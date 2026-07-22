@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>色ぬりビンゴマシーン（colors）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF3E6;
+    --paper-dark:#F0E4CC;
+    --ink:#2B2A4C;
+    --wood:#B9773F;
+    --wood-dark:#8A5A2E;
+    --teal:#4FB0AE;
+    --orange:#F2A93B;
+    --blue:#4A7FE0;
+    --coral:#E8607A;
+    --gold:#F4C542;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #fff7e6 0%, transparent 60%),
+      radial-gradient(1000px 500px at 110% 10%, #eaf6f5 0%, transparent 55%),
+      var(--paper);
+    font-family:'Nunito', sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  .stage{
+    max-width:1520px;
+    margin:0 auto;
+    padding:22px 28px 32px;
+  }
+  header{
+    text-align:center;
+    margin-bottom:10px;
+  }
+  header .eyebrow{
+    font-family:'Fredoka', sans-serif;
+    font-size:13px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--teal);
+    font-weight:600;
+  }
+  header h1{
+    font-family:'Fredoka', sans-serif;
+    font-size:30px;
+    font-weight:700;
+    margin:4px 0 2px;
+    color:var(--ink);
+  }
+  header p{
+    margin:0;
+    font-size:14px;
+    color:#6b6a8a;
+  }
+
+  .layout{
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    gap:36px;
+    margin-top:10px;
+  }
+  .left-col{
+    flex:0 0 auto;
+    width:min(50vw, 620px);
+  }
+  .right-col{
+    flex:1 1 380px;
+    max-width:520px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    padding-top:6px;
+  }
+
+  /* Kamishibai (paper theater) box */
+  .theater{
+    position:relative;
+    margin:10px auto 0;
+    width:100%;
+    background:linear-gradient(180deg, var(--wood) 0%, var(--wood-dark) 100%);
+    border-radius:18px;
+    padding:22px 22px 30px;
+    box-shadow:
+      0 18px 0 -6px rgba(0,0,0,.08),
+      0 24px 40px rgba(90,55,20,.25),
+      inset 0 2px 0 rgba(255,255,255,.15);
+  }
+  .theater::before, .theater::after{
+    content:"";
+    position:absolute;
+    width:14px;height:14px;
+    border-radius:50%;
+    background:#5c3b1e;
+    box-shadow:inset 0 2px 3px rgba(0,0,0,.4);
+    top:14px;
+  }
+  .theater::before{left:14px;}
+  .theater::after{right:14px;}
+
+  .window{
+    position:relative;
+    background:var(--paper);
+    border-radius:10px;
+    aspect-ratio:1/0.98;
+    overflow:hidden;
+    box-shadow:inset 0 6px 18px rgba(0,0,0,.18), inset 0 0 0 6px #fffaf0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .window .glow{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    box-shadow: inset 0 0 0 0 rgba(244,197,66,0);
+    transition:box-shadow .25s ease;
+    border-radius:10px;
+  }
+  .window.win .glow{
+    box-shadow: inset 0 0 0 6px var(--gold), 0 0 30px rgba(244,197,66,.8);
+  }
+
+  .cardface{
+    width:82%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    transition:transform .06s linear;
+  }
+  .cardface img{
+    width:100%;
+    max-height:62%;
+    object-fit:contain;
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,.12));
+  }
+  .cardface .label{
+    font-family:'Fredoka', sans-serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--ink);
+    opacity:0;
+    transform:translateY(6px);
+    transition:opacity .3s ease, transform .3s ease;
+  }
+  .cardface .label.show{opacity:1;transform:translateY(0);}
+  .cardface .label-ja{
+    font-size:13px;
+    color:#8a89a8;
+    margin-top:-6px;
+    opacity:0;
+    transition:opacity .3s ease;
+  }
+  .cardface .label-ja.show{opacity:1;}
+
+  .idle-hint{
+    font-size:15px;
+    color:#a9a7c4;
+    font-family:'Fredoka', sans-serif;
+  }
+
+  .controls{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .controls .row{
+    display:flex;
+    gap:12px;
+  }
+  .controls .row button{flex:1;}
+  button{
+    font-family:'Fredoka', sans-serif;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
+    border-radius:999px;
+    transition:transform .08s ease, filter .15s ease;
+  }
+  button:active{transform:scale(.96);}
+  #startBtn{
+    background:linear-gradient(180deg, #FF8A65, var(--coral));
+    color:#fff;
+    font-size:24px;
+    padding:22px 20px;
+    width:100%;
+    box-shadow:0 8px 0 #B33F55, 0 14px 20px rgba(232,96,122,.35);
+  }
+  #startBtn:disabled{
+    filter:grayscale(.5) brightness(.9);
+    cursor:not-allowed;
+    box-shadow:0 8px 0 #999, 0 10px 16px rgba(0,0,0,.15);
+  }
+  #startBtn:not(:disabled):hover{filter:brightness(1.05);}
+  #resetBtn{
+    background:#fff;
+    color:var(--ink);
+    font-size:15px;
+    padding:14px 18px;
+    border:2px solid var(--paper-dark);
+  }
+  #resetBtn:hover{border-color:var(--teal);color:var(--teal);}
+  #speakBtn{
+    background:#fff;
+    color:var(--ink);
+    font-size:15px;
+    padding:14px 18px;
+    border:2px solid var(--paper-dark);
+  }
+  #speakBtn:hover{border-color:var(--blue);color:var(--blue);}
+
+  .status{
+    text-align:center;
+    font-size:14px;
+    color:#8a89a8;
+    min-height:20px;
+  }
+
+  .history-wrap{
+    background:#fff;
+    border-radius:16px;
+    padding:16px 16px 18px;
+    border:1px solid #efe7d4;
+    box-shadow:0 2px 10px rgba(0,0,0,.04);
+    flex:1;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+  }
+  .history-wrap h2{
+    font-family:'Fredoka', sans-serif;
+    font-size:14px;
+    color:var(--ink);
+    text-align:left;
+    margin:0 0 12px;
+    letter-spacing:.02em;
+  }
+  .history{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:flex-start;
+    overflow-y:auto;
+    max-height:420px;
+  }
+  .chip{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--paper);
+    border-radius:12px;
+    padding:6px 12px 6px 6px;
+    box-shadow:0 2px 6px rgba(0,0,0,.06);
+    border:1px solid #efe7d4;
+  }
+  .chip img{
+    width:30px;height:30px;object-fit:contain;
+  }
+  .chip span{
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink);
+  }
+  .chip .n{
+    font-size:11px;
+    color:#b8b6d0;
+    font-weight:800;
+  }
+  .empty-note{
+    text-align:left;
+    font-size:13px;
+    color:#c2c0d8;
+  }
+
+  @media (max-width:900px){
+    .layout{flex-direction:column; align-items:stretch;}
+    .left-col{width:100%; max-width:520px; margin:0 auto;}
+    .right-col{max-width:520px; margin:0 auto; width:100%;}
+  }
+
+  @media (max-width:480px){
+    header h1{font-size:24px;}
+    .theater{padding:16px 16px 22px;}
+    #startBtn{font-size:19px;padding:18px 20px;}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <header>
+    <div class="eyebrow">COLOR BINGO</div>
+    <h1>色ぬりビンゴマシーン</h1>
+    <p>色鉛筆で自分だけのビンゴシートを作ろう｜スタートを押すと色が決まり、英語で読み上げます</p>
+  </header>
+
+  <div class="layout">
+    <div class="left-col">
+      <div class="theater">
+        <div class="window" id="window">
+          <div class="glow"></div>
+          <div class="cardface" id="cardface">
+            <img id="cardImg" src="" alt="" style="visibility:hidden;">
+            <div class="idle-hint" id="idleHint">START を押してね</div>
+            <div class="label" id="cardLabel"></div>
+            <div class="label-ja" id="cardLabelJa"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-col">
+      <div class="controls">
+        <button id="startBtn">▶ START</button>
+        <div class="row">
+          <button id="speakBtn">🔊 もう一度読む</button>
+          <button id="resetBtn">↺ 最初から</button>
+        </div>
+      </div>
+      <div class="status" id="status"></div>
+
+      <div class="history-wrap">
+        <h2>これまで出た色（<span id="countDisplay">0</span> / <span id="totalDisplay">0</span>）</h2>
+        <div class="history" id="history">
+          <div class="empty-note" id="emptyNote">まだありません</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CARDS = [
+{id:1, en:"red", ja:"あか", img:"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTAwIDQ5NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxmaWx0ZXIgaWQ9InNoYWRvdyIgeD0iLTQwJSIgeT0iLTQwJSIgd2lkdGg9IjE4MCUiIGhlaWdodD0iMTgwJSI+CiAgICAgIDxmZURyb3BTaGFkb3cgZHg9IjAiIGR5PSIxMCIgc3RkRGV2aWF0aW9uPSIxMiIgZmxvb2QtY29sb3I9IiM1YTM3MTQiIGZsb29kLW9wYWNpdHk9IjAuMjgiLz4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8Y2lyY2xlIGN4PSIyNTAiIGN5PSIyMjUiIHI9IjE1NSIgZmlsbD0iI0U1MzkzNSIgc3Ryb2tlPSIjMkIyQTRDIiBzdHJva2Utd2lkdGg9IjIuNSIgZmlsdGVyPSJ1cmwoI3NoYWRvdykiLz4KPC9zdmc+"},
+{id:2, en:"blue", ja:"あお", img:"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTAwIDQ5NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxmaWx0ZXIgaWQ9InNoYWRvdyIgeD0iLTQwJSIgeT0iLTQwJSIgd2lkdGg9IjE4MCUiIGhlaWdodD0iMTgwJSI+CiAgICAgIDxmZURyb3BTaGFkb3cgZHg9IjAiIGR5PSIxMCIgc3RkRGV2aWF0aW9uPSIxMiIgZmxvb2QtY29sb3I9IiM1YTM3MTQiIGZsb29kLW9wYWNpdHk9IjAuMjgiLz4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8Y2lyY2xlIGN4PSIyNTAiIGN5PSIyMjUiIHI9IjE1NSIgZmlsbD0iIzNCNkZENCIgc3Ryb2tlPSIjMkIyQTRDIiBzdHJva2Utd2lkdGg9IjIuNSIgZmlsdGVyPSJ1cmwoI3NoYWRvdykiLz4KPC9zdmc+"},
+{id:3, en:"pink", ja:"ピンク", img:"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTAwIDQ5NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxmaWx0ZXIgaWQ9InNoYWRvdyIgeD0iLTQwJSIgeT0iLTQwJSIgd2lkdGg9IjE4MCUiIGhlaWdodD0iMTgwJSI+CiAgICAgIDxmZURyb3BTaGFkb3cgZHg9IjAiIGR5PSIxMCIgc3RkRGV2aWF0aW9uPSIxMiIgZmxvb2QtY29sb3I9IiM1YTM3MTQiIGZsb29kLW9wYWNpdHk9IjAuMjgiLz4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8Y2lyY2xlIGN4PSIyNTAiIGN5PSIyMjUiIHI9IjE1NSIgZmlsbD0iI0YwNkFBMCIgc3Ryb2tlPSIjMkIyQTRDIiBzdHJva2Utd2lkdGg9IjIuNSIgZmlsdGVyPSJ1cmwoI3NoYWRvdykiLz4KPC9zdmc+"},
+{id:4, en:"green", ja:"みどり", img:"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTAwIDQ5NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxmaWx0ZXIgaWQ9InNoYWRvdyIgeD0iLTQwJSIgeT0iLTQwJSIgd2lkdGg9IjE4MCUiIGhlaWdodD0iMTgwJSI+CiAgICAgIDxmZURyb3BTaGFkb3cgZHg9IjAiIGR5PSIxMCIgc3RkRGV2aWF0aW9uPSIxMiIgZmxvb2QtY29sb3I9IiM1YTM3MTQiIGZsb29kLW9wYWNpdHk9IjAuMjgiLz4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8Y2lyY2xlIGN4PSIyNTAiIGN5PSIyMjUiIHI9IjE1NSIgZmlsbD0iIzQzQTA0NyIgc3Ryb2tlPSIjMkIyQTRDIiBzdHJva2Utd2lkdGg9IjIuNSIgZmlsdGVyPSJ1cmwoI3NoYWRvdykiLz4KPC9zdmc+"},
+{id:5, en:"brown", ja:"ちゃいろ", img:"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTAwIDQ5NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxmaWx0ZXIgaWQ9InNoYWRvdyIgeD0iLTQwJSIgeT0iLTQwJSIgd2lkdGg9IjE4MCUiIGhlaWdodD0iMTgwJSI+CiAgICAgIDxmZURyb3BTaGFkb3cgZHg9IjAiIGR5PSIxMCIgc3RkRGV2aWF0aW9uPSIxMiIgZmxvb2QtY29sb3I9IiM1YTM3MTQiIGZsb29kLW9wYWNpdHk9IjAuMjgiLz4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8Y2lyY2xlIGN4PSIyNTAiIGN5PSIyMjUiIHI9IjE1NSIgZmlsbD0iIzhENjM1MCIgc3Ryb2tlPSIjMkIyQTRDIiBzdHJva2Utd2lkdGg9IjIuNSIgZmlsdGVyPSJ1cmwoI3NoYWRvdykiLz4KPC9zdmc+"},
+{id:6, en:"black", ja:"くろ", img:"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTAwIDQ5NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxmaWx0ZXIgaWQ9InNoYWRvdyIgeD0iLTQwJSIgeT0iLTQwJSIgd2lkdGg9IjE4MCUiIGhlaWdodD0iMTgwJSI+CiAgICAgIDxmZURyb3BTaGFkb3cgZHg9IjAiIGR5PSIxMCIgc3RkRGV2aWF0aW9uPSIxMiIgZmxvb2QtY29sb3I9IiM1YTM3MTQiIGZsb29kLW9wYWNpdHk9IjAuMjgiLz4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8Y2lyY2xlIGN4PSIyNTAiIGN5PSIyMjUiIHI9IjE1NSIgZmlsbD0iIzJCMkEyQSIgc3Ryb2tlPSIjMkIyQTRDIiBzdHJva2Utd2lkdGg9IjIuNSIgZmlsdGVyPSJ1cmwoI3NoYWRvdykiLz4KPC9zdmc+"},
+{id:7, en:"white", ja:"しろ", img:"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTAwIDQ5NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxmaWx0ZXIgaWQ9InNoYWRvdyIgeD0iLTQwJSIgeT0iLTQwJSIgd2lkdGg9IjE4MCUiIGhlaWdodD0iMTgwJSI+CiAgICAgIDxmZURyb3BTaGFkb3cgZHg9IjAiIGR5PSIxMCIgc3RkRGV2aWF0aW9uPSIxMiIgZmxvb2QtY29sb3I9IiM1YTM3MTQiIGZsb29kLW9wYWNpdHk9IjAuMjgiLz4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8Y2lyY2xlIGN4PSIyNTAiIGN5PSIyMjUiIHI9IjE1NSIgZmlsbD0iI0ZGRkZGRiIgc3Ryb2tlPSIjMkIyQTRDIiBzdHJva2Utd2lkdGg9IjUiIGZpbHRlcj0idXJsKCNzaGFkb3cpIi8+Cjwvc3ZnPg=="},
+{id:8, en:"orange", ja:"オレンジ", img:"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTAwIDQ5NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxmaWx0ZXIgaWQ9InNoYWRvdyIgeD0iLTQwJSIgeT0iLTQwJSIgd2lkdGg9IjE4MCUiIGhlaWdodD0iMTgwJSI+CiAgICAgIDxmZURyb3BTaGFkb3cgZHg9IjAiIGR5PSIxMCIgc3RkRGV2aWF0aW9uPSIxMiIgZmxvb2QtY29sb3I9IiM1YTM3MTQiIGZsb29kLW9wYWNpdHk9IjAuMjgiLz4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8Y2lyY2xlIGN4PSIyNTAiIGN5PSIyMjUiIHI9IjE1NSIgZmlsbD0iI0YyQTkzQiIgc3Ryb2tlPSIjMkIyQTRDIiBzdHJva2Utd2lkdGg9IjIuNSIgZmlsdGVyPSJ1cmwoI3NoYWRvdykiLz4KPC9zdmc+"},
+{id:9, en:"purple", ja:"むらさき", img:"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTAwIDQ5NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxmaWx0ZXIgaWQ9InNoYWRvdyIgeD0iLTQwJSIgeT0iLTQwJSIgd2lkdGg9IjE4MCUiIGhlaWdodD0iMTgwJSI+CiAgICAgIDxmZURyb3BTaGFkb3cgZHg9IjAiIGR5PSIxMCIgc3RkRGV2aWF0aW9uPSIxMiIgZmxvb2QtY29sb3I9IiM1YTM3MTQiIGZsb29kLW9wYWNpdHk9IjAuMjgiLz4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8Y2lyY2xlIGN4PSIyNTAiIGN5PSIyMjUiIHI9IjE1NSIgZmlsbD0iIzhFNUZCRiIgc3Ryb2tlPSIjMkIyQTRDIiBzdHJva2Utd2lkdGg9IjIuNSIgZmlsdGVyPSJ1cmwoI3NoYWRvdykiLz4KPC9zdmc+"},
+{id:10, en:"yellow", ja:"きいろ", img:"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTAwIDQ5NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxmaWx0ZXIgaWQ9InNoYWRvdyIgeD0iLTQwJSIgeT0iLTQwJSIgd2lkdGg9IjE4MCUiIGhlaWdodD0iMTgwJSI+CiAgICAgIDxmZURyb3BTaGFkb3cgZHg9IjAiIGR5PSIxMCIgc3RkRGV2aWF0aW9uPSIxMiIgZmxvb2QtY29sb3I9IiM1YTM3MTQiIGZsb29kLW9wYWNpdHk9IjAuMjgiLz4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8Y2lyY2xlIGN4PSIyNTAiIGN5PSIyMjUiIHI9IjE1NSIgZmlsbD0iI0Y0QzU0MiIgc3Ryb2tlPSIjMkIyQTRDIiBzdHJva2Utd2lkdGg9IjIuNSIgZmlsdGVyPSJ1cmwoI3NoYWRvdykiLz4KPC9zdmc+"}
+];
+
+let deck = [];
+let drawn = [];
+let spinning = false;
+let lastCard = null;
+let speechToken = 0;
+let spinSession = 0;
+
+// Lightweight synthesized sound effects (no audio files needed, so the
+// whole app stays a single self-contained HTML file). Uses the Web Audio
+// API directly; the context is created/resumed on the first Start click
+// to satisfy browser autoplay rules.
+const SFX = (() => {
+  let ctx = null;
+  function ensureCtx(){
+    if(!ctx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) ctx = new AC();
+    }
+    if(ctx && ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function tone(freq, duration, {type='sine', gain=0.2, delay=0, sweepTo=null} = {}){
+    const c = ensureCtx();
+    if(!c) return;
+    const t0 = c.currentTime + delay;
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if(sweepTo) osc.frequency.exponentialRampToValueAtTime(sweepTo, t0 + duration);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + Math.min(0.015, duration/3));
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    osc.connect(g);
+    g.connect(c.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.03);
+  }
+  return {
+    unlock(){ ensureCtx(); },
+    start(){ tone(320, 0.16, {type:'triangle', gain:0.22, sweepTo:760}); },
+    tick(){ tone(600 + Math.random()*90, 0.045, {type:'square', gain:0.08}); },
+    stop(){
+      tone(880, 0.16, {type:'sine', gain:0.22});
+      tone(1318.5, 0.30, {type:'sine', gain:0.18, delay:0.09});
+    }
+  };
+})();
+
+function shuffledDeck(){
+  const arr = [...CARDS];
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function initGame(){
+  spinSession++;
+  spinning = false;
+  speechToken++;
+  if('speechSynthesis' in window) window.speechSynthesis.cancel();
+  deck = shuffledDeck();
+  drawn = [];
+  lastCard = null;
+  document.getElementById('history').innerHTML = '<div class="empty-note" id="emptyNote">まだありません</div>';
+  document.getElementById('countDisplay').textContent = '0';
+  document.getElementById('totalDisplay').textContent = CARDS.length;
+  document.getElementById('cardImg').style.visibility='hidden';
+  document.getElementById('idleHint').style.display='block';
+  document.getElementById('idleHint').textContent = 'START を押してね';
+  document.getElementById('cardLabel').classList.remove('show');
+  document.getElementById('cardLabel').textContent='';
+  document.getElementById('cardLabelJa').classList.remove('show');
+  document.getElementById('cardLabelJa').textContent='';
+  document.getElementById('window').classList.remove('win');
+  document.getElementById('status').textContent='';
+  document.getElementById('startBtn').disabled=false;
+}
+
+function speakWord(word){
+  if(!('speechSynthesis' in window)) return;
+  speechToken++;
+  const myToken = speechToken;
+  window.speechSynthesis.cancel();
+  // Chrome/Edge have a known bug where calling speak() immediately after
+  // cancel() can drop the new utterance or let a stale one keep playing.
+  // A short delay plus a token check guarantees the audio always matches
+  // the word that is currently on screen, even if the button is pressed
+  // again quickly.
+  setTimeout(()=>{
+    if(myToken !== speechToken) return;
+    const utter = new SpeechSynthesisUtterance(word);
+    utter.lang = 'en-US';
+    utter.rate = 0.85;
+    utter.pitch = 1.05;
+    window.speechSynthesis.speak(utter);
+  }, 80);
+}
+
+function addToHistory(card, index){
+  const emptyNote = document.getElementById('emptyNote');
+  if(emptyNote) emptyNote.remove();
+  const chip = document.createElement('div');
+  chip.className='chip';
+  chip.innerHTML = `<span class="n">${index}</span><img src="${card.img}" alt=""><span>${card.en}</span>`;
+  document.getElementById('history').appendChild(chip);
+  document.getElementById('countDisplay').textContent = index;
+}
+
+function startSpin(){
+  if(spinning) return;
+  if(deck.length===0){
+    document.getElementById('status').textContent='全部出たよ！「最初から」で新しいゲームを始めよう。';
+    return;
+  }
+  spinning = true;
+  spinSession++;
+  const mySession = spinSession;
+  SFX.start();
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('idleHint').style.display='none';
+  document.getElementById('cardImg').style.visibility='visible';
+  document.getElementById('cardLabel').classList.remove('show');
+  document.getElementById('cardLabelJa').classList.remove('show');
+  document.getElementById('window').classList.remove('win');
+  document.getElementById('status').textContent='';
+
+  const finalCard = deck.pop();
+  const imgEl = document.getElementById('cardImg');
+  const cardfaceEl = document.getElementById('cardface');
+
+  // Build spin sequence: random cards, decelerating, ending on finalCard
+  const totalSteps = 22;
+  let step = 0;
+  const pool = CARDS;
+
+  function revealResult(){
+    if(mySession !== spinSession) return;
+    SFX.stop();
+    cardfaceEl.style.transform='scale(1.08)';
+    setTimeout(()=>{ if(mySession===spinSession) cardfaceEl.style.transform='scale(1)'; }, 160);
+    document.getElementById('window').classList.add('win');
+    const lbl = document.getElementById('cardLabel');
+    const lblJa = document.getElementById('cardLabelJa');
+    lbl.textContent = finalCard.en;
+    lblJa.textContent = finalCard.ja;
+    requestAnimationFrame(()=>{
+      if(mySession!==spinSession) return;
+      lbl.classList.add('show');
+      lblJa.classList.add('show');
+    });
+
+    drawn.push(finalCard);
+    lastCard = finalCard;
+    addToHistory(finalCard, drawn.length);
+    speakWord(finalCard.en);
+    spinning = false;
+    document.getElementById('startBtn').disabled = false;
+    if(deck.length===0){
+      document.getElementById('status').textContent=`これで${CARDS.length}色すべて出ました！「最初から」で新しいゲームを始められます。`;
+    }
+  }
+
+  function scheduleNext(){
+    // If a newer spin (or a Reset) has started since this chain began,
+    // stop immediately so a stale animation can never overwrite the
+    // image/label/audio of the current round.
+    if(mySession !== spinSession) return;
+
+    if(step >= totalSteps){
+      // Land on the final card, but only reveal the label/audio once the
+      // browser has actually finished decoding and painting this exact
+      // image. Rapid src swapping during the flicker can leave a decode
+      // queued up; waiting for onload guarantees what's on screen always
+      // matches what gets read aloud, even if it costs a few extra ms.
+      imgEl.alt = finalCard.en;
+      let settled = false;
+      const finish = () => {
+        if(settled) return;
+        settled = true;
+        if(mySession !== spinSession) return;
+        revealResult();
+      };
+      imgEl.onload = finish;
+      imgEl.src = finalCard.img;
+      // Safety net in case onload doesn't fire (e.g. identical cached src).
+      setTimeout(finish, 120);
+      return;
+    }
+    const randCard = pool[Math.floor(Math.random()*pool.length)];
+    imgEl.onload = null;
+    imgEl.src = randCard.img;
+    imgEl.alt = '';
+    SFX.tick();
+    step++;
+    // easing: start fast (60ms) end slow (~360ms)
+    const t = step/totalSteps;
+    const delay = 55 + Math.pow(t,2.4)*380;
+    setTimeout(scheduleNext, delay);
+  }
+  scheduleNext();
+}
+
+document.getElementById('startBtn').addEventListener('click', startSpin);
+document.getElementById('resetBtn').addEventListener('click', initGame);
+document.getElementById('speakBtn').addEventListener('click', ()=>{
+  if(lastCard) speakWord(lastCard.en);
+});
+
+initGame();
+</script>
+</body>
+</html>
