@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ワードサーチメーカー - すきな単語でパズル作成</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink:#ff6fa5;
+    --blue:#4da3ff;
+    --yellow:#ffcb3d;
+    --green:#4cd77e;
+    --purple:#a56bff;
+    --bg1:#fdf6ff;
+    --bg2:#e8f4ff;
+    --ink:#3a2e50;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;min-height:100vh;
+    font-family:'Hiragino Maru Gothic ProN','Rounded Mplus 1c','Yu Gothic',sans-serif;
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));
+    color:var(--ink);
+  }
+  .wrap{max-width:1200px;margin:0 auto;padding:18px 22px 50px;}
+  h1{
+    text-align:center;font-size:clamp(24px,3.4vw,36px);margin:8px 0 4px;
+    color:var(--purple);text-shadow:2px 2px 0 #fff;
+  }
+  .subtitle{text-align:center;color:#7a6fa0;margin-bottom:16px;font-size:14px;}
+
+  .panel{
+    background:#fff;border-radius:24px;padding:26px 28px 30px;
+    box-shadow:0 10px 30px rgba(140,100,200,0.15);
+  }
+  .panel-narrow{max-width:640px;margin:0 auto;}
+  .panel h2{font-size:18px;color:var(--purple);margin:0 0 12px;}
+  .hint-text{font-size:13px;color:#9a90b8;margin:-6px 0 16px;}
+
+  .word-inputs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 16px;margin-bottom:18px;}
+  .word-inputs .field{display:flex;align-items:center;gap:8px;}
+  .word-inputs .field span{font-size:13px;color:var(--purple);font-weight:bold;width:18px;text-align:right;}
+  .word-inputs input{
+    flex:1;padding:10px 12px;border-radius:12px;border:2px solid #e4dbfb;
+    font-size:15px;font-weight:bold;color:var(--ink);
+  }
+  .word-inputs input:focus{outline:none;border-color:var(--purple);}
+
+  .opt-row{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:20px;}
+  .opt-row label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:bold;color:var(--purple);}
+
+  .start-btn{
+    display:block;width:100%;padding:16px;font-size:20px;font-weight:bold;
+    border:none;border-radius:18px;color:#fff;cursor:pointer;
+    background:linear-gradient(135deg,var(--pink),var(--purple));
+    box-shadow:0 8px 0 #b23a86,0 12px 20px rgba(0,0,0,.15);
+  }
+  .start-btn:active{transform:translateY(6px);box-shadow:0 2px 0 #b23a86;}
+  .error-text{color:#c0392b;font-weight:bold;font-size:14px;margin:0 0 14px;text-align:center;}
+
+  .controls-top{display:flex;justify-content:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .small-btn{
+    padding:9px 18px;border-radius:12px;cursor:pointer;font-weight:bold;
+    background:#fff;color:var(--purple);border:2px solid var(--purple);font-size:13px;
+  }
+  .small-btn:hover{background:#f3ecff;}
+  .case-toggle{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:bold;color:var(--purple);}
+  .uppercase{text-transform:uppercase;}
+
+  .puzzle-layout{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;}
+  .puzzle-main{flex:2;min-width:320px;display:flex;justify-content:center;}
+  .puzzle-side{flex:1;min-width:220px;}
+
+  .statsbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .stat{
+    background:#fff;border-radius:14px;padding:8px 14px;font-weight:bold;
+    box-shadow:0 4px 10px rgba(0,0,0,.08);font-size:12px;color:var(--purple);
+    min-width:90px;text-align:center;
+  }
+  .stat span{display:block;font-size:18px;color:var(--ink);margin-top:1px;}
+
+  .word-list{list-style:none;margin:0;padding:0;}
+  .word-list li{
+    display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;
+    background:#faf7ff;border:2px solid #eee0ff;margin-bottom:8px;font-weight:600;
+    font-family:'UD Digital 教科書体 NP-R','UD デジタル 教科書体 NP-R','UDDigitalNP-R','BIZ UDPGothic','Fredoka','Hiragino Maru Gothic ProN','Rounded Mplus 1c',sans-serif;
+    font-size:16px;color:var(--ink);transition:.2s;
+  }
+  .word-list li.found{background:#d8f5e0;border-color:#4cd77e;color:#227a3f;text-decoration:line-through;opacity:.75;}
+  .word-list .mini-play{
+    border:none;background:var(--yellow);color:#5c4d10;border-radius:50%;
+    width:22px;height:22px;font-size:10px;cursor:pointer;flex:none;
+    display:flex;align-items:center;justify-content:center;
+  }
+
+  .share-box{
+    margin-top:18px;padding:14px;background:#f7f2ff;border-radius:14px;
+    border:2px dashed #d8c8ff;
+  }
+  .share-label{font-size:13px;font-weight:bold;color:var(--purple);margin-bottom:8px;}
+  .share-row{display:flex;gap:8px;}
+  .share-row input{
+    flex:1;min-width:0;padding:8px 10px;border-radius:10px;border:2px solid #e4dbfb;
+    font-size:12px;color:#5c4d80;background:#fff;
+  }
+
+  .grid-box{
+    background:#fff;border-radius:20px;padding:14px;box-shadow:0 10px 30px rgba(140,100,200,.15);
+    touch-action:none;user-select:none;-webkit-user-select:none;
+  }
+  .ws-grid{display:grid;gap:2px;}
+  .ws-cell{
+    aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
+    font-family:'UD Digital 教科書体 NP-R','UD デジタル 教科書体 NP-R','UDDigitalNP-R','BIZ UDPGothic','Fredoka','Hiragino Maru Gothic ProN','Rounded Mplus 1c',sans-serif;
+    font-weight:600;color:var(--ink);background:#faf7ff;border-radius:4px;
+    font-size:clamp(15px,2.3vw,24px);cursor:pointer;transition:background .1s;
+  }
+  .ws-cell.selecting{background:#e0c3ff;color:#fff;}
+  .ws-cell.found{background:var(--green);color:#fff;}
+
+  .overlay{
+    display:none;position:fixed;inset:0;background:rgba(60,30,90,.55);
+    align-items:center;justify-content:center;z-index:50;padding:20px;
+  }
+  .overlay-card{
+    background:#fff;border-radius:24px;padding:30px 26px;text-align:center;
+    max-width:400px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);
+  }
+  .overlay-card h2{color:var(--purple);font-size:26px;margin:0 0 10px;}
+  .overlay-btns{display:flex;gap:10px;margin-top:20px;}
+  .overlay-btns button{
+    flex:1;padding:12px;border-radius:14px;border:none;font-weight:bold;cursor:pointer;font-size:15px;
+  }
+  .btn-primary{background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;}
+  .btn-secondary{background:#f0ecfa;color:var(--purple);}
+
+  footer{text-align:center;margin-top:30px;color:#b2a7cf;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔎 ワードサーチメーカー 🔤</h1>
+  <div class="subtitle">すきな単語でオリジナルのワードサーチパズルを作ろう</div>
+
+  <div id="stage"></div>
+
+  <footer>先生用ミニアプリ &middot; ブラウザだけで動きます（保存不要）</footer>
+</div>
+
+<div class="overlay" id="clearOverlay">
+  <div class="overlay-card">
+    <h2>🎉 ぜんぶ見つけた！🎉</h2>
+    <p id="clearStats" style="font-size:16px;"></p>
+    <div class="overlay-btns">
+      <button class="btn-secondary" id="overlayBack">単語を変更する</button>
+      <button class="btn-primary" id="overlayRetry">同じ単語で作り直す</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const stage = document.getElementById('stage');
+const clearOverlay = document.getElementById('clearOverlay');
+const clearStats = document.getElementById('clearStats');
+const overlayBack = document.getElementById('overlayBack');
+const overlayRetry = document.getElementById('overlayRetry');
+
+let state = {
+  words: [], size: 10, grid: [], placements: [],
+  found: new Set(), seconds:0, timer:null, speakOn:true,
+  selecting:false, startCell:null, path:[], uppercase:false
+};
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function speak(text, lang){
+  if(!state.speakOn) return;
+  if(!('speechSynthesis' in window)) return;
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang; u.rate = 0.85;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+let audioCtx;
+function beep(freqs, dur=0.12, type='sine'){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    freqs.forEach((f,i)=>{
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type=type; osc.frequency.value=f;
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime+i*dur);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+(i+1)*dur);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime+i*dur);
+      osc.stop(audioCtx.currentTime+(i+1)*dur);
+    });
+  }catch(e){}
+}
+const okSound = ()=>beep([523.25,659.25,783.99],0.11);
+const ngSound = ()=>beep([220,180],0.14,'sawtooth');
+const clearSound = ()=>beep([523,587,659,784,880,1047],0.12);
+
+/* ============ ① 単語入力画面 ============ */
+function renderIntro(prevWords){
+  const words = prevWords || [];
+  stage.innerHTML = `
+    <div class="panel"><div class="panel-narrow">
+      <h2>単語を入力しよう（最大8個）</h2>
+      <div class="hint-text">アルファベットだけで入力してください（2〜12文字）。空らんがあってもOKです。</div>
+      <div class="word-inputs" id="wordInputs">
+        ${Array.from({length:8}).map((_,i)=>`
+          <div class="field">
+            <span>${i+1}</span>
+            <input type="text" maxlength="12" data-idx="${i}" placeholder="例: ${['soccer','tennis','apple','school','friend','music','summer','orange'][i]}" value="${words[i]||''}">
+          </div>`).join('')}
+      </div>
+      <div class="opt-row">
+        <label><input type="checkbox" id="speakToggle" checked> 単語の発音を読み上げる</label>
+      </div>
+      <div class="error-text" id="errorText"></div>
+      <button class="start-btn" id="makeBtn">▶ パズルを作成する</button>
+    </div></div>`;
+
+  document.getElementById('makeBtn').addEventListener('click', ()=>{
+    const inputs = [...document.querySelectorAll('#wordInputs input')];
+    const raw = inputs.map(inp=>inp.value.trim().toLowerCase().replace(/[^a-z]/g,''));
+    const cleaned = raw.filter(w=>w.length>=2 && w.length<=12);
+    const unique = [...new Set(cleaned)];
+    const errorText = document.getElementById('errorText');
+    if(unique.length < 2){
+      errorText.textContent = '2文字以上12文字以下の単語を、2個以上入力してください。';
+      return;
+    }
+    errorText.textContent = '';
+    state.speakOn = document.getElementById('speakToggle').checked;
+    state.words = unique;
+    buildPuzzle();
+  });
+}
+
+/* ============ ② パズル生成（シード固定で誰が開いても同じ配置に） ============ */
+/* よこは左→右、たては上→下のみ（逆向き・ナナメなし） */
+const DIRECTIONS = [
+  [0,1],[1,0]
+];
+function mulberry32(seed){
+  let a = seed >>> 0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+let rng = Math.random;
+
+function tryGenerate(words, size){
+  const grid = Array.from({length:size}, ()=>Array(size).fill(null));
+  const placements = [];
+  const sorted = [...words].sort((a,b)=>b.length-a.length);
+  for(const word of sorted){
+    let placed = false;
+    for(let attempt=0; attempt<300 && !placed; attempt++){
+      const dir = DIRECTIONS[Math.floor(rng()*DIRECTIONS.length)];
+      const row = Math.floor(rng()*size);
+      const col = Math.floor(rng()*size);
+      const endRow = row + dir[0]*(word.length-1);
+      const endCol = col + dir[1]*(word.length-1);
+      if(endRow<0||endRow>=size||endCol<0||endCol>=size) continue;
+      let fits = true;
+      const cells = [];
+      for(let i=0;i<word.length;i++){
+        const r = row+dir[0]*i, c = col+dir[1]*i;
+        const existing = grid[r][c];
+        if(existing!==null && existing!==word[i]){ fits=false; break; }
+        cells.push([r,c]);
+      }
+      if(fits){
+        cells.forEach(([r,c],i)=>{ grid[r][c]=word[i]; });
+        placements.push({word, cells});
+        placed = true;
+      }
+    }
+    if(!placed) return null; // このサイズでは入りきらない
+  }
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  for(let r=0;r<size;r++) for(let c=0;c<size;c++){
+    if(grid[r][c]===null) grid[r][c] = letters[Math.floor(rng()*26)];
+  }
+  return {grid, placements};
+}
+function generatePuzzle(words){
+  const longest = Math.max(...words.map(w=>w.length));
+  let size = Math.min(Math.max(longest+3, 10), 16);
+  for(let tries=0; tries<6; tries++){
+    const result = tryGenerate(words, size);
+    if(result) return {...result, size};
+    size = Math.min(size+2, 18);
+  }
+  // 最終手段：入らない単語は諦めて配置できたものだけ使う
+  const size2 = 18;
+  const grid = Array.from({length:size2}, ()=>Array(size2).fill(null));
+  const placements = [];
+  const sorted = [...words].sort((a,b)=>b.length-a.length);
+  for(const word of sorted){
+    let placed=false;
+    for(let attempt=0; attempt<400 && !placed; attempt++){
+      const dir = DIRECTIONS[Math.floor(rng()*DIRECTIONS.length)];
+      const row = Math.floor(rng()*size2);
+      const col = Math.floor(rng()*size2);
+      const endRow = row + dir[0]*(word.length-1);
+      const endCol = col + dir[1]*(word.length-1);
+      if(endRow<0||endRow>=size2||endCol<0||endCol>=size2) continue;
+      let fits=true; const cells=[];
+      for(let i=0;i<word.length;i++){
+        const r=row+dir[0]*i,c=col+dir[1]*i;
+        const existing=grid[r][c];
+        if(existing!==null && existing!==word[i]){fits=false;break;}
+        cells.push([r,c]);
+      }
+      if(fits){ cells.forEach(([r,c],i)=>{grid[r][c]=word[i];}); placements.push({word,cells}); placed=true; }
+    }
+    if(!placed) placements.push({word, cells:null, failed:true});
+  }
+  const letters='abcdefghijklmnopqrstuvwxyz';
+  for(let r=0;r<size2;r++) for(let c=0;c<size2;c++){
+    if(grid[r][c]===null) grid[r][c]=letters[Math.floor(rng()*26)];
+  }
+  return {grid, placements, size:size2};
+}
+
+function buildPuzzle(keepSeed){
+  if(!keepSeed || !state.seed){
+    state.seed = Math.floor(Math.random()*1e9);
+  }
+  rng = mulberry32(state.seed);
+  const {grid, placements, size} = generatePuzzle(state.words);
+  state.grid = grid;
+  state.placements = placements;
+  state.size = size;
+  state.found = new Set();
+  state.seconds = 0;
+  updateShareUrl();
+  renderPuzzle();
+}
+
+function updateShareUrl(){
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.searchParams.set('words', state.words.join(','));
+  url.searchParams.set('seed', state.seed);
+  state.shareUrl = url.toString();
+  try{ history.replaceState(null, '', url.toString()); }catch(e){}
+}
+
+/* ============ ③ パズル画面 ============ */
+function renderPuzzle(){
+  const failedWords = state.placements.filter(p=>p.failed).map(p=>p.word);
+  stage.innerHTML = `
+    <div class="panel">
+      <div class="controls-top">
+        <button class="small-btn" id="backBtn">✏️ 単語を変更する</button>
+        <button class="small-btn" id="reshuffleBtn">🔀 同じ単語で作り直す</button>
+        <label class="case-toggle"><input type="checkbox" id="caseToggle" ${state.uppercase?'checked':''}> 大文字で表示</label>
+      </div>
+      ${failedWords.length ? `<div class="error-text">⚠️ 配置しきれなかった単語：${failedWords.join(', ')}（単語数を減らすとうまくいきやすいです）</div>` : ''}
+      <div class="puzzle-layout">
+        <div class="puzzle-main">
+          <div class="grid-box">
+            <div class="ws-grid${state.uppercase?' uppercase':''}" id="wsGrid" style="grid-template-columns:repeat(${state.size},1fr);width:min(70vw,560px);"></div>
+          </div>
+        </div>
+        <div class="puzzle-side">
+          <div class="statsbar">
+            <div class="stat">じかん<span id="timeStat">0:00</span></div>
+            <div class="stat">見つけた数<span id="foundStat">0 / ${state.placements.filter(p=>!p.failed).length}</span></div>
+          </div>
+          <ul class="word-list${state.uppercase?' uppercase':''}" id="wordList">
+            ${state.placements.filter(p=>!p.failed).map(p=>`
+              <li data-word="${p.word}">
+                <button class="mini-play" data-play="${p.word}">▶</button>
+                <span class="w-text">${p.word}</span>
+              </li>`).join('')}
+          </ul>
+          <div class="share-box">
+            <div class="share-label">🔗 このパズルを共有する（単語・配置ともそのまま）</div>
+            <div class="share-row">
+              <input type="text" id="shareUrlInput" readonly value="${state.shareUrl||''}">
+              <button class="small-btn" id="copyUrlBtn">コピー</button>
+            </div>
+            <div class="hint-text" id="copyHint" style="margin:6px 0 0;"></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('backBtn').addEventListener('click', ()=>{ stopTimer(); renderIntro(state.words); });
+  document.getElementById('reshuffleBtn').addEventListener('click', ()=>{ stopTimer(); buildPuzzle(); });
+  document.getElementById('caseToggle').addEventListener('change', (e)=>{
+    state.uppercase = e.target.checked;
+    document.getElementById('wsGrid').classList.toggle('uppercase', state.uppercase);
+    document.getElementById('wordList').classList.toggle('uppercase', state.uppercase);
+  });
+  document.querySelectorAll('[data-play]').forEach(btn=>{
+    btn.addEventListener('click', ()=> speak(btn.dataset.play,'en-US'));
+  });
+  document.getElementById('copyUrlBtn').addEventListener('click', async ()=>{
+    const input = document.getElementById('shareUrlInput');
+    const hint = document.getElementById('copyHint');
+    try{
+      await navigator.clipboard.writeText(input.value);
+      hint.textContent = '✅ コピーしました！ロイロノートなどに貼り付けて共有できます。';
+    }catch(e){
+      input.select();
+      input.setSelectionRange(0, 99999);
+      try{
+        document.execCommand('copy');
+        hint.textContent = '✅ コピーしました！';
+      }catch(e2){
+        hint.textContent = '⚠️ 自動コピーできませんでした。上の欄を選択して手動でコピーしてください。';
+      }
+    }
+  });
+
+  renderGrid();
+  startTimer();
+}
+
+function renderGrid(){
+  const gridEl = document.getElementById('wsGrid');
+  gridEl.innerHTML = '';
+  for(let r=0;r<state.size;r++){
+    for(let c=0;c<state.size;c++){
+      const cell = document.createElement('div');
+      cell.className='ws-cell';
+      cell.dataset.r=r; cell.dataset.c=c;
+      cell.textContent = state.grid[r][c];
+      gridEl.appendChild(cell);
+    }
+  }
+  attachDragHandlers(gridEl);
+}
+
+function startTimer(){
+  state.seconds=0;
+  document.getElementById('timeStat').textContent='0:00';
+  clearInterval(state.timer);
+  state.timer = setInterval(()=>{
+    state.seconds++;
+    const m=Math.floor(state.seconds/60), s=state.seconds%60;
+    const el = document.getElementById('timeStat');
+    if(el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  },1000);
+}
+function stopTimer(){ clearInterval(state.timer); }
+
+/* ============ ④ ドラッグ選択ロジック ============ */
+function cellKey(r,c){ return r+'_'+c; }
+
+function attachDragHandlers(gridEl){
+  state.selecting=false; state.startCell=null; state.path=[];
+
+  gridEl.addEventListener('pointerdown', (e)=>{
+    const cell = e.target.closest('.ws-cell');
+    if(!cell) return;
+    state.selecting = true;
+    state.startCell = {r:parseInt(cell.dataset.r), c:parseInt(cell.dataset.c)};
+    state.path = [state.startCell];
+    paintPath();
+    e.preventDefault();
+  });
+
+  document.addEventListener('pointermove', (e)=>{
+    if(!state.selecting) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const cell = el && el.closest ? el.closest('.ws-cell') : null;
+    if(!cell) return;
+    const r = parseInt(cell.dataset.r), c = parseInt(cell.dataset.c);
+    updatePath(r,c);
+  });
+
+  document.addEventListener('pointerup', ()=>{
+    if(!state.selecting) return;
+    state.selecting = false;
+    finishSelection();
+  });
+}
+
+function updatePath(r,c){
+  const {r:sr, c:sc} = state.startCell;
+  const dr = r - sr, dc = c - sc;
+  // たて・よこの直線だけを許可（ナナメは無視）
+  if(dr!==0 && dc!==0) return;
+  let stepR = Math.sign(dr), stepC = Math.sign(dc);
+  const steps = Math.max(Math.abs(dr), Math.abs(dc));
+  const path = [];
+  for(let i=0;i<=steps;i++){
+    path.push({r: sr+stepR*i, c: sc+stepC*i});
+  }
+  state.path = path;
+  paintPath();
+}
+
+function paintPath(){
+  document.querySelectorAll('.ws-cell.selecting').forEach(el=>el.classList.remove('selecting'));
+  state.path.forEach(({r,c})=>{
+    const el = document.querySelector(`.ws-cell[data-r="${r}"][data-c="${c}"]`);
+    if(el && !el.classList.contains('found')) el.classList.add('selecting');
+  });
+}
+
+function finishSelection(){
+  const letters = state.path.map(({r,c})=>state.grid[r][c]).join('');
+  const reversed = letters.split('').reverse().join('');
+  document.querySelectorAll('.ws-cell.selecting').forEach(el=>el.classList.remove('selecting'));
+
+  const match = state.placements.find(p=>!p.failed && !state.found.has(p.word) && (p.word===letters || p.word===reversed));
+  if(match){
+    state.found.add(match.word);
+    match.cells.forEach(([r,c])=>{
+      const el = document.querySelector(`.ws-cell[data-r="${r}"][data-c="${c}"]`);
+      if(el) el.classList.add('found');
+    });
+    const li = document.querySelector(`.word-list li[data-word="${match.word}"]`);
+    if(li) li.classList.add('found');
+    okSound();
+    speak(match.word,'en-US');
+    const total = state.placements.filter(p=>!p.failed).length;
+    document.getElementById('foundStat').textContent = `${state.found.size} / ${total}`;
+    if(state.found.size === total){
+      stopTimer();
+      clearSound();
+      const m=Math.floor(state.seconds/60), s=state.seconds%60;
+      clearStats.textContent = `タイム：${m}:${s.toString().padStart(2,'0')}`;
+      clearOverlay.style.display='flex';
+    }
+  } else if(letters.length>1){
+    ngSound();
+  }
+  state.path = [];
+  state.startCell = null;
+}
+
+/* ============ ボタン類 ============ */
+overlayBack.addEventListener('click', ()=>{
+  clearOverlay.style.display='none';
+  renderIntro(state.words);
+});
+overlayRetry.addEventListener('click', ()=>{
+  clearOverlay.style.display='none';
+  buildPuzzle();
+});
+
+/* ============ 起動（URLに単語が埋め込まれていれば直接そのパズルを開く） ============ */
+function boot(){
+  const params = new URLSearchParams(window.location.search);
+  const wordsParam = params.get('words');
+  const seedParam = params.get('seed');
+  if(wordsParam){
+    const cleaned = wordsParam.split(',')
+      .map(w=>w.trim().toLowerCase().replace(/[^a-z]/g,''))
+      .filter(w=>w.length>=2 && w.length<=12);
+    const unique = [...new Set(cleaned)];
+    if(unique.length>=2){
+      state.words = unique;
+      state.seed = seedParam ? parseInt(seedParam,10) : null;
+      state.speakOn = true;
+      buildPuzzle(true); // 同じseedがあれば同じ配置を再現
+      return;
+    }
+  }
+  renderIntro();
+}
+boot();
+</script>
+</body>
+</html>
