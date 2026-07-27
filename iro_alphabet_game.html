@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>いろあてゲーム - アルファベット(小文字)で色を当てよう</title>
+<style>
+  :root{
+    --pink:#ff6fa5;
+    --blue:#4da3ff;
+    --yellow:#ffcb3d;
+    --green:#4cd77e;
+    --purple:#a56bff;
+    --bg1:#fdf6ff;
+    --bg2:#e8f4ff;
+    --ink:#3a2e50;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;min-height:100vh;
+    font-family:'Hiragino Maru Gothic ProN','Rounded Mplus 1c','Yu Gothic',sans-serif;
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));
+    color:var(--ink);
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:20px 16px 60px;}
+  h1{
+    text-align:center;font-size:clamp(22px,4vw,32px);margin:10px 0 4px;
+    color:var(--purple);text-shadow:2px 2px 0 #fff;
+  }
+  .subtitle{text-align:center;color:#7a6fa0;margin-bottom:16px;font-size:14px;}
+
+  .topbar{display:flex;justify-content:center;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;}
+  .topbar label{font-size:13px;font-weight:bold;color:var(--purple);display:flex;align-items:center;gap:6px;}
+  .small-btn{
+    padding:8px 16px;border-radius:12px;cursor:pointer;font-weight:bold;
+    background:#fff;color:var(--purple);border:2px solid var(--purple);font-size:13px;
+  }
+  .small-btn:hover{background:#f3ecff;}
+
+  .panel{
+    background:#fff;border-radius:24px;padding:24px 22px 28px;
+    box-shadow:0 10px 30px rgba(140,100,200,0.15);
+  }
+  .panel h2{font-size:18px;color:var(--purple);margin:0 0 10px;}
+  .story-intro{
+    background:#f7f2ff;border-radius:14px;padding:14px 16px;font-size:14px;
+    line-height:1.8;color:#5c4d80;margin-bottom:16px;
+  }
+  .steps{font-size:13px;color:#7a6fa0;line-height:1.9;margin-bottom:18px;}
+  .steps b{color:var(--purple);}
+  .start-btn{
+    display:block;width:100%;padding:16px;font-size:20px;font-weight:bold;
+    border:none;border-radius:18px;color:#fff;cursor:pointer;
+    background:linear-gradient(135deg,var(--pink),var(--purple));
+    box-shadow:0 8px 0 #b23a86,0 12px 20px rgba(0,0,0,.15);
+  }
+  .start-btn:active{transform:translateY(6px);box-shadow:0 2px 0 #b23a86;}
+
+  .phase-title{text-align:center;font-weight:bold;color:var(--purple);font-size:17px;margin-bottom:14px;}
+  .role-badge{
+    display:inline-block;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:bold;
+    margin-bottom:14px;color:#fff;
+  }
+  .role-badge.answerer{background:linear-gradient(135deg,var(--pink),#ff9fc0);}
+  .role-badge.guesser{background:linear-gradient(135deg,var(--blue),#7cc4ff);}
+
+  .color-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0;}
+  .color-swatch{
+    background:#faf7ff;border-radius:16px;padding:10px 4px 8px;text-align:center;
+    border:3px solid #eee0ff;cursor:pointer;transition:.15s;position:relative;
+  }
+  .color-swatch:hover{border-color:var(--purple);transform:translateY(-2px);}
+  .color-swatch.selected{border-color:var(--pink);background:#fff0f6;box-shadow:0 6px 14px rgba(255,111,165,.35);}
+  .color-swatch.ruled-out{opacity:.3;pointer-events:none;filter:grayscale(1);}
+  .blob{
+    width:50px;height:50px;margin:0 auto 6px;
+    border-radius:60% 40% 55% 45%/55% 45% 60% 40%;
+    box-shadow:inset -4px -4px 10px rgba(0,0,0,.18), 0 4px 8px rgba(0,0,0,.15);
+  }
+  .swatch-bottom{display:flex;align-items:center;justify-content:center;gap:4px;}
+  .play-btn{
+    border:none;background:var(--yellow);color:#5c4d10;border-radius:50%;
+    width:20px;height:20px;font-size:10px;cursor:pointer;flex:none;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .color-label{font-weight:bold;font-size:12px;}
+
+  .confirm-btn{
+    display:block;margin:10px auto 0;padding:12px 30px;border-radius:14px;border:none;
+    font-weight:bold;font-size:16px;color:#fff;cursor:pointer;
+    background:linear-gradient(135deg,var(--pink),var(--purple));
+  }
+  .confirm-btn:disabled{opacity:.4;cursor:default;}
+
+  .secret-reveal{
+    text-align:center;background:#fff0f6;border-radius:18px;padding:24px;margin:14px 0;
+    border:3px dashed var(--pink);
+  }
+  .secret-reveal .blob{width:70px;height:70px;}
+  .warn-text{color:#c0392b;font-weight:bold;font-size:14px;margin-top:10px;}
+
+  .handoff-box{text-align:center;padding:40px 10px;}
+  .handoff-box .big-emoji{font-size:64px;margin-bottom:14px;animation:bounceHappy 1.2s infinite;}
+  @keyframes bounceHappy{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-14px);}
+  }
+
+  .blank-row{display:flex;justify-content:center;gap:8px;margin:18px 0;flex-wrap:wrap;}
+  .blank-box{
+    width:38px;height:50px;border-bottom:5px solid var(--purple);
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;font-weight:bold;color:var(--ink);
+  }
+  .blank-box.revealed{animation:popLetter .35s;}
+  @keyframes popLetter{
+    0%{transform:scale(.3);opacity:0;}
+    70%{transform:scale(1.3);}
+    100%{transform:scale(1);}
+  }
+
+  .qa-line{text-align:center;font-size:17px;font-weight:bold;min-height:26px;margin:8px 0 14px;color:var(--purple);}
+  .qa-line.yes{color:#227a3f;}
+  .qa-line.no{color:#a12a2a;}
+
+  .letter-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;max-width:480px;margin:0 auto 20px;}
+  .letter-btn{
+    aspect-ratio:1/1;border-radius:12px;border:3px solid #e4dbfb;background:#faf7ff;
+    font-size:17px;font-weight:bold;color:var(--ink);cursor:pointer;transition:.15s;
+  }
+  .letter-btn:hover:not(:disabled){border-color:var(--purple);background:#f1e8ff;}
+  .letter-btn.tried-yes{background:#d8f5e0;border-color:#4cd77e;color:#227a3f;}
+  .letter-btn.tried-no{background:#efefef;border-color:#ccc;color:#aaa;}
+  .letter-btn:disabled{cursor:default;}
+
+  .guess-hint{text-align:center;font-size:13px;color:#9a90b8;margin:6px 0 4px;}
+  .stats-mini{display:flex;justify-content:center;gap:10px;font-size:12px;color:var(--purple);font-weight:bold;margin-bottom:8px;}
+
+  .overlay{
+    display:none;position:fixed;inset:0;background:rgba(60,30,90,.55);
+    align-items:center;justify-content:center;z-index:50;padding:20px;
+  }
+  .overlay-card{
+    background:#fff;border-radius:24px;padding:30px 26px;text-align:center;
+    max-width:400px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);
+  }
+  .overlay-card h2{color:var(--purple);font-size:24px;margin:0 0 10px;}
+  .overlay-card .blob{width:70px;height:70px;margin:10px auto;}
+  .overlay-btns{display:flex;gap:10px;margin-top:20px;}
+  .overlay-btns button{
+    flex:1;padding:12px;border-radius:14px;border:none;font-weight:bold;cursor:pointer;font-size:15px;
+  }
+  .btn-primary{background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;}
+  .btn-secondary{background:#f0ecfa;color:var(--purple);}
+
+  footer{text-align:center;margin-top:30px;color:#b2a7cf;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎨 いろあてゲーム 🔤</h1>
+  <div class="subtitle">アルファベット（小文字）で色をたずね合おう &nbsp;/&nbsp; ペアで1台をつかいます</div>
+
+  <div class="topbar">
+    <label><input type="checkbox" id="speakToggle" checked> 英語を読み上げる</label>
+    <button class="small-btn" id="restartBtn" style="display:none;">🔄 はじめから</button>
+  </div>
+
+  <div id="stage"></div>
+
+  <footer>先生用ミニアプリ &middot; ブラウザだけで動きます（保存不要）</footer>
+</div>
+
+<div class="overlay" id="resultOverlay">
+  <div class="overlay-card">
+    <h2 id="resultTitle">🎉 せいかい！</h2>
+    <div class="blob" id="resultBlob"></div>
+    <p id="resultText" style="font-size:16px;font-weight:bold;"></p>
+    <p id="resultStats" style="font-size:13px;color:#9a90b8;"></p>
+    <div class="overlay-btns">
+      <button class="btn-primary" id="nextRoundBtn">🔄 やくわりを交代してもう一度</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ 色データ（教科書 Let's Try の10色に対応） ============ */
+const COLORS = [
+  {en:'red',    hex:'#ff3b30'},
+  {en:'blue',   hex:'#2f6fed'},
+  {en:'pink',   hex:'#ff6fa5'},
+  {en:'green',  hex:'#2ecc71'},
+  {en:'brown',  hex:'#8b5a2b'},
+  {en:'black',  hex:'#2b2b2b'},
+  {en:'white',  hex:'#f2f2f2', border:true},
+  {en:'orange', hex:'#ff9500'},
+  {en:'purple', hex:'#8e44ad'},
+  {en:'yellow', hex:'#ffd60a'},
+];
+
+/* ============ DOM参照 ============ */
+const stage = document.getElementById('stage');
+const speakToggle = document.getElementById('speakToggle');
+const restartBtn = document.getElementById('restartBtn');
+const resultOverlay = document.getElementById('resultOverlay');
+const resultTitle = document.getElementById('resultTitle');
+const resultBlob = document.getElementById('resultBlob');
+const resultText = document.getElementById('resultText');
+const resultStats = document.getElementById('resultStats');
+const nextRoundBtn = document.getElementById('nextRoundBtn');
+
+let state = {
+  phase:'intro', secret:null, pendingPick:null,
+  guessedLetters:new Set(), ruledOut:new Set(),
+  attempts:0, round:1
+};
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function speak(text, lang){
+  if(!speakToggle.checked) return;
+  if(!('speechSynthesis' in window)) return;
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang; u.rate = 0.85;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+let audioCtx;
+function beep(freqs, dur=0.12, type='sine'){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    freqs.forEach((f,i)=>{
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type=type; osc.frequency.value=f;
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime+i*dur);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+(i+1)*dur);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime+i*dur);
+      osc.stop(audioCtx.currentTime+(i+1)*dur);
+    });
+  }catch(e){}
+}
+const okSound = ()=>beep([523.25,659.25,783.99],0.11);
+const ngSound = ()=>beep([220,180],0.14,'sawtooth');
+const clearSound = ()=>beep([523,587,659,784,880,1047],0.12);
+
+function colorSwatchHTML(c, extraClass){
+  return `<div class="color-swatch ${extraClass||''}" data-color="${c.en}">
+      <div class="blob" style="background:${c.hex};${c.border?'border:2px solid #ccc;':''}"></div>
+      <div class="swatch-bottom">
+        <button class="play-btn" data-play="${c.en}" title="発音を聞く">▶</button>
+        <span class="color-label">${c.en}</span>
+      </div>
+    </div>`;
+}
+function bindPlayButtons(root){
+  root.querySelectorAll('[data-play]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      speak(btn.dataset.play, 'en-US');
+    });
+  });
+}
+
+/* ============ イントロ画面 ============ */
+function renderIntro(){
+  restartBtn.style.display='none';
+  stage.innerHTML = `
+    <div class="panel">
+      <h2>あそびかた</h2>
+      <div class="story-intro">
+        すきな色を1つ思いうかべて、ペアの相手に「Do you have "r"?」のように文字をたずねられ、「Yes, I do.」「No, I don't.」で答えます。デジタル版では、あてる人がアルファベットのパネルから文字をえらぶと、その文字が色の中にあれば表に出てきます。
+      </div>
+      <div class="steps">
+        <b>① </b>色を決める人が、画面で自分の色をひとつ選んでかくします。<br>
+        <b>② </b>タブレットを相手にわたします。<br>
+        <b>③ </b>あてる人が"Do you have ...?"と声に出しながら、A〜Zのパネルから文字をえらびます。<br>
+        <b>④ </b>色の中にその文字があれば、表に出てきます。ぜんぶわかったら色をあてましょう！
+      </div>
+      <button class="start-btn" id="introStartBtn">▶ はじめる</button>
+    </div>`;
+  document.getElementById('introStartBtn').addEventListener('click', ()=>{
+    state.round = 1;
+    goToPick();
+  });
+}
+
+/* ============ ① 色を決める（答える人） ============ */
+function goToPick(){
+  state.phase='pick';
+  state.pendingPick=null;
+  restartBtn.style.display='inline-block';
+  stage.innerHTML = `
+    <div class="panel">
+      <div class="role-badge answerer">🙋 色を決める人</div>
+      <div class="phase-title">すきな色をひとつえらんでね（相手に見られないように！）</div>
+      <div class="color-grid" id="pickGrid">
+        ${COLORS.map(c=>colorSwatchHTML(c)).join('')}
+      </div>
+      <button class="confirm-btn" id="confirmPickBtn" disabled>この色にきめる！</button>
+    </div>`;
+  bindPlayButtons(stage);
+  const grid = document.getElementById('pickGrid');
+  const confirmBtn = document.getElementById('confirmPickBtn');
+  grid.querySelectorAll('.color-swatch').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      grid.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('selected'));
+      el.classList.add('selected');
+      state.pendingPick = el.dataset.color;
+      confirmBtn.disabled = false;
+    });
+  });
+  confirmBtn.addEventListener('click', ()=>{
+    if(!state.pendingPick) return;
+    state.secret = COLORS.find(c=>c.en===state.pendingPick);
+    state.guessedLetters = new Set();
+    state.ruledOut = new Set();
+    state.attempts = 0;
+    showSecretConfirm();
+  });
+}
+
+function showSecretConfirm(){
+  const c = state.secret;
+  stage.innerHTML = `
+    <div class="panel">
+      <div class="phase-title">あなたが決めた色</div>
+      <div class="secret-reveal">
+        <div class="blob" style="background:${c.hex};${c.border?'border:2px solid #ccc;':''}"></div>
+        <div style="font-size:22px;font-weight:bold;margin-top:6px;">${c.en}</div>
+        <div class="warn-text">⚠️ この画面は相手に見せないでね！</div>
+      </div>
+      <button class="confirm-btn" id="toHandoffBtn">つぎへ（相手にわたす）</button>
+    </div>`;
+  document.getElementById('toHandoffBtn').addEventListener('click', goToHandoff);
+}
+
+/* ============ ② 端末をわたす ============ */
+function goToHandoff(){
+  state.phase='handoff';
+  stage.innerHTML = `
+    <div class="panel">
+      <div class="handoff-box">
+        <div class="big-emoji">📱➡️🙆</div>
+        <div class="phase-title">タブレットを あてる人に わたしてください</div>
+      </div>
+      <button class="start-btn" id="toGuessBtn">OK、わたしました！</button>
+    </div>`;
+  document.getElementById('toGuessBtn').addEventListener('click', goToGuess);
+}
+
+/* ============ ③ 文字をたずねて当てる（あてる人） ============ */
+function goToGuess(){
+  state.phase='guess';
+  const wordLen = state.secret.en.length;
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
+
+  stage.innerHTML = `
+    <div class="panel">
+      <div class="role-badge guesser">🔍 あてる人</div>
+      <div class="phase-title">"Do you have ...?" と聞きながら、文字をえらぼう</div>
+      <div class="stats-mini"><span id="attemptsLabel">聞いた回数：0</span></div>
+      <div class="blank-row" id="blankRow"></div>
+      <div class="qa-line" id="qaLine"></div>
+      <div class="letter-grid" id="letterGrid">
+        ${alphabet.map(l=>`<button class="letter-btn" data-letter="${l}">${l}</button>`).join('')}
+      </div>
+      <div class="guess-hint">わかったら下の色をタップして答えよう！</div>
+      <div class="color-grid" id="guessGrid">
+        ${COLORS.map(c=>colorSwatchHTML(c)).join('')}
+      </div>
+    </div>`;
+  bindPlayButtons(stage);
+  renderBlanks();
+
+  document.getElementById('letterGrid').querySelectorAll('.letter-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>onLetterGuess(btn));
+  });
+  document.getElementById('guessGrid').querySelectorAll('.color-swatch').forEach(el=>{
+    el.addEventListener('click', ()=>onColorGuess(el));
+  });
+}
+
+function renderBlanks(justRevealedIdx){
+  const word = state.secret.en;
+  const row = document.getElementById('blankRow');
+  row.innerHTML = word.split('').map((ch,i)=>{
+    const revealed = state.guessedLetters.has(ch);
+    return `<div class="blank-box${revealed?' revealed':''}">${revealed?ch:'_'}</div>`;
+  }).join('');
+}
+
+async function onLetterGuess(btn){
+  const letter = btn.dataset.letter;
+  if(btn.disabled) return;
+  btn.disabled = true;
+  state.attempts++;
+  document.getElementById('attemptsLabel').textContent = `聞いた回数：${state.attempts}`;
+
+  const qaLine = document.getElementById('qaLine');
+  qaLine.className='qa-line';
+  qaLine.textContent = `Do you have "${letter}"?`;
+  speak(`Do you have "${letter}"?`, 'en-US');
+  await sleep(650);
+
+  const has = state.secret.en.includes(letter);
+  if(has){
+    btn.classList.add('tried-yes');
+    state.guessedLetters.add(letter);
+    qaLine.classList.add('yes');
+    qaLine.textContent = 'Yes, I do!';
+    speak('Yes, I do!','en-US');
+    okSound();
+    renderBlanks();
+  } else {
+    btn.classList.add('tried-no');
+    qaLine.classList.add('no');
+    qaLine.textContent = "No, I don't.";
+    speak("No, I don't.",'en-US');
+    ngSound();
+  }
+
+  // 全部そろったら自動的に正解あつかい
+  const word = state.secret.en;
+  const allRevealed = word.split('').every(ch=>state.guessedLetters.has(ch));
+  if(allRevealed){
+    await sleep(700);
+    finishRound(true);
+  }
+}
+
+function onColorGuess(el){
+  if(el.classList.contains('ruled-out')) return;
+  const guess = el.dataset.color;
+  if(guess === state.secret.en){
+    finishRound(true);
+  } else {
+    el.classList.add('ruled-out');
+    ngSound();
+    const qaLine = document.getElementById('qaLine');
+    qaLine.className='qa-line no';
+    qaLine.textContent = `ちがうよ！ ${guess} じゃないよ。`;
+  }
+}
+
+/* ============ 結果 ============ */
+function finishRound(correct){
+  const c = state.secret;
+  clearSound();
+  resultTitle.textContent = '🎉 せいかい！';
+  resultBlob.style.background = c.hex;
+  resultBlob.style.border = c.border ? '2px solid #ccc' : 'none';
+  resultText.textContent = `こたえは "${c.en}" でした！`;
+  resultStats.textContent = `文字を聞いた回数：${state.attempts}回`;
+  resultOverlay.style.display='flex';
+  speak(c.en, 'en-US');
+}
+
+nextRoundBtn.addEventListener('click', ()=>{
+  resultOverlay.style.display='none';
+  state.round++;
+  goToPick();
+});
+
+restartBtn.addEventListener('click', ()=>{
+  resultOverlay.style.display='none';
+  renderIntro();
+});
+
+/* ============ 起動 ============ */
+renderIntro();
+</script>
+</body>
+</html>
