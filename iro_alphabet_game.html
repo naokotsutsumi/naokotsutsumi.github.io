@@ -22,12 +22,13 @@
     background:linear-gradient(160deg,var(--bg1),var(--bg2));
     color:var(--ink);
   }
-  .wrap{max-width:720px;margin:0 auto;padding:20px 16px 60px;}
+  .wrap{max-width:1440px;margin:0 auto;padding:16px 28px 40px;}
   h1{
-    text-align:center;font-size:clamp(22px,4vw,32px);margin:10px 0 4px;
+    text-align:center;font-size:clamp(26px,3.2vw,42px);margin:6px 0 4px;
     color:var(--purple);text-shadow:2px 2px 0 #fff;
   }
-  .subtitle{text-align:center;color:#7a6fa0;margin-bottom:16px;font-size:14px;}
+  .subtitle{text-align:center;color:#7a6fa0;margin-bottom:14px;font-size:clamp(13px,1.3vw,16px);}
+  .panel-narrow{max-width:680px;margin:0 auto;}
 
   .topbar{display:flex;justify-content:center;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;}
   .topbar label{font-size:13px;font-weight:bold;color:var(--purple);display:flex;align-items:center;gap:6px;}
@@ -38,10 +39,10 @@
   .small-btn:hover{background:#f3ecff;}
 
   .panel{
-    background:#fff;border-radius:24px;padding:24px 22px 28px;
+    background:#fff;border-radius:24px;padding:28px 36px 34px;
     box-shadow:0 10px 30px rgba(140,100,200,0.15);
   }
-  .panel h2{font-size:18px;color:var(--purple);margin:0 0 10px;}
+  .panel h2{font-size:20px;color:var(--purple);margin:0 0 10px;}
   .story-intro{
     background:#f7f2ff;border-radius:14px;padding:14px 16px;font-size:14px;
     line-height:1.8;color:#5c4d80;margin-bottom:16px;
@@ -64,26 +65,27 @@
   .role-badge.answerer{background:linear-gradient(135deg,var(--pink),#ff9fc0);}
   .role-badge.guesser{background:linear-gradient(135deg,var(--blue),#7cc4ff);}
 
-  .color-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0;}
+  .color-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:14px;margin:16px 0;}
+  .color-grid.sidebar{grid-template-columns:repeat(auto-fit,minmax(90px,1fr));}
   .color-swatch{
-    background:#faf7ff;border-radius:16px;padding:10px 4px 8px;text-align:center;
+    background:#faf7ff;border-radius:16px;padding:12px 6px 10px;text-align:center;
     border:3px solid #eee0ff;cursor:pointer;transition:.15s;position:relative;
   }
   .color-swatch:hover{border-color:var(--purple);transform:translateY(-2px);}
   .color-swatch.selected{border-color:var(--pink);background:#fff0f6;box-shadow:0 6px 14px rgba(255,111,165,.35);}
   .color-swatch.ruled-out{opacity:.3;pointer-events:none;filter:grayscale(1);}
   .blob{
-    width:50px;height:50px;margin:0 auto 6px;
+    width:58px;height:58px;margin:0 auto 6px;
     border-radius:60% 40% 55% 45%/55% 45% 60% 40%;
     box-shadow:inset -4px -4px 10px rgba(0,0,0,.18), 0 4px 8px rgba(0,0,0,.15);
   }
-  .swatch-bottom{display:flex;align-items:center;justify-content:center;gap:4px;}
+  .swatch-bottom{display:flex;align-items:center;justify-content:center;gap:5px;}
   .play-btn{
     border:none;background:var(--yellow);color:#5c4d10;border-radius:50%;
-    width:20px;height:20px;font-size:10px;cursor:pointer;flex:none;
+    width:24px;height:24px;font-size:11px;cursor:pointer;flex:none;
     display:flex;align-items:center;justify-content:center;
   }
-  .color-label{font-weight:bold;font-size:12px;}
+  .color-label{font-weight:bold;font-size:14px;}
 
   .confirm-btn{
     display:block;margin:10px auto 0;padding:12px 30px;border-radius:14px;border:none;
@@ -106,11 +108,11 @@
     50%{transform:translateY(-14px);}
   }
 
-  .blank-row{display:flex;justify-content:center;gap:8px;margin:18px 0;flex-wrap:wrap;}
+  .blank-row{display:flex;justify-content:center;gap:10px;margin:16px 0;flex-wrap:wrap;}
   .blank-box{
-    width:38px;height:50px;border-bottom:5px solid var(--purple);
+    width:48px;height:64px;border-bottom:6px solid var(--purple);
     display:flex;align-items:center;justify-content:center;
-    font-size:24px;font-weight:bold;color:var(--ink);
+    font-size:30px;font-weight:bold;color:var(--ink);
   }
   .blank-box.revealed{animation:popLetter .35s;}
   @keyframes popLetter{
@@ -119,22 +121,29 @@
     100%{transform:scale(1);}
   }
 
-  .qa-line{text-align:center;font-size:17px;font-weight:bold;min-height:26px;margin:8px 0 14px;color:var(--purple);}
+  .qa-line{text-align:center;font-size:22px;font-weight:bold;min-height:30px;margin:8px 0 16px;color:var(--purple);}
   .qa-line.yes{color:#227a3f;}
   .qa-line.no{color:#a12a2a;}
 
-  .letter-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;max-width:480px;margin:0 auto 20px;}
+  .guess-layout{display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;}
+  .guess-main{flex:1.5;min-width:440px;}
+  .guess-side{flex:1;min-width:260px;border-left:2px dashed #eee0ff;padding-left:28px;}
+  @media (max-width:820px){
+    .guess-side{border-left:none;padding-left:0;border-top:2px dashed #eee0ff;padding-top:20px;}
+  }
+
+  .letter-grid{display:grid;grid-template-columns:repeat(13,1fr);gap:8px;max-width:100%;margin:0 0 20px;}
   .letter-btn{
     aspect-ratio:1/1;border-radius:12px;border:3px solid #e4dbfb;background:#faf7ff;
-    font-size:17px;font-weight:bold;color:var(--ink);cursor:pointer;transition:.15s;
+    font-size:19px;font-weight:bold;color:var(--ink);cursor:pointer;transition:.15s;
   }
   .letter-btn:hover:not(:disabled){border-color:var(--purple);background:#f1e8ff;}
   .letter-btn.tried-yes{background:#d8f5e0;border-color:#4cd77e;color:#227a3f;}
   .letter-btn.tried-no{background:#efefef;border-color:#ccc;color:#aaa;}
   .letter-btn:disabled{cursor:default;}
 
-  .guess-hint{text-align:center;font-size:13px;color:#9a90b8;margin:6px 0 4px;}
-  .stats-mini{display:flex;justify-content:center;gap:10px;font-size:12px;color:var(--purple);font-weight:bold;margin-bottom:8px;}
+  .guess-hint{text-align:center;font-size:13px;color:#9a90b8;margin:0 0 10px;}
+  .stats-mini{display:flex;justify-content:center;gap:10px;font-size:13px;color:var(--purple);font-weight:bold;margin-bottom:6px;}
 
   .overlay{
     display:none;position:fixed;inset:0;background:rgba(60,30,90,.55);
@@ -159,7 +168,7 @@
 <body>
 <div class="wrap">
   <h1>🎨 いろあてゲーム 🔤</h1>
-  <div class="subtitle">アルファベット（小文字）で色をたずね合おう &nbsp;/&nbsp; ペアで1台をつかいます</div>
+  <div class="subtitle">アルファベット（小文字）で色をたずね合おう &nbsp;/&nbsp; クラス全体・代表の子や先生が出題</div>
 
   <div class="topbar">
     <label><input type="checkbox" id="speakToggle" checked> 英語を読み上げる</label>
@@ -178,7 +187,7 @@
     <p id="resultText" style="font-size:16px;font-weight:bold;"></p>
     <p id="resultStats" style="font-size:13px;color:#9a90b8;"></p>
     <div class="overlay-btns">
-      <button class="btn-primary" id="nextRoundBtn">🔄 やくわりを交代してもう一度</button>
+      <button class="btn-primary" id="nextRoundBtn">🔄 もう一度（つぎの出題者へ）</button>
     </div>
   </div>
 </div>
@@ -246,12 +255,12 @@ const okSound = ()=>beep([523.25,659.25,783.99],0.11);
 const ngSound = ()=>beep([220,180],0.14,'sawtooth');
 const clearSound = ()=>beep([523,587,659,784,880,1047],0.12);
 
-function colorSwatchHTML(c, extraClass){
+function colorSwatchHTML(c, extraClass, hideLabel){
   return `<div class="color-swatch ${extraClass||''}" data-color="${c.en}">
       <div class="blob" style="background:${c.hex};${c.border?'border:2px solid #ccc;':''}"></div>
       <div class="swatch-bottom">
         <button class="play-btn" data-play="${c.en}" title="発音を聞く">▶</button>
-        <span class="color-label">${c.en}</span>
+        ${hideLabel ? '' : `<span class="color-label">${c.en}</span>`}
       </div>
     </div>`;
 }
@@ -268,19 +277,20 @@ function bindPlayButtons(root){
 function renderIntro(){
   restartBtn.style.display='none';
   stage.innerHTML = `
-    <div class="panel">
+    <div class="panel"><div class="panel-narrow">
       <h2>あそびかた</h2>
       <div class="story-intro">
-        すきな色を1つ思いうかべて、ペアの相手に「Do you have "r"?」のように文字をたずねられ、「Yes, I do.」「No, I don't.」で答えます。デジタル版では、あてる人がアルファベットのパネルから文字をえらぶと、その文字が色の中にあれば表に出てきます。
+        先生（または代表の子）がひみつの色を1つえらびます。クラスのみんなは「Do you have "r"?」のように文字をたずね、「Yes, I do.」「No, I don't.」の答えを聞きながら、色をあてます。文字をえらぶと、その文字が色の中にあれば表に出てくるので、見える化されて取り組みやすくなります。
       </div>
       <div class="steps">
-        <b>① </b>色を決める人が、画面で自分の色をひとつ選んでかくします。<br>
-        <b>② </b>タブレットを相手にわたします。<br>
-        <b>③ </b>あてる人が"Do you have ...?"と声に出しながら、A〜Zのパネルから文字をえらびます。<br>
-        <b>④ </b>色の中にその文字があれば、表に出てきます。ぜんぶわかったら色をあてましょう！
+        <b>① </b>みんなは つくえに伏せましょう。<br>
+        <b>② </b>先生（または代表の子）が、画面でひみつの色をひとつ選びます。<br>
+        <b>③ </b>「起きてください」の合図で、みんな顔を上げます。<br>
+        <b>④ </b>クラスみんなで"Do you have ...?"と声に出しながら、A〜Zのパネルから文字をえらびます。<br>
+        <b>⑤ </b>色の中にその文字があれば、表に出てきます。わかったら色をあてましょう！
       </div>
       <button class="start-btn" id="introStartBtn">▶ はじめる</button>
-    </div>`;
+    </div></div>`;
   document.getElementById('introStartBtn').addEventListener('click', ()=>{
     state.round = 1;
     goToPick();
@@ -294,8 +304,8 @@ function goToPick(){
   restartBtn.style.display='inline-block';
   stage.innerHTML = `
     <div class="panel">
-      <div class="role-badge answerer">🙋 色を決める人</div>
-      <div class="phase-title">すきな色をひとつえらんでね（相手に見られないように！）</div>
+      <div class="role-badge answerer">🙈 みんなは机に伏せましょう</div>
+      <div class="phase-title">先生（または代表の子）が、ひみつの色をひとつえらんでください</div>
       <div class="color-grid" id="pickGrid">
         ${COLORS.map(c=>colorSwatchHTML(c)).join('')}
       </div>
@@ -325,15 +335,15 @@ function goToPick(){
 function showSecretConfirm(){
   const c = state.secret;
   stage.innerHTML = `
-    <div class="panel">
-      <div class="phase-title">あなたが決めた色</div>
+    <div class="panel"><div class="panel-narrow">
+      <div class="phase-title">ひみつの色（確認用）</div>
       <div class="secret-reveal">
         <div class="blob" style="background:${c.hex};${c.border?'border:2px solid #ccc;':''}"></div>
         <div style="font-size:22px;font-weight:bold;margin-top:6px;">${c.en}</div>
-        <div class="warn-text">⚠️ この画面は相手に見せないでね！</div>
+        <div class="warn-text">⚠️ 児童が起きる前に確認だけ。画面はまだ見せないでね！</div>
       </div>
-      <button class="confirm-btn" id="toHandoffBtn">つぎへ（相手にわたす）</button>
-    </div>`;
+      <button class="confirm-btn" id="toHandoffBtn">つぎへ（起きる合図をする）</button>
+    </div></div>`;
   document.getElementById('toHandoffBtn').addEventListener('click', goToHandoff);
 }
 
@@ -341,35 +351,40 @@ function showSecretConfirm(){
 function goToHandoff(){
   state.phase='handoff';
   stage.innerHTML = `
-    <div class="panel">
+    <div class="panel"><div class="panel-narrow">
       <div class="handoff-box">
-        <div class="big-emoji">📱➡️🙆</div>
-        <div class="phase-title">タブレットを あてる人に わたしてください</div>
+        <div class="big-emoji">🙈➡️🙆</div>
+        <div class="phase-title">「起きてください」と声をかけましょう</div>
       </div>
-      <button class="start-btn" id="toGuessBtn">OK、わたしました！</button>
-    </div>`;
+      <button class="start-btn" id="toGuessBtn">OK、みんな起きました！</button>
+    </div></div>`;
   document.getElementById('toGuessBtn').addEventListener('click', goToGuess);
 }
 
 /* ============ ③ 文字をたずねて当てる（あてる人） ============ */
 function goToGuess(){
   state.phase='guess';
-  const wordLen = state.secret.en.length;
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
 
   stage.innerHTML = `
     <div class="panel">
-      <div class="role-badge guesser">🔍 あてる人</div>
-      <div class="phase-title">"Do you have ...?" と聞きながら、文字をえらぼう</div>
-      <div class="stats-mini"><span id="attemptsLabel">聞いた回数：0</span></div>
-      <div class="blank-row" id="blankRow"></div>
-      <div class="qa-line" id="qaLine"></div>
-      <div class="letter-grid" id="letterGrid">
-        ${alphabet.map(l=>`<button class="letter-btn" data-letter="${l}">${l}</button>`).join('')}
-      </div>
-      <div class="guess-hint">わかったら下の色をタップして答えよう！</div>
-      <div class="color-grid" id="guessGrid">
-        ${COLORS.map(c=>colorSwatchHTML(c)).join('')}
+      <div class="role-badge guesser">👀 クラスみんなであてよう</div>
+      <div class="phase-title">みんなで相談しながら "Do you have ...?" と聞いて、文字をえらぼう</div>
+      <div class="guess-layout">
+        <div class="guess-main">
+          <div class="stats-mini"><span id="attemptsLabel">聞いた回数：0</span></div>
+          <div class="blank-row" id="blankRow"></div>
+          <div class="qa-line" id="qaLine"></div>
+          <div class="letter-grid" id="letterGrid">
+            ${alphabet.map(l=>`<button class="letter-btn" data-letter="${l}">${l}</button>`).join('')}
+          </div>
+        </div>
+        <div class="guess-side">
+          <div class="guess-hint">わかったら色をタップして答えよう！</div>
+          <div class="color-grid sidebar" id="guessGrid">
+            ${COLORS.map(c=>colorSwatchHTML(c, '', true)).join('')}
+          </div>
+        </div>
       </div>
     </div>`;
   bindPlayButtons(stage);
@@ -383,13 +398,19 @@ function goToGuess(){
   });
 }
 
-function renderBlanks(justRevealedIdx){
+/* 色の文字数がバレないよう、実際の長さに関わらず常に6マス固定で表示する
+   （教科書の活動と同じく、あまったマスはずっと空欄のままになる） */
+const FIXED_SLOTS = 6;
+function renderBlanks(){
   const word = state.secret.en;
   const row = document.getElementById('blankRow');
-  row.innerHTML = word.split('').map((ch,i)=>{
-    const revealed = state.guessedLetters.has(ch);
-    return `<div class="blank-box${revealed?' revealed':''}">${revealed?ch:'_'}</div>`;
-  }).join('');
+  let html = '';
+  for(let i=0;i<FIXED_SLOTS;i++){
+    const ch = word[i];
+    const revealed = ch && state.guessedLetters.has(ch);
+    html += `<div class="blank-box${revealed?' revealed':''}">${revealed?ch:'_'}</div>`;
+  }
+  row.innerHTML = html;
 }
 
 async function onLetterGuess(btn){
