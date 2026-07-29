@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Let's Go to the Zoo! | まちたんけん英語アプリ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky:#BFE6F5;
+  --sky-2:#E6F6FC;
+  --grass:#CFEAB4;
+  --grass-2:#BFE0A2;
+  --road:#EAE5D8;
+  --road-line:#ffffff;
+  --sun:#FFB300;
+  --brick:#E8604C;
+  --ink:#2B3A35;
+  --ink-soft:#5B6D66;
+  --card:#FFFDF8;
+  --tab-words:#6FBE6A;
+  --tab-sent:#4FA6D8;
+  --tab-map:#FFB300;
+  --tab-quiz:#E8604C;
+  --radius:20px;
+  --shadow: 0 4px 0 rgba(43,58,53,0.18);
+  --shadow-sm: 0 3px 0 rgba(43,58,53,0.18);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Nunito',sans-serif;
+  background:linear-gradient(180deg,var(--sky) 0%,var(--sky-2) 220px, #F4F9EE 220px);
+  color:var(--ink);
+  min-height:100vh;
+  padding-bottom:60px;
+}
+.app-shell{max-width:1320px;margin:0 auto;padding:14px 20px 30px;}
+
+/* header */
+.skyline{text-align:center;font-size:18px;opacity:.5;letter-spacing:10px;margin-bottom:-2px;user-select:none;}
+header.title-block{text-align:center;padding:2px 0 10px;}
+h1{
+  font-family:'Baloo 2',cursive;
+  font-size:clamp(22px,4vw,34px);
+  margin:0;
+  color:var(--ink);
+  text-shadow: 2px 2px 0 #fff, 4px 4px 0 rgba(43,58,53,.12);
+}
+h1 .zoo-emoji{display:inline-block;transform:rotate(-6deg);}
+.subtitle{
+  font-family:'Baloo 2',cursive;
+  font-weight:600;
+  color:var(--ink-soft);
+  font-size:15px;
+  margin-top:6px;
+  background:#fff;
+  display:inline-block;
+  padding:4px 14px;
+  border-radius:999px;
+  box-shadow:var(--shadow-sm);
+}
+
+/* nav - signpost tabs */
+nav.tabs{
+  display:flex;
+  gap:10px;
+  overflow-x:auto;
+  padding:6px 2px 14px;
+  margin-bottom:10px;
+  -webkit-overflow-scrolling:touch;
+}
+nav.tabs button{
+  flex:1 1 auto;
+  white-space:nowrap;
+  font-family:'Baloo 2',cursive;
+  font-size:15px;
+  font-weight:700;
+  color:#fff;
+  border:none;
+  padding:12px 16px 12px 22px;
+  cursor:pointer;
+  position:relative;
+  border-radius:10px;
+  box-shadow: var(--shadow);
+  clip-path: polygon(0% 50%, 14px 0%, 100% 0%, 100% 100%, 14px 100%);
+  transition: transform .12s ease;
+  opacity:.72;
+}
+nav.tabs button:hover{transform:translateY(-2px);}
+nav.tabs button.active{opacity:1;transform:translateY(2px);box-shadow:0 2px 0 rgba(43,58,53,.18);}
+nav.tabs button[data-tab="words"]{background:var(--tab-words);}
+nav.tabs button[data-tab="sentences"]{background:var(--tab-sent);}
+nav.tabs button[data-tab="map"]{background:var(--tab-map);color:#3a2a00;text-shadow:none;}
+nav.tabs button[data-tab="quiz"]{background:var(--tab-quiz);}
+
+section.tab-panel{display:none;animation:fadein .25s ease;}
+section.tab-panel.active{display:block;}
+@keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+.panel-card{
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:16px 20px;
+  margin-bottom:14px;
+}
+.panel-lead{font-family:'Baloo 2',cursive;font-size:19px;margin:0 0 3px;}
+.panel-sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 12px;}
+
+.layout-2col{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;}
+.layout-2col > .col{flex:1 1 340px;min-width:0;}
+
+/* ===== Words tab ===== */
+.word-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+  gap:12px;
+}
+.word-card{
+  background:#fff;
+  border:2px solid #EFE9DA;
+  border-radius:16px;
+  padding:14px 8px 10px;
+  text-align:center;
+  cursor:pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+  box-shadow:0 3px 0 #EFE9DA;
+}
+.word-card:hover{transform:translateY(-3px);box-shadow:0 6px 0 #EFE9DA;}
+.word-card:active{transform:translateY(1px);box-shadow:0 1px 0 #EFE9DA;}
+.word-card .emoji{font-size:36px;display:block;margin-bottom:6px;}
+.word-card .en{font-family:'Baloo 2',cursive;font-weight:700;font-size:14.5px;display:block;}
+.word-card .ja{font-size:11.5px;color:var(--ink-soft);display:block;margin-top:2px;}
+.word-card .spk{font-size:12px;color:var(--tab-sent);margin-top:4px;}
+
+/* ===== Sentences tab ===== */
+.sentence-row{
+  display:flex;align-items:center;gap:12px;
+  background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:10px;
+  border:2px solid #EFE9DA;
+}
+.sentence-row p{margin:0;font-size:16px;font-weight:700;font-family:'Baloo 2',cursive;color:var(--ink);flex:1;}
+.play-btn{
+  border:none;background:var(--tab-sent);color:#fff;border-radius:999px;
+  width:40px;height:40px;font-size:17px;cursor:pointer;flex-shrink:0;
+  box-shadow:0 3px 0 #2f7ea6;
+}
+.play-btn:active{transform:translateY(2px);box-shadow:none;}
+.builder{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px;}
+.builder select{
+  font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;padding:9px 10px;
+  border-radius:10px;border:2px solid #E3DDCE;background:#fff;color:var(--ink);
+}
+.built-sentence{
+  margin-top:12px;background:#FFF6E0;border:2px dashed var(--sun);border-radius:14px;
+  padding:12px 14px;font-family:'Baloo 2',cursive;font-size:16px;color:var(--ink);
+}
+
+/* ===== Map / game tab ===== */
+.map-layout{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap;}
+.map-layout .map-col{flex:1 1 380px;min-width:0;}
+.map-layout .side-col{flex:1 1 240px;max-width:300px;}
+
+.target-select-top{
+  display:block;width:100%;max-width:420px;margin:0 0 16px;
+  font-family:'Baloo 2',cursive;font-weight:700;font-size:16px;
+  padding:12px 14px;border-radius:12px;border:2px solid #E3DDCE;background:#fff;color:var(--ink);
+  cursor:pointer;
+}
+
+.map-wrap{
+  position:relative;
+  background:var(--grass);
+  background-image: radial-gradient(circle, var(--grass-2) 1px, transparent 1.4px);
+  background-size:14px 14px;
+  border-radius:16px;
+  padding:14px;
+  width:100%;
+  margin:0;
+  box-shadow:inset 0 0 0 3px #fff, var(--shadow);
+}
+#mapGrid{
+  display:grid;
+  gap:3px;
+  width:100%;
+  aspect-ratio: var(--cols) / var(--rows);
+}
+.cell{border-radius:6px;position:relative;display:flex;align-items:center;justify-content:center;}
+.cell.road{
+  background-color:var(--road);
+  background-image: linear-gradient(90deg, transparent 46%, var(--road-line) 46%, var(--road-line) 54%, transparent 54%),
+                     linear-gradient(0deg, transparent 46%, var(--road-line) 46%, var(--road-line) 54%, transparent 54%);
+  background-size: 100% 3px, 3px 100%;
+  background-repeat:no-repeat;
+  background-position:center;
+}
+.cell.road.start{background-color:#FFE9A8;}
+.cell.road.start::after{content:'🚩';font-size:60%;}
+.cell.building{
+  background:#fff;
+  border:2px solid #EFE9DA;
+  border-radius:10px;
+  flex-direction:column;
+  font-size:60%;
+  box-shadow:0 2px 0 #EFE9DA;
+  cursor:pointer;
+  padding:2px;
+  text-align:center;
+  line-height:1.1;
+}
+.cell.building .b-emoji{font-size:170%;}
+.cell.building .b-label{font-size:62%;font-weight:800;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.cell.building.target{
+  border-color:var(--brick);
+  box-shadow:0 0 0 3px rgba(232,96,76,.35), 0 2px 0 var(--brick);
+  animation: pulse 1.1s infinite ease-in-out;
+}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.avatar{
+  position:relative;
+  font-size:150%;
+  transition: transform .15s ease;
+  filter: drop-shadow(0 2px 1px rgba(0,0,0,.25));
+}
+.avatar .arrow{
+  position:absolute;top:-14px;left:50%;
+  font-size:13px;
+  transform-origin:center;
+}
+.avatar.bump{animation:bump .3s ease;}
+@keyframes bump{0%,100%{transform:scale(1);}50%{transform:scale(1.3);}}
+
+.progress-pill{
+  background:#fff;border-radius:999px;padding:8px 16px;font-weight:800;
+  font-family:'Baloo 2',cursive;font-size:14px;box-shadow:var(--shadow-sm);text-align:center;
+}
+.action-buttons{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+.action-buttons button{
+  font-family:'Baloo 2',cursive;font-weight:700;font-size:14.5px;
+  padding:12px 16px;border-radius:14px;border:none;cursor:pointer;color:#fff;
+  width:100%;
+}
+#btnLeft{background:#6FBE6A;box-shadow:0 4px 0 #4d8f49;}
+#btnStraight{background:#4FA6D8;box-shadow:0 4px 0 #2f7ea6;}
+#btnRight{background:#FFB300;color:#3a2a00;box-shadow:0 4px 0 #b57f00;}
+.action-buttons button:active{transform:translateY(3px);box-shadow:none;}
+.action-buttons button.shake{animation:shake .35s;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+.feedback{
+  text-align:center;font-family:'Baloo 2',cursive;font-size:15px;min-height:24px;margin-top:10px;color:var(--ink-soft);
+}
+.success-banner{
+  display:none;text-align:center;background:#FFF6E0;border:3px dashed var(--sun);
+  border-radius:16px;padding:16px;margin-top:14px;font-family:'Baloo 2',cursive;font-size:18px;
+}
+.success-banner.show{display:block;animation:fadein .3s ease;}
+
+/* ===== Quiz tab ===== */
+#quizArea{text-align:center;}
+.quiz-q{font-size:22px;margin-bottom:18px;}
+.quiz-emoji-big{font-size:64px;}
+.quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:420px;margin:0 auto;}
+.quiz-options button{
+  font-family:'Baloo 2',cursive;font-weight:700;font-size:15px;padding:14px 8px;
+  border-radius:14px;border:2px solid #E3DDCE;background:#fff;cursor:pointer;
+}
+.quiz-options button.correct{background:#DFF3D8;border-color:#6FBE6A;}
+.quiz-options button.wrong{background:#FBDCD6;border-color:var(--brick);}
+.quiz-score{font-family:'Baloo 2',cursive;font-size:15px;margin-bottom:10px;color:var(--ink-soft);}
+#quizNext{
+  margin-top:16px;font-family:'Baloo 2',cursive;font-weight:700;font-size:14px;
+  background:var(--tab-quiz);color:#fff;border:none;padding:10px 22px;border-radius:12px;
+  cursor:pointer;box-shadow:0 3px 0 #a83f31;display:none;
+}
+#quizNext:active{transform:translateY(2px);box-shadow:none;}
+#quizResult{display:none;font-family:'Baloo 2',cursive;font-size:20px;}
+#quizRetry{display:none;margin-top:12px;font-family:'Baloo 2',cursive;font-weight:700;background:var(--tab-words);color:#fff;border:none;padding:10px 22px;border-radius:12px;cursor:pointer;box-shadow:0 3px 0 #4d8f49;}
+
+footer{text-align:center;font-size:11.5px;color:var(--ink-soft);margin-top:24px;}
+
+@media (max-width:480px){
+  .word-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));}
+  .action-buttons button{padding:12px 10px;font-size:13.5px;}
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="skyline">🏥 🏫 📮 🏟️ 🏦 🏠 🏛️</div>
+  <header class="title-block">
+    <h1><span class="zoo-emoji">🦁</span> Let's Go to the Zoo! <span class="zoo-emoji" style="transform:rotate(6deg)">🐘</span></h1>
+    <div class="subtitle">New Horizon Elementary 5 ・ Unit 5 ・ まちたんけん英語アプリ</div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="words" class="active">🌳 たんご</button>
+    <button data-tab="sentences">💬 ぶん</button>
+    <button data-tab="map">🗺️ まちあんない</button>
+    <button data-tab="quiz">🎯 クイズ</button>
+  </nav>
+
+  <!-- WORDS TAB -->
+  <section class="tab-panel active" id="tab-words">
+    <div class="panel-card">
+      <p class="panel-lead">🌳 Town Words</p>
+      <p class="panel-sub">カードをタップすると発音がきこえるよ！ (Tap a card to hear it.)</p>
+      <div class="word-grid" id="wordGrid"></div>
+    </div>
+  </section>
+
+  <!-- SENTENCES TAB -->
+  <section class="tab-panel" id="tab-sentences">
+    <div class="layout-2col">
+      <div class="col panel-card">
+        <p class="panel-lead">💬 Key Sentences</p>
+        <p class="panel-sub">▶ ボタンで音声がきこえるよ。</p>
+        <div id="sentenceList"></div>
+      </div>
+
+      <div class="col">
+        <div class="panel-card">
+          <p class="panel-lead">🏙️ Make Your Own</p>
+          <p class="panel-sub">町にある建物をえらんで、文をつくってみよう。</p>
+          <div class="builder">
+            <span style="font-weight:700;">We have a nice</span>
+            <select id="patternWord"></select>
+            <span style="font-weight:700;">.</span>
+            <button class="play-btn" id="playPattern" style="width:44px;">▶</button>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <p class="panel-lead">🧭 Direction Builder</p>
+          <p class="panel-sub">数字と向きをえらんで、道あんないの文をつくってみよう。</p>
+          <div class="builder">
+            <span style="font-weight:700;">Go straight for</span>
+            <select id="dirBlocks"><option>1</option><option selected>2</option><option>3</option></select>
+            <span style="font-weight:700;">block(s). Turn</span>
+            <select id="dirTurn"><option value="right">right</option><option value="left">left</option></select>
+            <span style="font-weight:700;">. You can see it on your</span>
+            <select id="dirSide"><option value="left">left</option><option value="right">right</option></select>
+            <span style="font-weight:700;">.</span>
+          </div>
+          <div class="built-sentence" id="builtSentence"></div>
+          <div class="builder"><button class="play-btn" id="playBuilt" style="width:44px;">▶</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAP TAB -->
+  <section class="tab-panel" id="tab-map">
+    <div class="panel-card">
+      <p class="panel-lead">🗺️ Where is it?</p>
+      <p class="panel-sub">ボタンで地図をすすんで、目的地をさがそう！</p>
+      <select id="targetSelect" class="target-select-top"></select>
+      <div class="map-layout">
+        <div class="map-col">
+          <div class="map-wrap">
+            <div id="mapGrid"></div>
+          </div>
+        </div>
+        <div class="side-col">
+          <div class="progress-pill" id="targetPill">🎯 -</div>
+          <div class="action-buttons">
+            <button id="btnLeft">↩️ Turn left</button>
+            <button id="btnStraight">⬆️ Go straight</button>
+            <button id="btnRight">↪️ Turn right</button>
+          </div>
+          <div class="feedback" id="gameFeedback"></div>
+          <div class="success-banner" id="successBanner"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ TAB -->
+  <section class="tab-panel" id="tab-quiz">
+    <div class="panel-card" id="quizArea">
+      <p class="panel-lead">🎯 Word Quiz</p>
+      <div class="quiz-score" id="quizScore"></div>
+      <div id="quizQuestion"></div>
+      <button id="quizNext">Next ▶</button>
+      <div id="quizResult"></div>
+      <button id="quizRetry">🔁 Try Again</button>
+    </div>
+  </section>
+
+  <footer>Made for New Horizon Elementary 5, Unit 5 “Let’s go to the zoo.” / speechSynthesis を使用しています（対応ブラウザで音声が出ます）。</footer>
+</div>
+
+<script>
+/* ============ DATA ============ */
+const VOCAB = [
+  {en:'park', ja:'公園', emoji:'🌳'},
+  {en:'library', ja:'図書館', emoji:'📚'},
+  {en:'museum', ja:'美術館', emoji:'🖼️'},
+  {en:'hospital', ja:'病院', emoji:'🏥'},
+  {en:'bus stop', ja:'バスてい', emoji:'🚌'},
+  {en:'station', ja:'えき', emoji:'🚉'},
+  {en:'police station', ja:'けいさつしょ', emoji:'🚓'},
+  {en:'fire station', ja:'しょうぼうしょ', emoji:'🚒'},
+  {en:'post office', ja:'ゆうびんきょく', emoji:'📮'},
+  {en:'bookstore', ja:'本屋', emoji:'📖'},
+  {en:'restaurant', ja:'レストラン', emoji:'🍴'},
+  {en:'supermarket', ja:'スーパー', emoji:'🛒'},
+  {en:'zoo', ja:'どうぶつえん', emoji:'🦁'},
+  {en:'stadium', ja:'スタジアム', emoji:'🏟️'}
+];
+
+const KEY_SENTENCES = [
+  "What do you have in your town?",
+  "We have a nice park.",
+  "Where is the park?",
+  "Go straight for one block. Turn right. You can see it on your left."
+];
+
+/* ============ SPEECH ============ */
+function speak(text, rate){
+  if(!('speechSynthesis' in window)){ return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  u.rate = rate || 0.92;
+  u.pitch = 1.05;
+  window.speechSynthesis.speak(u);
+}
+
+/* ============ TABS ============ */
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ============ WORDS TAB ============ */
+const wordGrid = document.getElementById('wordGrid');
+VOCAB.forEach(v=>{
+  const card = document.createElement('div');
+  card.className='word-card';
+  card.innerHTML = `<span class="emoji">${v.emoji}</span><span class="en">${v.en}</span><span class="ja">${v.ja}</span><span class="spk">🔊</span>`;
+  card.addEventListener('click', ()=> speak(v.en));
+  wordGrid.appendChild(card);
+});
+
+/* ============ SENTENCES TAB ============ */
+const sentenceList = document.getElementById('sentenceList');
+KEY_SENTENCES.forEach(s=>{
+  const row = document.createElement('div');
+  row.className='sentence-row';
+  row.innerHTML = `<p>${s}</p><button class="play-btn">▶</button>`;
+  row.querySelector('button').addEventListener('click', ()=> speak(s));
+  sentenceList.appendChild(row);
+});
+
+const patternWord = document.getElementById('patternWord');
+VOCAB.forEach(v=>{
+  const opt = document.createElement('option');
+  opt.value = v.en; opt.textContent = v.en;
+  patternWord.appendChild(opt);
+});
+patternWord.value = 'park';
+document.getElementById('playPattern').addEventListener('click', ()=>{
+  speak(`We have a nice ${patternWord.value}.`);
+});
+
+function updateBuiltSentence(){
+  const n = document.getElementById('dirBlocks').value;
+  const turn = document.getElementById('dirTurn').value;
+  const side = document.getElementById('dirSide').value;
+  const text = `Go straight for ${n} block${n>1?'s':''}. Turn ${turn}. You can see it on your ${side}.`;
+  document.getElementById('builtSentence').textContent = text;
+  return text;
+}
+['dirBlocks','dirTurn','dirSide'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', updateBuiltSentence);
+});
+updateBuiltSentence();
+document.getElementById('playBuilt').addEventListener('click', ()=> speak(updateBuiltSentence()));
+
+/* ============ MAP / DIRECTIONS GAME ============ */
+const DIRS = ['N','N','N','E','E','E','N','N','E','E','S','S','E','E','N','N'];
+const DELTA = {N:{x:0,y:-1}, S:{x:0,y:1}, E:{x:1,y:0}, W:{x:-1,y:0}};
+const RIGHT_OF = {N:'E',E:'S',S:'W',W:'N'};
+const LEFT_OF  = {N:'W',W:'S',S:'E',E:'N'};
+const ARROW = {N:'⬆️',E:'➡️',S:'⬇️',W:'⬅️'};
+
+/* Builds a non-self-intersecting road path from DIRS, then places one
+   building per free left/right "storefront" slot along straight
+   sections (skipping slots that would land on the road itself),
+   walking through VOCAB in order. Verified collision-free offline. */
+function buildMap(){
+  const path = [{x:0,y:0}];
+  DIRS.forEach(d=>{
+    const p = path[path.length-1];
+    const del = DELTA[d];
+    path.push({x:p.x+del.x, y:p.y+del.y});
+  });
+  function actionFor(i){ // i = 1..DIRS.length (path index)
+    if(i===1) return 'straight';
+    const prev = DIRS[i-2], cur = DIRS[i-1];
+    if(prev===cur) return 'straight';
+    if(RIGHT_OF[prev]===cur) return 'turn-right';
+    return 'turn-left';
+  }
+  const straightIdx = [];
+  for(let i=1;i<=DIRS.length;i++){ if(actionFor(i)==='straight') straightIdx.push(i); }
+
+  const occupied = new Set(path.map(p=>p.x+','+p.y));
+  const buildings = [];
+  let vi = 0;
+  outer:
+  for(const i of straightIdx){
+    for(const side of ['right','left']){
+      if(vi >= VOCAB.length) break outer;
+      const facing = DIRS[i-1];
+      const sideDir = side==='right' ? RIGHT_OF[facing] : LEFT_OF[facing];
+      const del = DELTA[sideDir];
+      const cell = path[i];
+      const x = cell.x+del.x, y = cell.y+del.y;
+      const key = x+','+y;
+      if(occupied.has(key)) continue; // slot blocked by the road, skip it
+      occupied.add(key);
+      buildings.push({...VOCAB[vi], pathIndex:i, side, x, y});
+      vi++;
+    }
+  }
+  return {path, actionFor, buildings};
+}
+const MAP = buildMap();
+
+/* render static grid (roads + buildings), avatar placed separately */
+const mapGrid = document.getElementById('mapGrid');
+let cellEls = {}; // key "x,y" -> element (road or building)
+let avatarEl = null;
+
+function renderGrid(){
+  const allCoords = MAP.path.concat(MAP.buildings.map(b=>({x:b.x,y:b.y})));
+  const minX = Math.min(...allCoords.map(c=>c.x));
+  const maxX = Math.max(...allCoords.map(c=>c.x));
+  const minY = Math.min(...allCoords.map(c=>c.y));
+  const maxY = Math.max(...allCoords.map(c=>c.y));
+  const offX = -minX + 1, offY = -minY + 1;
+  const cols = (maxX-minX) + 3;
+  const rows = (maxY-minY) + 3;
+  mapGrid.style.setProperty('--cols', cols);
+  mapGrid.style.setProperty('--rows', rows);
+  mapGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  mapGrid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+  mapGrid.innerHTML = '';
+  cellEls = {};
+
+  MAP.path.forEach((p,i)=>{
+    const div = document.createElement('div');
+    div.className = 'cell road' + (i===0 ? ' start' : '');
+    div.style.gridColumn = (p.x+offX+1);
+    div.style.gridRow = (p.y+offY+1);
+    mapGrid.appendChild(div);
+    cellEls['road-'+i] = div;
+  });
+
+  MAP.buildings.forEach(b=>{
+    const div = document.createElement('div');
+    div.className = 'cell building';
+    div.dataset.pathIndex = b.pathIndex;
+    div.dataset.en = b.en;
+    div.innerHTML = `<span class="b-emoji">${b.emoji}</span><span class="b-label">${b.en}</span>`;
+    div.style.gridColumn = (b.x+offX+1);
+    div.style.gridRow = (b.y+offY+1);
+    div.addEventListener('click', ()=> speak(b.en));
+    mapGrid.appendChild(div);
+    cellEls['b-'+b.pathIndex] = div;
+  });
+
+  avatarEl = document.createElement('div');
+  avatarEl.className = 'avatar';
+  avatarEl.innerHTML = `<span class="arrow" id="avatarArrow">⬆️</span>🧑`;
+  avatarEl.style.gridColumn = (MAP.path[0].x+offX+1);
+  avatarEl.style.gridRow = (MAP.path[0].y+offY+1);
+  mapGrid.appendChild(avatarEl);
+}
+renderGrid();
+
+/* target select dropdown */
+const targetSelect = document.getElementById('targetSelect');
+MAP.buildings.forEach(b=>{
+  const opt = document.createElement('option');
+  opt.value = b.en; opt.textContent = `${b.emoji} ${b.en}`;
+  targetSelect.appendChild(opt);
+});
+
+/* game state */
+let currentIndex = 0;
+let targetIndex = null;   // block number to reach
+let targetBuilding = null; // the exact building object (unique by en name)
+
+/* store offsets globally for reuse */
+(function storeOffsets(){
+  const allCoords = MAP.path.concat(MAP.buildings.map(b=>({x:b.x,y:b.y})));
+  const minX = Math.min(...allCoords.map(c=>c.x));
+  const minY = Math.min(...allCoords.map(c=>c.y));
+  window.__offX = -minX + 1;
+  window.__offY = -minY + 1;
+})();
+
+function currentFacing(){
+  return currentIndex===0 ? DIRS[0] : DIRS[currentIndex-1];
+}
+
+function updateHud(){
+  document.getElementById('avatarArrow').textContent = ARROW[currentFacing()];
+  document.querySelectorAll('.cell.building').forEach(el=>{
+    el.classList.toggle('target', !!targetBuilding && el.dataset.en===targetBuilding.en);
+  });
+}
+
+function startRound(building){
+  targetBuilding = building;
+  targetIndex = building.pathIndex;
+  currentIndex = 0;
+  targetSelect.value = building.en;
+  document.getElementById('targetPill').textContent = `🎯 ${building.emoji} ${building.en}`;
+  document.getElementById('successBanner').classList.remove('show');
+  document.getElementById('gameFeedback').textContent = '';
+  const p = MAP.path[0];
+  avatarEl.style.gridColumn = (p.x + window.__offX + 1);
+  avatarEl.style.gridRow = (p.y + window.__offY + 1);
+  updateHud();
+}
+
+function tryAction(chosen){
+  if(!targetIndex){ document.getElementById('gameFeedback').textContent = '👆 まずは行き先をえらんでね！'; return; }
+  if(currentIndex >= targetIndex){ return; }
+  const required = MAP.actionFor(currentIndex+1);
+  const btnMap = {straight:'btnStraight','turn-left':'btnLeft','turn-right':'btnRight'};
+  if(chosen === required){
+    currentIndex++;
+    const p = MAP.path[currentIndex];
+    avatarEl.style.gridColumn = (p.x + window.__offX + 1);
+    avatarEl.style.gridRow = (p.y + window.__offY + 1);
+    avatarEl.classList.remove('bump'); void avatarEl.offsetWidth; avatarEl.classList.add('bump');
+    updateHud();
+    if(currentIndex === targetIndex){
+      const b = targetBuilding;
+      const msg = `🎉 You found the ${b.en}! It's on your ${b.side}!`;
+      document.getElementById('successBanner').textContent = msg;
+      document.getElementById('successBanner').classList.add('show');
+      document.getElementById('gameFeedback').textContent = '';
+      speak(`You can see it on your ${b.side}. This is the ${b.en}.`);
+    } else {
+      document.getElementById('gameFeedback').textContent = '✅ Good! つぎは？';
+    }
+  } else {
+    const el = document.getElementById(btnMap[chosen]);
+    el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
+    document.getElementById('gameFeedback').textContent = '🤔 ちがうよ！矢印の向きをかくにんしよう。';
+  }
+}
+
+document.getElementById('btnStraight').addEventListener('click', ()=> tryAction('straight'));
+document.getElementById('btnLeft').addEventListener('click', ()=> tryAction('turn-left'));
+document.getElementById('btnRight').addEventListener('click', ()=> tryAction('turn-right'));
+
+targetSelect.addEventListener('change', ()=>{
+  const b = MAP.buildings.find(bd=>bd.en===targetSelect.value);
+  if(b) startRound(b);
+});
+
+/* init first round: start easy, save the zoo for the big finale */
+startRound(MAP.buildings[0]);
+
+/* ============ QUIZ TAB ============ */
+let quizQuestions = [];
+let quizIdx = 0;
+let quizScore = 0;
+
+function shuffle(arr){ return arr.slice().sort(()=>Math.random()-0.5); }
+
+function buildQuiz(){
+  quizQuestions = shuffle(VOCAB).map(v=>{
+    const type = Math.random() < 0.5 ? 'text' : 'audio';
+    const distractors = shuffle(VOCAB.filter(x=>x.en!==v.en)).slice(0,3);
+    const options = shuffle([v, ...distractors]);
+    return {answer:v, type, options};
+  }).slice(0,10);
+  quizIdx = 0; quizScore = 0;
+  document.getElementById('quizResult').style.display='none';
+  document.getElementById('quizRetry').style.display='none';
+  document.getElementById('quizNext').style.display='none';
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion(){
+  document.getElementById('quizScore').textContent = `Question ${quizIdx+1} / ${quizQuestions.length}　Score: ${quizScore}`;
+  const q = quizQuestions[quizIdx];
+  const qDiv = document.getElementById('quizQuestion');
+  document.getElementById('quizNext').style.display='none';
+
+  if(q.type === 'text'){
+    qDiv.innerHTML = `<div class="quiz-q"><span class="quiz-emoji-big">${q.answer.emoji}</span><br>これは英語で何？</div>
+      <div class="quiz-options">${q.options.map(o=>`<button data-en="${o.en}">${o.en}</button>`).join('')}</div>`;
+  } else {
+    qDiv.innerHTML = `<div class="quiz-q">🔊 きこえた単語をえらんでね<br><button class="play-btn" id="quizPlay" style="margin-top:8px;">▶</button></div>
+      <div class="quiz-options">${q.options.map(o=>`<button data-en="${o.en}">${o.emoji} ${o.en}</button>`).join('')}</div>`;
+    document.getElementById('quizPlay').addEventListener('click', ()=> speak(q.answer.en));
+    speak(q.answer.en);
+  }
+
+  qDiv.querySelectorAll('.quiz-options button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const correct = btn.dataset.en === q.answer.en;
+      qDiv.querySelectorAll('.quiz-options button').forEach(b=>{
+        b.disabled = true;
+        if(b.dataset.en === q.answer.en) b.classList.add('correct');
+        else if(b===btn) b.classList.add('wrong');
+      });
+      if(correct) quizScore++;
+      document.getElementById('quizScore').textContent = `Question ${quizIdx+1} / ${quizQuestions.length}　Score: ${quizScore}`;
+      document.getElementById('quizNext').style.display='inline-block';
+    });
+  });
+}
+
+document.getElementById('quizNext').addEventListener('click', ()=>{
+  quizIdx++;
+  if(quizIdx < quizQuestions.length){
+    renderQuizQuestion();
+  } else {
+    document.getElementById('quizQuestion').innerHTML = '';
+    document.getElementById('quizNext').style.display='none';
+    const r = document.getElementById('quizResult');
+    r.style.display='block';
+    r.textContent = `🎉 Finished! Your score: ${quizScore} / ${quizQuestions.length}`;
+    document.getElementById('quizRetry').style.display='inline-block';
+  }
+});
+document.getElementById('quizRetry').addEventListener('click', buildQuiz);
+
+buildQuiz();
+</script>
+</body>
+</html>
