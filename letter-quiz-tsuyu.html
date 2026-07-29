@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文字さがしクイズ - つゆ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-1:#eef2f1;
+    --bg-2:#dfe8ea;
+    --card:#fbfdfb;
+    --ink:#2f3a3a;
+    --sky-1:#c7d6de;
+    --sky-2:#a9bfcb;
+    --cloud:#eef3f5;
+    --cloud-shade:#c7d3d9;
+    --leaf:#5a8a5f;
+    --leaf-deep:#3d6641;
+    --petal-off:#d7dbd6;
+    --petal-blue:#7d9fd6;
+    --petal-purple:#a680c9;
+    --petal-pink:#dd9ac0;
+    --rain:#8fb0c4;
+    --miss:#d97757;
+    --line:#dbe3dd;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 12% 8%, #f6faf7 0%, transparent 45%),
+      radial-gradient(circle at 92% 88%, var(--bg-2) 0%, transparent 55%),
+      linear-gradient(160deg, var(--bg-1), var(--bg-2));
+    font-family:'Zen Maru Gothic', sans-serif;
+    color:var(--ink);
+    padding:32px 16px;
+  }
+  .stage{width:100%;max-width:520px;}
+  .card{
+    background:var(--card);
+    border-radius:28px;
+    padding:36px 30px 30px;
+    box-shadow:0 20px 50px -20px rgba(30,50,50,0.28), 0 2px 0 rgba(255,255,255,0.7) inset;
+    position:relative;
+    overflow:hidden;
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.14em;
+    color:#4f7a8c;
+    font-weight:700;
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Kiwi Maru', serif;
+    font-size:26px;
+    margin:0 0 4px;
+    color:#2c4650;
+  }
+  .hint{
+    font-size:14px;
+    color:#6f8188;
+    margin:0 0 20px;
+  }
+  .scene-wrap{
+    display:flex;
+    justify-content:center;
+    margin-bottom:14px;
+  }
+  #scene{
+    width:100%;
+    max-width:340px;
+    height:180px;
+    border-radius:20px;
+    background:linear-gradient(180deg, var(--sky-1), var(--sky-2));
+    overflow:hidden;
+  }
+  .petal{transition:fill .5s ease, transform .4s ease;}
+  .drop{
+    opacity:0;
+    transition:opacity .3s ease;
+  }
+  .drop.show{opacity:0.85; animation:fall 1.1s ease-in infinite;}
+  @keyframes fall{
+    0%{transform:translateY(0); opacity:0;}
+    15%{opacity:0.85;}
+    100%{transform:translateY(18px); opacity:0;}
+  }
+  .cloud{transition:transform .5s ease, opacity .5s ease;}
+  .wash{
+    opacity:0;
+    transition:opacity .6s ease;
+  }
+  .wash.show{opacity:0.55;}
+  .sun{transition:opacity .5s ease;}
+  .blanks{
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:10px;
+    margin:16px 0 22px;
+  }
+  .blank{
+    width:28px;
+    text-align:center;
+    font-family:'Kiwi Maru', serif;
+    font-size:22px;
+    font-weight:500;
+    color:#2c4650;
+    border-bottom:3px solid var(--line);
+    padding-bottom:4px;
+    transition:border-color .3s ease, transform .3s ease;
+  }
+  .blank.filled{
+    border-color:var(--petal-purple);
+    animation:pop .35s ease;
+  }
+  @keyframes pop{
+    0%{transform:scale(0.6);}
+    60%{transform:scale(1.12);}
+    100%{transform:scale(1);}
+  }
+  .letters{
+    display:grid;
+    grid-template-columns:repeat(6, 1fr);
+    gap:8px;
+    margin-bottom:18px;
+  }
+  .key{
+    aspect-ratio:1/1;
+    border-radius:14px;
+    border:none;
+    background:#fff;
+    box-shadow:0 3px 0 var(--line), 0 6px 14px -8px rgba(40,60,60,0.22);
+    font-family:'Zen Maru Gothic', sans-serif;
+    font-weight:700;
+    font-size:16px;
+    color:#2c4650;
+    cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease, background .2s ease, color .2s ease;
+  }
+  .key:hover:not(:disabled){transform:translateY(-2px);}
+  .key:active:not(:disabled){transform:translateY(1px); box-shadow:0 1px 0 var(--line);}
+  .key:disabled{cursor:default;}
+  .key.correct{
+    background:var(--petal-purple);
+    color:#fff;
+    box-shadow:0 3px 0 #7c5b9c;
+  }
+  .key.wrong{
+    background:#e7eef1;
+    color:#6f8fa0;
+    box-shadow:0 3px 0 #cdd9df;
+    opacity:0.75;
+  }
+  .status{
+    min-height:22px;
+    text-align:center;
+    font-size:14.5px;
+    font-weight:700;
+    color:#5c3f78;
+    margin:0 0 6px;
+  }
+  .status.lose{color:var(--miss);}
+  .meta{
+    text-align:center;
+    font-size:12.5px;
+    color:#7c8c92;
+    margin:0 0 4px;
+  }
+  .retry{
+    display:block;
+    margin:14px auto 0;
+    padding:10px 22px;
+    border:none;
+    border-radius:999px;
+    background:var(--petal-purple);
+    color:#fff;
+    font-family:'Zen Maru Gothic', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    box-shadow:0 4px 0 #7c5b9c;
+  }
+  .retry:active{transform:translateY(2px); box-shadow:0 2px 0 #7c5b9c;}
+  .hidden{display:none;}
+  .answer-reveal{
+    text-align:center;
+    font-size:13px;
+    color:#7c8c92;
+    margin-top:2px;
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="card">
+      <p class="eyebrow">O〜Z の12文字だけで挑戦</p>
+      <h1>文字さがしクイズ</h1>
+      <p class="hint">ヒント: 6月ごろの雨の季節／ローマ字5文字の日本語</p>
+
+      <div class="scene-wrap">
+        <svg id="scene" viewBox="0 0 340 180">
+          <!-- clouds -->
+          <g class="cloud" id="cloud1">
+            <ellipse cx="70" cy="30" rx="34" ry="14" fill="#eef3f5"/>
+            <ellipse cx="95" cy="24" rx="22" ry="12" fill="#eef3f5"/>
+            <ellipse cx="45" cy="24" rx="20" ry="11" fill="#eef3f5"/>
+          </g>
+          <g class="cloud" id="cloud2">
+            <ellipse cx="265" cy="26" rx="30" ry="12" fill="#dfe9ec"/>
+            <ellipse cx="288" cy="20" rx="18" ry="10" fill="#dfe9ec"/>
+          </g>
+          <circle class="sun" id="sun" cx="288" cy="20" r="16" fill="#ffe1a0" opacity="0"/>
+
+          <!-- rain drops, appear per mistake -->
+          <g id="drops">
+            <path class="drop" data-i="0" d="M60,50 q-2,6 0,10 q2,-1 2,-5 q0,-3 -2,-5" fill="#8fb0c4"/>
+            <path class="drop" data-i="1" d="M80,54 q-2,6 0,10 q2,-1 2,-5 q0,-3 -2,-5" fill="#8fb0c4"/>
+            <path class="drop" data-i="2" d="M100,50 q-2,6 0,10 q2,-1 2,-5 q0,-3 -2,-5" fill="#8fb0c4"/>
+            <path class="drop" data-i="3" d="M250,52 q-2,6 0,10 q2,-1 2,-5 q0,-3 -2,-5" fill="#8fb0c4"/>
+            <path class="drop" data-i="4" d="M270,48 q-2,6 0,10 q2,-1 2,-5 q0,-3 -2,-5" fill="#8fb0c4"/>
+            <path class="drop" data-i="5" d="M290,54 q-2,6 0,10 q2,-1 2,-5 q0,-3 -2,-5" fill="#8fb0c4"/>
+            <path class="drop" data-i="6" d="M170,40 q-2,6 0,10 q2,-1 2,-5 q0,-3 -2,-5" fill="#8fb0c4"/>
+            <path class="drop" data-i="7" d="M190,44 q-2,6 0,10 q2,-1 2,-5 q0,-3 -2,-5" fill="#8fb0c4"/>
+          </g>
+
+          <!-- ground -->
+          <rect x="0" y="150" width="340" height="30" fill="#b9cdd4" opacity="0.5"/>
+
+          <!-- stem and leaves -->
+          <line x1="170" y1="176" x2="170" y2="110" stroke="#5a8a5f" stroke-width="5" stroke-linecap="round"/>
+          <path d="M170,140 C150,136 140,150 132,158 C150,158 164,150 170,140 Z" fill="#5a8a5f"/>
+          <path d="M170,150 C190,146 200,160 208,168 C190,168 176,160 170,150 Z" fill="#5a8a5f"/>
+
+          <!-- hydrangea head: 4 clusters unlocked by 4 distinct letters -->
+          <g id="flowerHead" transform="translate(170,95)">
+            <g class="cluster" data-cluster="0">
+              <circle class="petal" cx="-18" cy="-6" r="9" fill="#d7dbd6"/>
+              <circle class="petal" cx="-24" cy="6" r="7" fill="#d7dbd6"/>
+            </g>
+            <g class="cluster" data-cluster="1">
+              <circle class="petal" cx="0" cy="-18" r="9" fill="#d7dbd6"/>
+              <circle class="petal" cx="14" cy="-8" r="7" fill="#d7dbd6"/>
+            </g>
+            <g class="cluster" data-cluster="2">
+              <circle class="petal" cx="18" cy="6" r="9" fill="#d7dbd6"/>
+              <circle class="petal" cx="10" cy="18" r="7" fill="#d7dbd6"/>
+            </g>
+            <g class="cluster" data-cluster="3">
+              <circle class="petal" cx="-6" cy="14" r="9" fill="#d7dbd6"/>
+              <circle class="petal" cx="0" cy="0" r="8" fill="#d7dbd6"/>
+            </g>
+          </g>
+
+          <rect class="wash" id="wash" x="0" y="0" width="340" height="180" fill="#7d9fd6"/>
+        </svg>
+      </div>
+
+      <div class="blanks" id="blanks"></div>
+      <div class="letters" id="letters"></div>
+      <p class="status" id="status">&nbsp;</p>
+      <p class="meta" id="meta"></p>
+      <p class="answer-reveal hidden" id="answerReveal"></p>
+      <button class="retry hidden" id="retry">もう一度あそぶ</button>
+    </div>
+  </div>
+
+<script>
+  const WORD = ['t','s','u','y','u'];   // 答え: tsuyu (つゆ / 梅雨)
+  const ANSWER_LABEL = '梅雨（つゆ）＝ rainy season';
+  const ALL_LETTERS = ['o','p','q','r','s','t','u','v','w','x','y','z'];
+  const DISTINCT_CORRECT = [...new Set(WORD)];                 // t, s, u, y
+  const MAX_MISTAKES = ALL_LETTERS.length - DISTINCT_CORRECT.length; // 8
+  const PETAL_COLORS = ['#7d9fd6', '#a680c9', '#dd9ac0', '#8fb0d0'];
+
+  const blanksEl = document.getElementById('blanks');
+  const lettersEl = document.getElementById('letters');
+  const statusEl = document.getElementById('status');
+  const metaEl = document.getElementById('meta');
+  const retryEl = document.getElementById('retry');
+  const answerRevealEl = document.getElementById('answerReveal');
+  const sunEl = document.getElementById('sun');
+  const washEl = document.getElementById('wash');
+  const dropEls = document.querySelectorAll('.drop');
+  const clusterEls = document.querySelectorAll('.cluster');
+
+  let correctSet, mistakes, over, bloomedCount;
+
+  function init(){
+    correctSet = new Set();
+    mistakes = 0;
+    over = false;
+    bloomedCount = 0;
+
+    blanksEl.innerHTML = '';
+    WORD.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'blank';
+      d.id = 'blank-' + i;
+      blanksEl.appendChild(d);
+    });
+
+    lettersEl.innerHTML = '';
+    ALL_LETTERS.forEach(letter => {
+      const b = document.createElement('button');
+      b.className = 'key';
+      b.textContent = letter;
+      b.addEventListener('click', () => guess(letter, b));
+      lettersEl.appendChild(b);
+    });
+
+    sunEl.style.opacity = 0;
+    washEl.classList.remove('show');
+    dropEls.forEach(d => d.classList.remove('show'));
+    clusterEls.forEach(c => {
+      c.querySelectorAll('.petal').forEach(p => p.setAttribute('fill', '#d7dbd6'));
+    });
+
+    statusEl.textContent = '\u00A0';
+    statusEl.classList.remove('lose');
+    metaEl.textContent = 'のこりミス回数: ' + MAX_MISTAKES;
+    answerRevealEl.classList.add('hidden');
+    retryEl.classList.add('hidden');
+  }
+
+  function bloomNext(){
+    if (bloomedCount >= clusterEls.length) return;
+    const cluster = clusterEls[bloomedCount];
+    const color = PETAL_COLORS[bloomedCount % PETAL_COLORS.length];
+    cluster.querySelectorAll('.petal').forEach(p => p.setAttribute('fill', color));
+    bloomedCount++;
+  }
+
+  function guess(letter, btn){
+    if (over) return;
+    btn.disabled = true;
+
+    if (WORD.includes(letter)){
+      btn.classList.add('correct');
+      let firstTimeThisLetter = false;
+      WORD.forEach((l, i) => {
+        if (l === letter){
+          if (!correctSet.has(i)) firstTimeThisLetter = true;
+          correctSet.add(i);
+          const blank = document.getElementById('blank-' + i);
+          blank.textContent = l;
+          blank.classList.add('filled');
+        }
+      });
+      if (firstTimeThisLetter) bloomNext();
+      if (correctSet.size === WORD.length){
+        win();
+      }
+    } else {
+      btn.classList.add('wrong');
+      if (dropEls[mistakes]) dropEls[mistakes].classList.add('show');
+      mistakes++;
+      metaEl.textContent = 'のこりミス回数: ' + (MAX_MISTAKES - mistakes);
+      if (mistakes >= MAX_MISTAKES){
+        lose();
+      }
+    }
+  }
+
+  function win(){
+    over = true;
+    statusEl.textContent = 'せいかい！ 🌸 「つゆ」でした';
+    metaEl.textContent = '';
+    sunEl.style.opacity = 1;
+    dropEls.forEach(d => d.classList.remove('show'));
+    disableAll();
+  }
+
+  function lose(){
+    over = true;
+    statusEl.textContent = '雨に流されてしまいました';
+    statusEl.classList.add('lose');
+    washEl.classList.add('show');
+    answerRevealEl.textContent = '答え: ' + ANSWER_LABEL;
+    answerRevealEl.classList.remove('hidden');
+    disableAll();
+  }
+
+  function disableAll(){
+    document.querySelectorAll('.key').forEach(b => b.disabled = true);
+    retryEl.classList.remove('hidden');
+  }
+
+  retryEl.addEventListener('click', init);
+
+  init();
+</script>
+</body>
+</html>
