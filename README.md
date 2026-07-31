@@ -1,1 +1,0 @@
-# naokotsutsumi.github.io
