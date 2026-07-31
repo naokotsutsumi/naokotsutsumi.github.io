@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>パネルクイズ(16マス・時短版)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF3E6;
+    --paper-dark:#F0E4CC;
+    --ink:#2B2A4C;
+    --wood:#B9773F;
+    --wood-dark:#8A5A2E;
+    --teal:#4FB0AE;
+    --orange:#F2A93B;
+    --blue:#4A7FE0;
+    --coral:#E8607A;
+    --gold:#F4C542;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #fff7e6 0%, transparent 60%),
+      radial-gradient(1000px 500px at 110% 10%, #eaf6f5 0%, transparent 55%),
+      var(--paper);
+    font-family:'Nunito', sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  .stage{max-width:1400px;margin:0 auto;padding:22px 28px 40px;}
+  header{text-align:center;margin-bottom:14px;}
+  header .eyebrow{
+    font-family:'Fredoka', sans-serif;font-size:13px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--teal);font-weight:600;
+  }
+  header h1{font-family:'Fredoka', sans-serif;font-size:30px;font-weight:700;margin:4px 0 4px;color:var(--ink);}
+  header p{margin:0;font-size:14px;color:#6b6a8a;}
+
+  .layout{display:flex;align-items:flex-start;justify-content:center;gap:36px;margin-top:16px;flex-wrap:wrap;}
+
+  /* Board */
+  .board-col{flex:0 0 auto;width:min(92vmin,860px);}
+  .frame{
+    background:linear-gradient(180deg, var(--wood) 0%, var(--wood-dark) 100%);
+    border-radius:18px;padding:18px;
+    box-shadow:0 18px 0 -6px rgba(0,0,0,.08), 0 24px 40px rgba(90,55,20,.25), inset 0 2px 0 rgba(255,255,255,.15);
+  }
+  .board{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+    background:var(--paper);border-radius:10px;padding:18px;
+    box-shadow:inset 0 6px 18px rgba(0,0,0,.15);
+  }
+  .panel{aspect-ratio:4/3;perspective:600px;cursor:pointer;}
+  .panel .flipper{
+    position:relative;width:100%;height:100%;transform-style:preserve-3d;
+    transition:transform .6s cubic-bezier(.34,1.56,.64,1);
+  }
+  .panel.flipped .flipper{transform:rotateY(180deg);}
+  .panel.no-anim .flipper{transition:none;}
+  .panel .face{
+    position:absolute;inset:0;backface-visibility:hidden;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .panel .front{
+    background:var(--paper-dark);color:#9a98b5;
+    font-family:'Fredoka';font-weight:700;font-size:clamp(26px,5.6vmin,40px);
+    box-shadow:inset 0 0 0 2px rgba(0,0,0,.05);
+  }
+  .panel .back{
+    background:var(--team-color, var(--ink));color:#fff;transform:rotateY(180deg);
+    font-family:'Fredoka';font-weight:700;font-size:clamp(34px,7.6vmin,54px);
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.3);
+  }
+  .panel .badge{
+    position:absolute;top:8px;left:10px;font-size:16px;font-family:'Fredoka';
+    color:rgba(255,255,255,.85);
+  }
+  .panel.pulse .back{animation:pulse .26s ease;}
+  @keyframes pulse{0%{transform:rotateY(180deg) scale(1);}45%{transform:rotateY(180deg) scale(1.12);}100%{transform:rotateY(180deg) scale(1);}}
+  .panel:hover .flipper{filter:brightness(1.03);}
+
+  .board-actions{display:flex;gap:10px;margin-top:14px;justify-content:center;}
+  button{font-family:'Fredoka';border:none;cursor:pointer;font-weight:600;border-radius:999px;transition:transform .08s ease, filter .15s ease;}
+  button:active{transform:scale(.96);}
+  .ghost-btn{background:#fff;color:var(--ink);font-size:14px;padding:12px 18px;border:2px solid var(--paper-dark);}
+  .ghost-btn:hover{border-color:var(--teal);color:var(--teal);}
+  .ghost-btn:disabled{opacity:.45;cursor:not-allowed;}
+
+  /* Side column */
+  .side-col{flex:1 1 300px;max-width:360px;display:flex;flex-direction:column;gap:12px;padding-top:4px;}
+  .hint{
+    font-family:'Fredoka';font-size:14px;color:var(--coral);text-align:center;
+    min-height:18px;
+  }
+  .team-card{
+    display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;
+    background:#fff;border:2px solid var(--paper-dark);cursor:pointer;
+    transition:transform .1s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .team-card.active{
+    border-color:var(--tc);
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--tc) 30%, transparent), 0 6px 14px rgba(0,0,0,.08);
+    transform:translateY(-2px);
+  }
+  .swatch{
+    width:38px;height:38px;border-radius:10px;background:var(--tc);flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.4), 0 3px 6px rgba(0,0,0,.15);
+  }
+  .info{display:flex;flex-direction:column;gap:2px;flex:1;}
+  .team-name{
+    font-family:'Fredoka';font-weight:600;font-size:16px;outline:none;
+    border-bottom:1px dashed transparent;width:fit-content;
+  }
+  .team-name:focus{border-bottom-color:var(--tc);}
+  .count{font-size:12px;color:#6b6a8a;}
+  .count .num{font-family:'Fredoka';font-weight:700;font-size:19px;color:var(--ink);}
+
+  .soundboard{
+    margin-top:6px;padding:14px;border-radius:14px;background:#fff;border:2px solid var(--paper-dark);
+  }
+  .soundboard-title{font-family:'Fredoka';font-size:13px;color:#8a89a8;margin-bottom:10px;text-align:center;}
+  .sound-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .sound-btn{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    padding:12px 8px;border-radius:14px;font-size:22px;color:#fff;border:none;
+  }
+  .sound-btn span{font-family:'Fredoka';font-size:12px;font-weight:600;}
+  .sb-quiz{background:linear-gradient(180deg,#FFC85C,var(--gold));color:var(--ink);box-shadow:0 5px 0 #C99A2E;}
+  .sb-quiz span{color:var(--ink);}
+  .sb-clap{background:linear-gradient(180deg,#7FCFCD,var(--teal));box-shadow:0 5px 0 #357C7A;}
+  .sb-correct{background:linear-gradient(180deg,#6FE0A0,#33B673);box-shadow:0 5px 0 #23895A;}
+  .sb-wrong{background:linear-gradient(180deg,#F08A9B,var(--coral));box-shadow:0 5px 0 #B33F55;}
+
+  .overlay{
+    position:fixed;inset:0;background:rgba(43,42,76,.55);
+    display:flex;align-items:center;justify-content:center;z-index:50;
+  }
+  .overlay[hidden]{display:none;}
+  .result-card{
+    background:var(--paper);border-radius:20px;padding:30px 34px;max-width:420px;width:90%;
+    text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.3);
+  }
+  .result-card h2{font-family:'Fredoka';margin:0 0 4px;font-size:24px;}
+  .result-card .sub{font-size:13px;color:#6b6a8a;margin-bottom:16px;}
+  .rank-row{
+    display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;
+    background:#fff;margin-bottom:8px;
+  }
+  .rank-row .place{font-family:'Fredoka';font-weight:700;font-size:15px;width:26px;color:#8a89a8;}
+  .rank-row .mark{
+    width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:15px;font-weight:700;
+  }
+  .rank-row .rname{flex:1;text-align:left;font-family:'Fredoka';font-size:15px;}
+  .rank-row .rcount{font-family:'Fredoka';font-weight:700;}
+  #playAgainBtn{
+    margin-top:14px;background:linear-gradient(180deg,#FF8A65, var(--coral));color:#fff;
+    font-size:16px;padding:14px 22px;width:100%;
+    box-shadow:0 6px 0 #B33F55, 0 10px 16px rgba(232,96,122,.35);
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <header>
+    <div class="eyebrow">Panel Quiz · Short Version</div>
+    <h1>パネルクイズ(16マス・時短版)</h1>
+    <p>① チームを選ぶ(色を英語で読み上げます) → ② 正解したチームが好きなパネルをタップ → 挟んだ相手パネルも自動でひっくり返る!</p>
+  </header>
+
+  <div class="layout">
+    <div class="board-col">
+      <div class="frame">
+        <div class="board" id="board"></div>
+      </div>
+      <div class="board-actions">
+        <button class="ghost-btn" id="undoBtn">↩ 元に戻す</button>
+        <button class="ghost-btn" id="resetBtn">⟲ ボードをリセット</button>
+      </div>
+    </div>
+
+    <div class="side-col">
+      <div class="hint" id="hint">まずチームを選んでね</div>
+      <div class="team-card" data-team="t1" style="--tc:var(--coral)">
+        <div class="swatch">★</div>
+        <div class="info">
+          <span class="team-name" contenteditable="true" spellcheck="false">Red</span>
+          <div class="count"><span class="num" data-count="t1">0</span> 枚</div>
+        </div>
+      </div>
+      <div class="team-card" data-team="t2" style="--tc:var(--teal)">
+        <div class="swatch">●</div>
+        <div class="info">
+          <span class="team-name" contenteditable="true" spellcheck="false">Green</span>
+          <div class="count"><span class="num" data-count="t2">0</span> 枚</div>
+        </div>
+      </div>
+      <div class="team-card" data-team="t3" style="--tc:var(--orange)">
+        <div class="swatch">▲</div>
+        <div class="info">
+          <span class="team-name" contenteditable="true" spellcheck="false">Yellow</span>
+          <div class="count"><span class="num" data-count="t3">0</span> 枚</div>
+        </div>
+      </div>
+      <div class="team-card" data-team="t4" style="--tc:var(--blue)">
+        <div class="swatch">■</div>
+        <div class="info">
+          <span class="team-name" contenteditable="true" spellcheck="false">Blue</span>
+          <div class="count"><span class="num" data-count="t4">0</span> 枚</div>
+        </div>
+      </div>
+
+      <div class="soundboard">
+        <div class="soundboard-title">🔊 サウンドボタン</div>
+        <div class="sound-grid">
+          <button class="sound-btn sb-quiz" id="quizStartBtn">🎺<span>出題</span></button>
+          <button class="sound-btn sb-clap" id="applauseBtn">👏<span>拍手</span></button>
+          <button class="sound-btn sb-correct" id="correctBtn">⭕<span>正解</span></button>
+          <button class="sound-btn sb-wrong" id="wrongBtn">❌<span>不正解</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="resultOverlay" hidden>
+  <div class="result-card">
+    <h2>けっか発表!</h2>
+    <div class="sub">全16パネルが埋まりました</div>
+    <div id="rankList"></div>
+    <button id="playAgainBtn">🔄 もう一度あそぶ</button>
+  </div>
+</div>
+
+<script>
+const TEAMS = {
+  t1:{color:'var(--coral)', mark:'★', colorWord:'Red'},
+  t2:{color:'var(--teal)', mark:'●', colorWord:'Green'},
+  t3:{color:'var(--orange)', mark:'▲', colorWord:'Yellow'},
+  t4:{color:'var(--blue)', mark:'■', colorWord:'Blue'},
+};
+const N = 16;
+let board = Array(N).fill(null);   // holds team id or null
+let history = [];                  // stack of board snapshots
+let activeTeam = null;
+let animating = false;
+
+const boardEl = document.getElementById('board');
+const hintEl = document.getElementById('hint');
+const undoBtn = document.getElementById('undoBtn');
+const resetBtn = document.getElementById('resetBtn');
+const overlay = document.getElementById('resultOverlay');
+const rankList = document.getElementById('rankList');
+
+// ---- sound effects (synthesized, no audio files) ----
+const SFX = (() => {
+  let ctx = null;
+  function ensureCtx(){
+    if(!ctx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) ctx = new AC();
+    }
+    if(ctx && ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function tone(freq, duration, {type='sine', gain=0.2, delay=0, sweepTo=null} = {}){
+    const c = ensureCtx();
+    if(!c) return;
+    const t0 = c.currentTime + delay;
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if(sweepTo) osc.frequency.exponentialRampToValueAtTime(sweepTo, t0 + duration);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + Math.min(0.015, duration/3));
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    osc.connect(g); g.connect(c.destination);
+    osc.start(t0); osc.stop(t0 + duration + 0.03);
+  }
+  function noiseBurst(duration, {gain=0.25, filterFreq=2200, q=1, delay=0} = {}){
+    const c = ensureCtx();
+    if(!c) return;
+    const bufferSize = Math.max(1, Math.floor(c.sampleRate * duration));
+    const buffer = c.createBuffer(1, bufferSize, c.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++){
+      data[i] = (Math.random()*2-1) * (1 - i/bufferSize);
+    }
+    const src = c.createBufferSource();
+    src.buffer = buffer;
+    const filter = c.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = filterFreq;
+    filter.Q.value = q;
+    const g = c.createGain();
+    g.gain.value = gain;
+    src.connect(filter); filter.connect(g); g.connect(c.destination);
+    src.start(c.currentTime + delay);
+  }
+  return {
+    unlock(){ ensureCtx(); },
+    claim(){ tone(500, 0.16, {type:'triangle', gain:0.22, sweepTo:820}); },
+    tick(){ tone(700 + Math.random()*120, 0.06, {type:'square', gain:0.10}); },
+    fanfare(){
+      tone(660,0.15,{gain:.2}); tone(880,0.15,{gain:.2,delay:.14}); tone(1100,0.3,{gain:.22,delay:.28});
+    },
+    // 華やかな「クイズ出題」ファンファーレ:低い「デ」の後、高く明るい「デーン」で盛り上げる
+    quizStart(){
+      // デ(短く低い一撃)
+      tone(90, 0.09, {type:'sawtooth', gain:.28});
+      noiseBurst(0.08, {gain:0.2, filterFreq:150, q:0.8, delay:0});
+      // デーン(高く明るく駆け上がる本命の一撃)
+      tone(392, 0.5,  {type:'sawtooth', gain:.28, delay:0.15, sweepTo:520});
+      tone(784, 0.35, {type:'triangle', gain:.12, delay:0.15}); // 倍音で明るさを足す
+      noiseBurst(0.28, {gain:0.16, filterFreq:4200, q:0.8, delay:0.15});
+    },
+    // 拍手:歓声の「わー」+ランダムなノイズバースト+口笛のような歓声トーンを重ねる
+    applause(){
+      tone(300, 0.5, {type:'sine', gain:.14, sweepTo:900});
+      for(let i=0;i<24;i++){
+        noiseBurst(0.08 + Math.random()*0.06, {
+          gain: 0.14 + Math.random()*0.13,
+          filterFreq: 1200 + Math.random()*2800,
+          delay: Math.random()*1.2
+        });
+      }
+      for(let i=0;i<3;i++){
+        const d = Math.random()*0.9;
+        tone(1100 + Math.random()*500, 0.32, {type:'sine', gain:.10, delay:d, sweepTo:1700 + Math.random()*400});
+      }
+    },
+    // 正解:定番の「ピンポーン」チャイム
+    correct(){
+      tone(659, 0.35, {type:'sine', gain:.28});
+      tone(1318,0.2,  {type:'sine', gain:.08});
+      tone(523, 0.5,  {type:'sine', gain:.28, delay:.32});
+      tone(1046,0.25, {type:'sine', gain:.08, delay:.32});
+    },
+    // 不正解:昔ながらのブザー音を2音で交互に鳴らしてから沈み込む
+    wrong(){
+      tone(200, 0.12, {type:'square', gain:.2});
+      tone(150, 0.12, {type:'square', gain:.2, delay:.13});
+      tone(200, 0.12, {type:'square', gain:.2, delay:.26});
+      tone(120, 0.34, {type:'sawtooth', gain:.22, delay:.39, sweepTo:55});
+    }
+  };
+})();
+
+// ---- build board DOM ----
+for(let i=0;i<N;i++){
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+  panel.dataset.idx = i;
+  panel.innerHTML = `
+    <div class="flipper">
+      <div class="face front">${i+1}</div>
+      <div class="face back"><span class="badge">${i+1}</span><span class="mark"></span></div>
+    </div>`;
+  panel.addEventListener('click', ()=>onPanelClick(i));
+  boardEl.appendChild(panel);
+}
+const panelEls = [...boardEl.querySelectorAll('.panel')];
+
+// ---- team card selection & naming ----
+document.querySelectorAll('.team-card').forEach(card=>{
+  card.addEventListener('click', (e)=>{
+    if(e.target.classList.contains('team-name')) return; // let editing work
+    setActiveTeam(card.dataset.team);
+  });
+});
+function setActiveTeam(id){
+  activeTeam = id;
+  document.querySelectorAll('.team-card').forEach(c=>{
+    c.classList.toggle('active', c.dataset.team===id);
+  });
+  hintEl.textContent = '正解したパネルをタップしてね';
+  SFX.unlock();
+  speakColor(TEAMS[id].colorWord);
+}
+
+let speechToken = 0;
+function speakColor(word){
+  if(!('speechSynthesis' in window)) return;
+  speechToken++;
+  const myToken = speechToken;
+  window.speechSynthesis.cancel();
+  setTimeout(()=>{
+    if(myToken !== speechToken) return;
+    const utter = new SpeechSynthesisUtterance(word);
+    utter.lang = 'en-US';
+    utter.rate = 0.9;
+    utter.pitch = 1.05;
+    window.speechSynthesis.speak(utter);
+  }, 60);
+}
+
+// ---- capture logic (Othello-style sandwich) ----
+const GRID = 4; // 4x4 = 16マス
+function getCaptures(idx, teamId, state){
+  const row = Math.floor(idx/GRID), col = idx%GRID;
+  const dirs = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+  const captures = [];
+  for(const [dr,dc] of dirs){
+    let r=row+dr, c=col+dc;
+    const line = [];
+    let foundOwn = false;
+    while(r>=0 && r<GRID && c>=0 && c<GRID){
+      const cell = state[r*GRID+c];
+      if(cell===null) break;
+      if(cell===teamId){ foundOwn = true; break; }
+      line.push(r*GRID+c);
+      r+=dr; c+=dc;
+    }
+    if(foundOwn && line.length>0) captures.push(...line);
+  }
+  return captures;
+}
+
+function setPanelVisual(i, teamId, {sound=true, instant=false}={}){
+  const el = panelEls[i];
+  const wasFlipped = el.classList.contains('flipped');
+  el.style.setProperty('--team-color', TEAMS[teamId].color);
+  el.querySelector('.back .mark').textContent = TEAMS[teamId].mark;
+  if(instant){
+    el.classList.add('no-anim');
+    el.classList.add('flipped');
+    void el.offsetWidth;
+    el.classList.remove('no-anim');
+    return;
+  }
+  if(!wasFlipped){
+    el.classList.add('flipped');
+    if(sound) SFX.claim();
+  } else {
+    el.classList.add('pulse');
+    if(sound) SFX.tick();
+    setTimeout(()=>el.classList.remove('pulse'), 260);
+  }
+}
+
+function onPanelClick(idx){
+  if(animating) return;
+  if(!activeTeam){
+    hintEl.textContent = '先にチームを選んでね!';
+    return;
+  }
+  history.push(board.slice());
+  undoBtn.disabled = false;
+
+  const captures = getCaptures(idx, activeTeam, board);
+  board[idx] = activeTeam;
+  captures.forEach(i=>board[i]=activeTeam);
+
+  animating = true;
+  setPanelVisual(idx, activeTeam);
+  const sorted = captures.slice().sort((a,b)=>{
+    const da = Math.hypot(Math.floor(a/GRID)-Math.floor(idx/GRID), (a%GRID)-(idx%GRID));
+    const db = Math.hypot(Math.floor(b/GRID)-Math.floor(idx/GRID), (b%GRID)-(idx%GRID));
+    return da-db;
+  });
+  sorted.forEach((i,order)=>{
+    setTimeout(()=>setPanelVisual(i, activeTeam), 140 + order*90);
+  });
+  const totalDelay = 140 + sorted.length*90 + 200;
+  setTimeout(()=>{
+    animating = false;
+    updateScores();
+    checkGameOver();
+  }, totalDelay);
+}
+
+function updateScores(){
+  const counts = {t1:0,t2:0,t3:0,t4:0};
+  board.forEach(v=>{ if(v) counts[v]++; });
+  Object.keys(counts).forEach(id=>{
+    document.querySelector(`[data-count="${id}"]`).textContent = counts[id];
+  });
+  return counts;
+}
+
+function checkGameOver(){
+  if(board.every(v=>v!==null)){
+    const counts = updateScores();
+    showResults(counts);
+  }
+}
+
+function showResults(counts){
+  const teamNames = {};
+  document.querySelectorAll('.team-card').forEach(c=>{
+    teamNames[c.dataset.team] = c.querySelector('.team-name').textContent.trim();
+  });
+  const ranked = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  rankList.innerHTML = '';
+  let place = 1;
+  ranked.forEach(([id,count], i)=>{
+    if(i>0 && ranked[i-1][1] > count) place = i+1;
+    const row = document.createElement('div');
+    row.className = 'rank-row';
+    row.innerHTML = `
+      <span class="place">${place}位</span>
+      <span class="mark" style="background:${TEAMS[id].color}">${TEAMS[id].mark}</span>
+      <span class="rname">${teamNames[id]}</span>
+      <span class="rcount">${count}枚</span>`;
+    rankList.appendChild(row);
+  });
+  SFX.fanfare();
+  overlay.hidden = false;
+}
+
+document.getElementById('playAgainBtn').addEventListener('click', ()=>{
+  overlay.hidden = true;
+  resetBoard();
+});
+
+undoBtn.addEventListener('click', ()=>{
+  if(animating || history.length===0) return;
+  board = history.pop();
+  if(history.length===0) undoBtn.disabled = true;
+  redrawFromState();
+  updateScores();
+});
+
+resetBtn.addEventListener('click', ()=>{
+  if(window.confirm('ボードをリセットしますか?')) resetBoard();
+});
+
+function resetBoard(){
+  board = Array(N).fill(null);
+  history = [];
+  undoBtn.disabled = true;
+  redrawFromState();
+  updateScores();
+  overlay.hidden = true;
+}
+
+function redrawFromState(){
+  panelEls.forEach((el,i)=>{
+    el.classList.add('no-anim');
+    if(board[i]===null){
+      el.classList.remove('flipped');
+    } else {
+      el.style.setProperty('--team-color', TEAMS[board[i]].color);
+      el.querySelector('.back .mark').textContent = TEAMS[board[i]].mark;
+      el.classList.add('flipped');
+    }
+    void el.offsetWidth;
+    el.classList.remove('no-anim');
+  });
+}
+
+// ---- soundboard buttons ----
+document.getElementById('quizStartBtn').addEventListener('click', ()=>{ SFX.unlock(); SFX.quizStart(); });
+document.getElementById('applauseBtn').addEventListener('click', ()=>{ SFX.unlock(); SFX.applause(); });
+document.getElementById('correctBtn').addEventListener('click', ()=>{ SFX.unlock(); SFX.correct(); });
+document.getElementById('wrongBtn').addEventListener('click', ()=>{ SFX.unlock(); SFX.wrong(); });
+
+// unlock audio on first interaction anywhere on the page
+document.addEventListener('click', ()=>SFX.unlock(), {once:true});
+undoBtn.disabled = true;
+</script>
+</body>
+</html>
