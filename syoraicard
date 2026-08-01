@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Future カード作成アプリ</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- html2canvas (画像保存用ライブラリ) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=M+PLUS+Rounded+1c:wght@700;800&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+  <!-- FontAwesome アイコン -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body {
+      font-family: 'Nunito', 'M PLUS Rounded 1c', sans-serif;
+      background-color: #f0fdf4;
+    }
+
+    /* 上下の模様パターン */
+    .pattern-bar {
+      background: repeating-linear-gradient(
+        90deg,
+        #60a5fa 0px, #60a5fa 16px,
+        transparent 16px, transparent 24px,
+        #f97316 24px, #f97316 40px,
+        transparent 40px, transparent 48px
+      );
+      height: 16px;
+    }
+
+    /* 英語の4線ノート風背景 */
+    .english-4lines {
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        transparent 10%,
+        #94a3b8 10%, #94a3b8 12%,       /* 1本目: グレー */
+        transparent 12%,
+        transparent 38%,
+        #cbd5e1 38%, #cbd5e1 40%,       /* 2本目: 破線風 */
+        transparent 40%,
+        transparent 65%,
+        #0284c7 65%, #0284c7 68%,       /* 3本目: 青線 (ベースライン) */
+        transparent 68%,
+        transparent 94%,
+        #94a3b8 94%, #94a3b8 96%,       /* 4本目: グレー */
+        transparent 96%
+      );
+    }
+
+    /* ポップな "My Future" タイトル */
+    .my-future-text {
+      font-family: 'Fredoka', cursive;
+      color: #f97316;
+      -webkit-text-stroke: 2.5px #ffffff;
+      text-shadow: 
+        3px 3px 0px #ea580c,
+        4px 4px 6px rgba(0,0,0,0.15);
+    }
+
+    /* なぞり書き用フォントスタイル */
+    .tracing-mode {
+      color: rgba(148, 163, 184, 0.4);
+      -webkit-text-stroke: 1.5px #64748b;
+      letter-spacing: 2px;
+    }
+
+    .normal-mode {
+      color: #0f172a;
+      letter-spacing: 1px;
+    }
+
+    /* 印刷用調整 */
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        background-color: white;
+      }
+      #card-wrapper {
+        box-shadow: none !important;
+        border: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex flex-col items-center justify-center">
+
+  <header class="no-print text-center mb-6">
+    <h1 class="text-3xl font-extrabold text-teal-600 mb-2">✨ My Future カード作成ツール ✨</h1>
+    <p class="text-gray-600 text-sm">将来の夢を描いて、自分だけのカードを作ろう！</p>
+  </header>
+
+  <div class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    
+    <!-- コントロールパネル (操作画面) -->
+    <div class="no-print lg:col-span-4 bg-white p-6 rounded-2xl shadow-xl border border-teal-100 flex flex-col gap-5">
+      <h2 class="text-xl font-bold text-gray-800 border-b pb-2 border-teal-100">
+        <i class="fa-solid fa-sliders text-teal-500 mr-2"></i>編集パネル
+      </h2>
+
+      <!-- モード切り替え -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">イラストの作成方法</label>
+        <div class="grid grid-cols-2 gap-2 bg-gray-100 p-1 rounded-xl">
+          <button id="btn-mode-draw" class="py-2 text-sm font-bold rounded-lg bg-white shadow-sm text-teal-600 transition">
+            <i class="fa-solid fa-pen mr-1"></i>お絵描き
+          </button>
+          <button id="btn-mode-upload" class="py-2 text-sm font-bold rounded-lg text-gray-500 hover:text-gray-700 transition">
+            <i class="fa-solid fa-image mr-1"></i>画像アップロード
+          </button>
+        </div>
+      </div>
+
+      <!-- お絵描きツール -->
+      <div id="draw-tools" class="flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <label class="text-sm font-bold text-gray-700">ペンの色</label>
+          <input type="color" id="pen-color" value="#3b82f6" class="w-10 h-10 rounded-lg cursor-pointer border border-gray-300">
+        </div>
+        <div class="flex items-center justify-between">
+          <label class="text-sm font-bold text-gray-700">ペンの太さ</label>
+          <input type="range" id="pen-size" min="2" max="20" value="5" class="w-32 accent-teal-500">
+        </div>
+        <div class="flex gap-2 mt-1">
+          <button id="btn-eraser" class="flex-1 py-1.5 px-3 bg-gray-200 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-300 transition">
+            <i class="fa-solid fa-eraser mr-1"></i>消しゴム
+          </button>
+          <button id="btn-clear" class="flex-1 py-1.5 px-3 bg-red-100 text-red-600 rounded-lg text-xs font-bold hover:bg-red-200 transition">
+            <i class="fa-solid fa-trash-can mr-1"></i>全消去
+          </button>
+        </div>
+      </div>
+
+      <!-- 画像アップロードツール -->
+      <div id="upload-tools" class="hidden">
+        <label class="block text-sm font-bold text-gray-700 mb-2">画像をえらぶ</label>
+        <input type="file" id="image-input" accept="image/*" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 cursor-pointer">
+      </div>
+
+      <hr class="border-gray-100">
+
+      <!-- テキスト入力 -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-1">
+          将来なりたいもの（英語）
+        </label>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-sm font-bold text-gray-500">I want to be</span>
+          <input type="text" id="text-input" placeholder="a doctor." value="a soccer player." class="flex-1 px-3 py-2 border rounded-xl focus:ring-2 focus:ring-teal-400 focus:outline-none text-sm font-semibold">
+        </div>
+
+        <!-- なぞり書きトグル -->
+        <label class="flex items-center gap-2 cursor-pointer mt-3">
+          <input type="checkbox" id="tracing-toggle" class="w-4 h-4 text-teal-600 rounded accent-teal-500">
+          <span class="text-xs font-bold text-gray-600">なぞり書きモード（うすい文字にする）</span>
+        </label>
+      </div>
+
+      <hr class="border-gray-100">
+
+      <!-- アクションボタン -->
+      <div class="flex flex-col gap-2">
+        <button id="btn-download" class="w-full py-3 bg-teal-500 hover:bg-teal-600 text-white font-bold rounded-xl shadow-lg shadow-teal-200 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-download"></i> 画像としてダウンロード
+        </button>
+        <button id="btn-print" class="w-full py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 text-sm">
+          <i class="fa-solid fa-print"></i> 印刷する
+        </button>
+      </div>
+    </div>
+
+    <!-- カードプレビューエリア -->
+    <div class="lg:col-span-8 flex justify-center">
+      <div id="card-wrapper" class="w-[780px] h-[390px] bg-white rounded-2xl shadow-2xl overflow-hidden border-4 border-white flex flex-col justify-between relative select-none">
+        
+        <!-- 上部ブロック模様 -->
+        <div class="pattern-bar w-full"></div>
+
+        <!-- 右上: Unit 8 マーク -->
+        <div class="absolute top-6 right-6 border-2 border-gray-800 rounded-full w-10 h-10 flex flex-col items-center justify-center leading-none bg-white z-10">
+          <span class="text-[9px] font-bold">Unit</span>
+          <span class="text-base font-extrabold -mt-0.5">8</span>
+        </div>
+
+        <!-- メインコンテンツ（左右分割） -->
+        <div class="flex-1 flex px-8 py-2 items-center relative">
+          
+          <!-- 左側: My Future ロゴ ＆ シューティングスター背景 -->
+          <div class="w-1/2 h-full flex flex-col justify-center items-center relative pr-4">
+            
+            <!-- 流れ星の虹グラデーション背景 -->
+            <div class="absolute w-[280px] h-[90px] rounded-full blur-sm opacity-80 rotate-[-8deg] -z-0"
+                 style="background: linear-gradient(180deg, #fbcfe8 0%, #fef08a 50%, #bae6fd 100%);"></div>
+
+            <!-- 大きな黄色の星（左） -->
+            <svg class="absolute -left-2 top-6 w-28 h-28 text-yellow-300 drop-shadow-md rotate-[-12deg]" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.784 1.399 8.165L12 18.896l-7.333 3.863 1.399-8.165L.132 9.21l8.2-1.192z"/>
+            </svg>
+            <!-- 小さな星々 -->
+            <svg class="absolute left-24 top-2 w-10 h-10 text-yellow-400 rotate-[15deg]" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.784 1.399 8.165L12 18.896l-7.333 3.863 1.399-8.165L.132 9.21l8.2-1.192z"/>
+            </svg>
+            <svg class="absolute left-44 bottom-2 w-12 h-12 text-yellow-300 rotate-[-20deg]" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.784 1.399 8.165L12 18.896l-7.333 3.863 1.399-8.165L.132 9.21l8.2-1.192z"/>
+            </svg>
+
+            <!-- テキストロゴ "My Future" -->
+            <div class="my-future-text text-5xl font-black z-10 rotate-[-6deg] tracking-wider ml-6">
+              My Future
+            </div>
+          </div>
+
+          <!-- 右側: イラスト / 写真表示枠 -->
+          <div class="w-1/2 h-full flex justify-end items-center pr-4">
+            <div class="w-[320px] h-[210px] border-4 border-sky-300 rounded-3xl bg-white overflow-hidden shadow-inner relative flex items-center justify-center">
+              
+              <!-- お絵描き用Canvas -->
+              <canvas id="card-canvas" width="320" height="210" class="absolute inset-0 cursor-crosshair z-10"></canvas>
+              
+              <!-- アップロード画像表示用 -->
+              <img id="uploaded-img" class="absolute inset-0 w-full h-full object-contain hidden z-0" alt="uploaded">
+            </div>
+          </div>
+        </div>
+
+        <!-- 下部: 英語ノート線 ＆ テキスト -->
+        <div class="px-8 mb-4">
+          <div class="english-4lines h-[60px] w-full relative flex items-center px-4 overflow-hidden rounded-md">
+            <div id="text-display" class="text-3xl font-bold tracking-wide transition-all z-10 flex items-center h-full pt-1 font-mono">
+              <span class="mr-3 opacity-75">I want to be</span>
+              <span id="user-text-target" class="normal-mode">a soccer player.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 下部ブロック模様 -->
+        <div class="pattern-bar w-full"></div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // --- 要素の取得 ---
+    const cardCanvas = document.getElementById('card-canvas');
+    const ctx = cardCanvas.getContext('2d');
+    const uploadedImg = document.getElementById('uploaded-img');
+    const textInput = document.getElementById('text-input');
+    const userTextTarget = document.getElementById('user-text-target');
+    const tracingToggle = document.getElementById('tracing-toggle');
+
+    const btnModeDraw = document.getElementById('btn-mode-draw');
+    const btnModeUpload = document.getElementById('btn-mode-upload');
+    const drawTools = document.getElementById('draw-tools');
+    const uploadTools = document.getElementById('upload-tools');
+
+    const penColorInput = document.getElementById('pen-color');
+    const penSizeInput = document.getElementById('pen-size');
+    const btnEraser = document.getElementById('btn-eraser');
+    const btnClear = document.getElementById('btn-clear');
+    const imageInput = document.getElementById('image-input');
+
+    const btnDownload = document.getElementById('btn-download');
+    const btnPrint = document.getElementById('btn-print');
+
+    // --- お絵描き状態設定 ---
+    let isDrawing = false;
+    let isEraser = false;
+    let currentPenColor = penColorInput.value;
+
+    // --- テキストリアルタイム反映 ---
+    textInput.addEventListener('input', (e) => {
+      userTextTarget.textContent = e.target.value || '...';
+    });
+
+    // なぞり書きモードトグル
+    tracingToggle.addEventListener('change', (e) => {
+      const textContainer = document.getElementById('text-display');
+      if (e.target.checked) {
+        textContainer.classList.add('tracing-mode');
+        textContainer.classList.remove('normal-mode');
+      } else {
+        textContainer.classList.remove('tracing-mode');
+        textContainer.classList.add('normal-mode');
+      }
+    });
+
+    // --- モード切り替え (お絵描き vs アップロード) ---
+    btnModeDraw.addEventListener('click', () => {
+      btnModeDraw.className = "py-2 text-sm font-bold rounded-lg bg-white shadow-sm text-teal-600 transition";
+      btnModeUpload.className = "py-2 text-sm font-bold rounded-lg text-gray-500 hover:text-gray-700 transition";
+      drawTools.classList.remove('hidden');
+      uploadTools.classList.add('hidden');
+      cardCanvas.style.pointerEvents = 'auto';
+    });
+
+    btnModeUpload.addEventListener('click', () => {
+      btnModeUpload.className = "py-2 text-sm font-bold rounded-lg bg-white shadow-sm text-teal-600 transition";
+      btnModeDraw.className = "py-2 text-sm font-bold rounded-lg text-gray-500 hover:text-gray-700 transition";
+      uploadTools.classList.remove('hidden');
+      drawTools.classList.add('hidden');
+      cardCanvas.style.pointerEvents = 'none';
+    });
+
+    // --- キャンバスお絵描きロジック ---
+    function getCanvasCoords(e) {
+      const rect = cardCanvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) * (cardCanvas.width / rect.width),
+        y: (clientY - rect.top) * (cardCanvas.height / rect.height)
+      };
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      const coords = getCanvasCoords(e);
+      ctx.beginPath();
+      ctx.moveTo(coords.x, coords.y);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      e.preventDefault();
+      const coords = getCanvasCoords(e);
+
+      ctx.lineWidth = penSizeInput.value;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      if (isEraser) {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.lineWidth = penSizeInput.value * 2;
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = penColorInput.value;
+      }
+
+      ctx.lineTo(coords.x, coords.y);
+      ctx.stroke();
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+      ctx.beginPath();
+    }
+
+    // マウスイベント
+    cardCanvas.addEventListener('mousedown', startDrawing);
+    cardCanvas.addEventListener('mousemove', draw);
+    cardCanvas.addEventListener('mouseup', stopDrawing);
+    cardCanvas.addEventListener('mouseleave', stopDrawing);
+
+    // タッチイベント (スマホ・タブレット対応)
+    cardCanvas.addEventListener('touchstart', startDrawing);
+    cardCanvas.addEventListener('touchmove', draw);
+    cardCanvas.addEventListener('touchend', stopDrawing);
+
+    // ツールボタン処理
+    penColorInput.addEventListener('change', () => { isEraser = false; });
+    btnEraser.addEventListener('click', () => {
+      isEraser = !isEraser;
+      btnEraser.classList.toggle('bg-teal-200', isEraser);
+    });
+
+    btnClear.addEventListener('click', () => {
+      ctx.clearRect(0, 0, cardCanvas.width, cardCanvas.height);
+    });
+
+    // --- 画像アップロード処理 ---
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          uploadedImg.src = event.target.result;
+          uploadedImg.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // --- 画像として保存 (html2canvas) ---
+    btnDownload.addEventListener('click', () => {
+      const cardElement = document.getElementById('card-wrapper');
+      
+      html2canvas(cardElement, {
+        scale: 2, // 高解像度出力
+        useCORS: true,
+        backgroundColor: null
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'My_Future_Card.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    });
+
+    // --- 印刷処理 ---
+    btnPrint.addEventListener('click', () => {
+      window.print();
+    });
+  </script>
+</body>
+</html>
