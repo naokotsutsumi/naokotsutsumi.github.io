@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>えいごタイピング れんしゅう</title>
+<style>
+  :root{
+    --pink:#ff6fa5; --blue:#4fc3f7; --yellow:#ffd54f; --green:#66bb6a;
+    --purple:#ba68c8; --bg1:#fff6e9; --bg2:#e3f6ff; --ink:#3a3a3a;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    font-family:"Hiragino Maru Gothic ProN","Comic Sans MS","Trebuchet MS",sans-serif;
+    background:linear-gradient(160deg,var(--bg2),var(--bg1));
+    color:var(--ink);
+    overflow-x:hidden;
+  }
+  #app{
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    padding:20px 16px 60px;
+  }
+  .screen{ width:100%; max-width:720px; display:none; flex-direction:column; align-items:center; }
+  .screen.active{ display:flex; }
+
+  h1.title{
+    font-size:2.1rem; color:var(--pink); text-shadow:2px 2px 0 #fff, 4px 4px 0 rgba(0,0,0,0.05);
+    margin:10px 0 6px; text-align:center;
+  }
+  .subtitle{ color:#777; margin-bottom:24px; text-align:center; font-size:1rem;}
+
+  .info-note{
+    background:#fff9e8; border:2px dashed #f0c987; border-radius:16px;
+    padding:14px 18px; margin-bottom:24px; width:100%; max-width:640px;
+    font-size:0.85rem; color:#6b5b3a; line-height:1.7; text-align:left;
+  }
+  .info-note .info-title{ font-weight:bold; color:#c98a2b; margin-bottom:4px; font-size:0.9rem; }
+  .info-note code{
+    background:#fff; border:1px solid #f0c987; border-radius:6px; padding:1px 6px; font-size:0.85rem;
+  }
+
+  /* ---- Level select ---- */
+  .level-grid{
+    display:grid; grid-template-columns:repeat(3,1fr);
+    gap:18px; width:100%;
+  }
+  .level-card{
+    border:none; border-radius:22px; padding:22px 10px 16px;
+    color:#fff; font-weight:bold; cursor:pointer;
+    box-shadow:0 6px 0 rgba(0,0,0,0.15); transition:transform .1s;
+    font-size:1.05rem; display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  .level-card:active{ transform:translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,0.15); }
+  .level-card .lv-num{ font-size:2.4rem; }
+  .level-card .lv-desc{ font-size:0.85rem; font-weight:normal; opacity:.95; }
+  .level-card.l1{ background:linear-gradient(160deg,#7ee8c7,#3fb98d); }
+  .level-card.l2{ background:linear-gradient(160deg,#8fd1ff,#4fa3e3); }
+  .level-card.l3{ background:linear-gradient(160deg,#ffd27f,#ff9f43); }
+  .level-card.l4{ background:linear-gradient(160deg,#ffa3c7,#ff6fa5); }
+  .level-card.l5{ background:linear-gradient(160deg,#c39bff,#9b5de5); }
+  .best-badge{
+    font-size:0.75rem; background:rgba(255,255,255,0.35); border-radius:10px;
+    padding:2px 8px; margin-top:2px;
+  }
+
+  /* ---- Game screen ---- */
+  .topbar{
+    width:100%; display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;
+  }
+  .back-btn{
+    background:#fff; border:2px solid #ddd; border-radius:14px; padding:8px 14px;
+    cursor:pointer; font-size:0.9rem; color:#888;
+  }
+  .progress-wrap{ flex:1; margin:0 14px; }
+  .progress-bar{ background:#fff; border-radius:20px; height:16px; overflow:hidden; box-shadow:inset 0 0 0 2px #eee;}
+  .progress-fill{ height:100%; background:linear-gradient(90deg,var(--blue),var(--green)); width:0%; transition:width .3s; }
+  .progress-label{ text-align:center; font-size:0.8rem; color:#888; margin-top:4px;}
+  .stars{ font-size:1.1rem; letter-spacing:2px; }
+
+  .card{
+    background:#fff; border-radius:28px; padding:24px 20px; width:100%;
+    box-shadow:0 8px 24px rgba(0,0,0,0.08); display:flex; flex-direction:column; align-items:center;
+    position:relative;
+  }
+  .illust-wrap{
+    width:220px; height:220px; border-radius:20px; overflow:hidden;
+    background:#f4f8fb; display:flex; align-items:center; justify-content:center;
+    border:6px solid #fff; box-shadow:0 0 0 3px #eef2f5;
+    margin-bottom:14px;
+  }
+  .illust-wrap img{ width:100%; height:100%; object-fit:contain; }
+
+  .speak-btn{
+    border:none; background:var(--blue); color:#fff; width:54px; height:54px; border-radius:50%;
+    font-size:1.5rem; cursor:pointer; box-shadow:0 4px 0 #2f9fd6; margin-bottom:14px;
+  }
+  .speak-btn:active{ transform:translateY(3px); box-shadow:0 1px 0 #2f9fd6; }
+
+  .model-word{
+    font-size:2.2rem; letter-spacing:6px; font-weight:bold; color:#555;
+    background:var(--bg1); padding:6px 22px; border-radius:16px; margin-bottom:18px;
+    border:2px dashed #f0c987;
+  }
+
+  .letter-boxes{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:18px; }
+  .letter-box{
+    width:42px; height:52px; border-radius:10px; border:3px solid #dfe6ea;
+    display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:bold;
+    color:var(--ink); background:#fbfdff; transition:all .15s;
+  }
+  .letter-box.filled{ border-color:var(--green); background:#eafaf0; color:var(--green); }
+  .letter-box.wrong{ border-color:#ff5a5a; background:#ffecec; animation:shake .3s; }
+  .letter-box.space{ border:none; background:none; width:20px; }
+
+  @keyframes shake{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(-5px); }
+    75%{ transform:translateX(5px); }
+  }
+
+  #typeInput{
+    opacity:0; position:absolute; width:1px; height:1px; pointer-events:none;
+  }
+  .hint{ color:#aaa; font-size:0.85rem; margin-top:4px; }
+
+  /* ---- Result screen ---- */
+  .result-emoji{ font-size:4.5rem; margin-bottom:6px; }
+  .result-title{ font-size:1.8rem; font-weight:bold; color:var(--pink); margin-bottom:6px; text-align:center;}
+  .result-score{ font-size:1.3rem; color:#666; margin-bottom:22px; }
+  .result-btns{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+  .btn{
+    border:none; border-radius:16px; padding:14px 26px; font-size:1.05rem; font-weight:bold;
+    color:#fff; cursor:pointer; box-shadow:0 5px 0 rgba(0,0,0,0.15);
+  }
+  .btn:active{ transform:translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,0.15); }
+  .btn.retry{ background:var(--green); }
+  .btn.home{ background:var(--purple); }
+
+  .confetti{
+    position:fixed; top:-20px; width:10px; height:16px; opacity:0.9; z-index:50;
+    animation:fall linear forwards;
+  }
+  @keyframes fall{
+    to{ transform:translateY(110vh) rotate(360deg); opacity:0.3; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== Level select screen ===== -->
+  <div class="screen active" id="screen-select">
+    <h1 class="title">Every Day English Typing Challenge</h1>
+    <p class="subtitle">レベルをえらんでね</p>
+    <div class="info-note">
+      <div class="info-title">⌨️ にゅうりょくの ヒント</div>
+      たんごとたんごの あいだには、キーボードの <code>スペースキー</code>(space)を おしてね。<br>
+      れい:<code>go to school</code> は g-o- (スペース) -t-o- (スペース) -s-c-h-o-o-l と うつよ。<br><br>
+      アポストロフィ(<code>'</code>)が つく たんごも あるよ。<br>
+      れい:<code>teachers' room</code> の <code>'</code> は、キーボードの <code>'</code>キーで にゅうりょくしてね。
+    </div>
+    <div class="level-grid" id="levelGrid"></div>
+  </div>
+
+  <!-- ===== Game screen ===== -->
+  <div class="screen" id="screen-game">
+    <div class="topbar">
+      <button class="back-btn" id="backBtn">← もどる</button>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel">1 / 10</div>
+      </div>
+      <div class="stars" id="starsLabel">⭐️0</div>
+    </div>
+
+    <div class="card">
+      <div class="illust-wrap"><img id="wordImage" src="" alt=""></div>
+      <button class="speak-btn" id="speakBtn" title="もう一度きく">🔊</button>
+      <div class="model-word" id="modelWord">apple</div>
+      <div class="letter-boxes" id="letterBoxes"></div>
+      <div class="hint">キーボードで にゅうりょくしてね</div>
+      <input id="typeInput" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <audio id="wordAudio"></audio>
+  </div>
+
+  <!-- ===== Result screen ===== -->
+  <div class="screen" id="screen-result">
+    <div class="card" style="align-items:center;">
+      <div class="result-emoji" id="resultEmoji">🎉</div>
+      <div class="result-title" id="resultTitle">パーフェクト！</div>
+      <div class="result-score" id="resultScore">10 / 10 もんクリア！</div>
+      <div class="result-btns">
+        <button class="btn retry" id="retryBtn">もういちど</button>
+        <button class="btn home" id="homeBtn">レベルをえらぶ</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ================= Word data ================= */
+const WORD_DATA = {"1": [{"word": "black", "image": "assets_v2/level1/black.png", "audio": "assets_v2/level1/black.mp3"}, {"word": "blue", "image": "assets_v2/level1/blue.png", "audio": "assets_v2/level1/blue.mp3"}, {"word": "brown", "image": "assets_v2/level1/brown.png", "audio": "assets_v2/level1/brown.mp3"}, {"word": "green", "image": "assets_v2/level1/green.png", "audio": "assets_v2/level1/green.mp3"}, {"word": "orange", "image": "assets_v2/level1/orange.png", "audio": "assets_v2/level1/orange.mp3"}, {"word": "pink", "image": "assets_v2/level1/pink.png", "audio": "assets_v2/level1/pink.mp3"}, {"word": "purple", "image": "assets_v2/level1/purple.png", "audio": "assets_v2/level1/purple.mp3"}, {"word": "red", "image": "assets_v2/level1/red.png", "audio": "assets_v2/level1/red.mp3"}, {"word": "white", "image": "assets_v2/level1/white.png", "audio": "assets_v2/level1/white.mp3"}, {"word": "yellow", "image": "assets_v2/level1/yellow.png", "audio": "assets_v2/level1/yellow.mp3"}], "2": [{"word": "bean", "image": "assets_v2/level2/bean.png", "audio": "assets_v2/level2/bean.mp3"}, {"word": "corn", "image": "assets_v2/level2/corn.png", "audio": "assets_v2/level2/corn.mp3"}, {"word": "onion", "image": "assets_v2/level2/onion.png", "audio": "assets_v2/level2/onion.mp3"}, {"word": "potato", "image": "assets_v2/level2/potato.png", "audio": "assets_v2/level2/potato.mp3"}, {"word": "tomato", "image": "assets_v2/level2/tomato.png", "audio": "assets_v2/level2/tomato.mp3"}, {"word": "cabbage", "image": "assets_v2/level2/cabbage.png", "audio": "assets_v2/level2/cabbage.mp3"}, {"word": "lettuce", "image": "assets_v2/level2/lettuce.png", "audio": "assets_v2/level2/lettuce.mp3"}, {"word": "spinach", "image": "assets_v2/level2/spinach.png", "audio": "assets_v2/level2/spinach.mp3"}, {"word": "broccoli", "image": "assets_v2/level2/broccoli.png", "audio": "assets_v2/level2/broccoli.mp3"}, {"word": "cucumber", "image": "assets_v2/level2/cucumber.png", "audio": "assets_v2/level2/cucumber.mp3"}], "3": [{"word": "nut", "image": "assets_v2/level3/nut.png", "audio": "assets_v2/level3/nut.mp3"}, {"word": "apple", "image": "assets_v2/level3/apple.png", "audio": "assets_v2/level3/apple.mp3"}, {"word": "lemon", "image": "assets_v2/level3/lemon.png", "audio": "assets_v2/level3/lemon.mp3"}, {"word": "melon", "image": "assets_v2/level3/melon.png", "audio": "assets_v2/level3/melon.mp3"}, {"word": "peach", "image": "assets_v2/level3/peach.png", "audio": "assets_v2/level3/peach.mp3"}, {"word": "banana", "image": "assets_v2/level3/banana.png", "audio": "assets_v2/level3/banana.mp3"}, {"word": "cherry", "image": "assets_v2/level3/cherry.png", "audio": "assets_v2/level3/cherry.mp3"}, {"word": "grapes", "image": "assets_v2/level3/grapes.png", "audio": "assets_v2/level3/grapes.mp3"}, {"word": "orange", "image": "assets_v2/level3/orange.png", "audio": "assets_v2/level3/orange.mp3"}, {"word": "pineapple", "image": "assets_v2/level3/pineapple.png", "audio": "assets_v2/level3/pineapple.mp3"}], "4": [{"word": "judo", "image": "assets_v2/level4/judo.png", "audio": "assets_v2/level4/judo.mp3"}, {"word": "sumo", "image": "assets_v2/level4/sumo.png", "audio": "assets_v2/level4/sumo.mp3"}, {"word": "kendo", "image": "assets_v2/level4/kendo.png", "audio": "assets_v2/level4/kendo.mp3"}, {"word": "rugby", "image": "assets_v2/level4/rugby.png", "audio": "assets_v2/level4/rugby.mp3"}, {"word": "skiing", "image": "assets_v2/level4/skiing.png", "audio": "assets_v2/level4/skiing.mp3"}, {"word": "soccer", "image": "assets_v2/level4/soccer.png", "audio": "assets_v2/level4/soccer.mp3"}, {"word": "tennis", "image": "assets_v2/level4/tennis.png", "audio": "assets_v2/level4/tennis.mp3"}, {"word": "baseball", "image": "assets_v2/level4/baseball.png", "audio": "assets_v2/level4/baseball.mp3"}, {"word": "swimming", "image": "assets_v2/level4/swimming.png", "audio": "assets_v2/level4/swimming.mp3"}, {"word": "badminton", "image": "assets_v2/level4/badminton.png", "audio": "assets_v2/level4/badminton.mp3"}], "5": [{"word": "grilled eel", "image": "assets_v2/level5/grilled_eel.png", "audio": "assets_v2/level5/grilled_eel.mp3"}, {"word": "rice ball", "image": "assets_v2/level5/rice_ball.png", "audio": "assets_v2/level5/rice_ball.mp3"}, {"word": "curry and rice", "image": "assets_v2/level5/curry_and_rice.png", "audio": "assets_v2/level5/curry_and_rice.mp3"}, {"word": "sandwich", "image": "assets_v2/level5/sandwich.png", "audio": "assets_v2/level5/sandwich.mp3"}, {"word": "bread", "image": "assets_v2/level5/bread.png", "audio": "assets_v2/level5/bread.mp3"}, {"word": "pancake", "image": "assets_v2/level5/pancake.png", "audio": "assets_v2/level5/pancake.mp3"}, {"word": "hamburger", "image": "assets_v2/level5/hamburger.png", "audio": "assets_v2/level5/hamburger.mp3"}, {"word": "pizza", "image": "assets_v2/level5/pizza.png", "audio": "assets_v2/level5/pizza.mp3"}, {"word": "grilled fish", "image": "assets_v2/level5/grilled_fish.png", "audio": "assets_v2/level5/grilled_fish.mp3"}, {"word": "rice", "image": "assets_v2/level5/rice.png", "audio": "assets_v2/level5/rice.mp3"}], "6": [{"word": "bitter", "image": "assets_v2/level6/bitter.png", "audio": "assets_v2/level6/bitter.mp3"}, {"word": "cold", "image": "assets_v2/level6/cold.png", "audio": "assets_v2/level6/cold.mp3"}, {"word": "delicious", "image": "assets_v2/level6/delicious.png", "audio": "assets_v2/level6/delicious.mp3"}, {"word": "hard", "image": "assets_v2/level6/hard.png", "audio": "assets_v2/level6/hard.mp3"}, {"word": "hot", "image": "assets_v2/level6/hot.png", "audio": "assets_v2/level6/hot.mp3"}, {"word": "salty", "image": "assets_v2/level6/salty.png", "audio": "assets_v2/level6/salty.mp3"}, {"word": "soft", "image": "assets_v2/level6/soft.png", "audio": "assets_v2/level6/soft.mp3"}, {"word": "sour", "image": "assets_v2/level6/sour.png", "audio": "assets_v2/level6/sour.mp3"}, {"word": "spicy", "image": "assets_v2/level6/spicy.png", "audio": "assets_v2/level6/spicy.mp3"}, {"word": "sweet", "image": "assets_v2/level6/sweet.png", "audio": "assets_v2/level6/sweet.mp3"}], "7": [{"word": "cousin", "image": "assets_v2/level7/cousin.png", "audio": "assets_v2/level7/cousin.mp3"}, {"word": "father", "image": "assets_v2/level7/father.png", "audio": "assets_v2/level7/father.mp3"}, {"word": "mother", "image": "assets_v2/level7/mother.png", "audio": "assets_v2/level7/mother.mp3"}, {"word": "me", "image": "assets_v2/level7/me.png", "audio": "assets_v2/level7/me.mp3"}, {"word": "brother", "image": "assets_v2/level7/brother.png", "audio": "assets_v2/level7/brother.mp3"}, {"word": "sister", "image": "assets_v2/level7/sister.png", "audio": "assets_v2/level7/sister.mp3"}, {"word": "grandfather", "image": "assets_v2/level7/grandfather.png", "audio": "assets_v2/level7/grandfather.mp3"}, {"word": "uncle", "image": "assets_v2/level7/uncle.png", "audio": "assets_v2/level7/uncle.mp3"}, {"word": "grandmother", "image": "assets_v2/level7/grandmother.png", "audio": "assets_v2/level7/grandmother.mp3"}, {"word": "aunt", "image": "assets_v2/level7/aunt.png", "audio": "assets_v2/level7/aunt.mp3"}], "8": [{"word": "get up", "image": "assets_v2/level8/get_up.jpg", "audio": "assets_v2/level8/get_up.mp3"}, {"word": "go home", "image": "assets_v2/level8/go_home.jpg", "audio": "assets_v2/level8/go_home.mp3"}, {"word": "watch TV", "image": "assets_v2/level8/watch_TV.jpg", "audio": "assets_v2/level8/watch_TV.mp3"}, {"word": "go to bed", "image": "assets_v2/level8/go_to_bed.jpg", "audio": "assets_v2/level8/go_to_bed.mp3"}, {"word": "have lunch", "image": "assets_v2/level8/have_lunch.jpg", "audio": "assets_v2/level8/have_lunch.mp3"}, {"word": "have dinner", "image": "assets_v2/level8/have_dinner.jpg", "audio": "assets_v2/level8/have_dinner.mp3"}, {"word": "play soccer", "image": "assets_v2/level8/play_soccer.jpg", "audio": "assets_v2/level8/play_soccer.mp3"}, {"word": "take a bath", "image": "assets_v2/level8/take_a_bath.jpg", "audio": "assets_v2/level8/take_a_bath.mp3"}, {"word": "comb my hair", "image": "assets_v2/level8/comb_my_hair.jpg", "audio": "assets_v2/level8/comb_my_hair.mp3"}, {"word": "go to school", "image": "assets_v2/level8/go_to_school.jpg", "audio": "assets_v2/level8/go_to_school.mp3"}], "9": [{"word": "gym", "image": "assets_v2/level9/gym.jpg", "audio": "assets_v2/level9/gym.mp3"}, {"word": "library", "image": "assets_v2/level9/library.jpg", "audio": "assets_v2/level9/library.mp3"}, {"word": "restroom", "image": "assets_v2/level9/restroom.png", "audio": "assets_v2/level9/restroom.mp3"}, {"word": "classroom", "image": "assets_v2/level9/classroom.jpg", "audio": "assets_v2/level9/classroom.mp3"}, {"word": "lunch room", "image": "assets_v2/level9/lunch_room.jpg", "audio": "assets_v2/level9/lunch_room.mp3"}, {"word": "music room", "image": "assets_v2/level9/music_room.jpg", "audio": "assets_v2/level9/music_room.mp3"}, {"word": "playground", "image": "assets_v2/level9/playground.jpg", "audio": "assets_v2/level9/playground.mp3"}, {"word": "cooking room", "image": "assets_v2/level9/cooking_room.jpg", "audio": "assets_v2/level9/cooking_room.mp3"}, {"word": "science room", "image": "assets_v2/level9/science_room.jpg", "audio": "assets_v2/level9/science_room.mp3"}, {"word": "computer room", "image": "assets_v2/level9/computer_room.jpg", "audio": "assets_v2/level9/computer_room.mp3"}], "10": [{"word": "bag", "image": "assets_v2/level10/bag.png", "audio": "assets_v2/level10/bag.mp3"}, {"word": "bat", "image": "assets_v2/level10/bat.png", "audio": "assets_v2/level10/bat.mp3"}, {"word": "bed", "image": "assets_v2/level10/bed.png", "audio": "assets_v2/level10/bed.mp3"}, {"word": "mug", "image": "assets_v2/level10/mug.png", "audio": "assets_v2/level10/mug.mp3"}, {"word": "desk", "image": "assets_v2/level10/desk.png", "audio": "assets_v2/level10/desk.mp3"}, {"word": "chair", "image": "assets_v2/level10/chair.png", "audio": "assets_v2/level10/chair.mp3"}, {"word": "glass", "image": "assets_v2/level10/glass.png", "audio": "assets_v2/level10/glass.mp3"}, {"word": "glove", "image": "assets_v2/level10/glove.png", "audio": "assets_v2/level10/glove.mp3"}, {"word": "watch", "image": "assets_v2/level10/watch.png", "audio": "assets_v2/level10/watch.mp3"}, {"word": "racket", "image": "assets_v2/level10/racket.png", "audio": "assets_v2/level10/racket.mp3"}], "11": [{"word": "vet", "image": "assets_v2/level11/vet.png", "audio": "assets_v2/level11/vet.mp3"}, {"word": "cook", "image": "assets_v2/level11/cook.png", "audio": "assets_v2/level11/cook.mp3"}, {"word": "baker", "image": "assets_v2/level11/baker.png", "audio": "assets_v2/level11/baker.mp3"}, {"word": "nurse", "image": "assets_v2/level11/nurse.png", "audio": "assets_v2/level11/nurse.mp3"}, {"word": "pilot", "image": "assets_v2/level11/pilot.png", "audio": "assets_v2/level11/pilot.mp3"}, {"word": "artist", "image": "assets_v2/level11/artist.png", "audio": "assets_v2/level11/artist.mp3"}, {"word": "farmer", "image": "assets_v2/level11/farmer.png", "audio": "assets_v2/level11/farmer.mp3"}, {"word": "singer", "image": "assets_v2/level11/singer.png", "audio": "assets_v2/level11/singer.mp3"}, {"word": "writer", "image": "assets_v2/level11/writer.png", "audio": "assets_v2/level11/writer.mp3"}, {"word": "teacher", "image": "assets_v2/level11/teacher.png", "audio": "assets_v2/level11/teacher.mp3"}], "12": [{"word": "tablet", "image": "assets_v2/level12/tablet.png", "audio": "assets_v2/level12/tablet.mp3"}, {"word": "ticket", "image": "assets_v2/level12/ticket.png", "audio": "assets_v2/level12/ticket.mp3"}, {"word": "present", "image": "assets_v2/level12/present.png", "audio": "assets_v2/level12/present.mp3"}, {"word": "sticker", "image": "assets_v2/level12/sticker.png", "audio": "assets_v2/level12/sticker.mp3"}, {"word": "comedian", "image": "assets_v2/level12/comedian.png", "audio": "assets_v2/level12/comedian.mp3"}, {"word": "computer", "image": "assets_v2/level12/computer.png", "audio": "assets_v2/level12/computer.mp3"}, {"word": "eggplant", "image": "assets_v2/level12/eggplant.png", "audio": "assets_v2/level12/eggplant.mp3"}, {"word": "mushroom", "image": "assets_v2/level12/mushroom.png", "audio": "assets_v2/level12/mushroom.mp3"}, {"word": "textbook", "image": "assets_v2/level12/textbook.png", "audio": "assets_v2/level12/textbook.mp3"}, {"word": "treasure", "image": "assets_v2/level12/treasure.png", "audio": "assets_v2/level12/treasure.mp3"}], "13": [{"word": "umbrella", "image": "assets_v2/level13/umbrella.png", "audio": "assets_v2/level13/umbrella.mp3"}, {"word": "astronaut", "image": "assets_v2/level13/astronaut.png", "audio": "assets_v2/level13/astronaut.mp3"}, {"word": "dodgeball", "image": "assets_v2/level13/dodgeball.png", "audio": "assets_v2/level13/dodgeball.mp3"}, {"word": "scientist", "image": "assets_v2/level13/scientist.png", "audio": "assets_v2/level13/scientist.mp3"}, {"word": "zookeeper", "image": "assets_v2/level13/zookeeper.png", "audio": "assets_v2/level13/zookeeper.mp3"}, {"word": "basketball", "image": "assets_v2/level13/basketball.png", "audio": "assets_v2/level13/basketball.mp3"}, {"word": "comic book", "image": "assets_v2/level13/comic_book.png", "audio": "assets_v2/level13/comic_book.mp3"}, {"word": "dictionary", "image": "assets_v2/level13/dictionary.png", "audio": "assets_v2/level13/dictionary.mp3"}, {"word": "kiwi fruit", "image": "assets_v2/level13/kiwi_fruit.png", "audio": "assets_v2/level13/kiwi_fruit.mp3"}, {"word": "programmer", "image": "assets_v2/level13/programmer.png", "audio": "assets_v2/level13/programmer.mp3"}], "14": [{"word": "smartphone", "image": "assets_v2/level14/smartphone.png", "audio": "assets_v2/level14/smartphone.mp3"}, {"word": "strawberry", "image": "assets_v2/level14/strawberry.png", "audio": "assets_v2/level14/strawberry.mp3"}, {"word": "volleyball", "image": "assets_v2/level14/volleyball.png", "audio": "assets_v2/level14/volleyball.mp3"}, {"word": "watermelon", "image": "assets_v2/level14/watermelon.png", "audio": "assets_v2/level14/watermelon.mp3"}, {"word": "firefighter", "image": "assets_v2/level14/firefighter.png", "audio": "assets_v2/level14/firefighter.mp3"}, {"word": "green pepper", "image": "assets_v2/level14/green_pepper.png", "audio": "assets_v2/level14/green_pepper.mp3"}, {"word": "soccer shoes", "image": "assets_v2/level14/soccer_shoes.png", "audio": "assets_v2/level14/soccer_shoes.mp3"}, {"word": "table tennis", "image": "assets_v2/level14/table_tennis.png", "audio": "assets_v2/level14/table_tennis.mp3"}, {"word": "walk my dog", "image": "assets_v2/level14/walk_the_dog.jpg", "audio": "assets_v2/level14/walk_the_dog.mp3"}, {"word": "office worker", "image": "assets_v2/level14/office_worker.png", "audio": "assets_v2/level14/office_worker.mp3"}], "15": [{"word": "school office", "image": "assets_v2/level15/school_office.jpg", "audio": "assets_v2/level15/school_office.mp3"}, {"word": "study English", "image": "assets_v2/level15/study_English.jpg", "audio": "assets_v2/level15/study_English.mp3"}, {"word": "swimming pool", "image": "assets_v2/level15/swimming_pool.png", "audio": "assets_v2/level15/swimming_pool.mp3"}, {"word": "brush my teeth", "image": "assets_v2/level15/brush_my_teeth.jpg", "audio": "assets_v2/level15/brush_my_teeth.mp3"}, {"word": "do my homework", "image": "assets_v2/level15/do_my_homework.jpg", "audio": "assets_v2/level15/do_my_homework.mp3"}, {"word": "have breakfast", "image": "assets_v2/level15/have_breakfast.jpg", "audio": "assets_v2/level15/have_breakfast.mp3"}, {"word": "police officer", "image": "assets_v2/level15/police_officer.png", "audio": "assets_v2/level15/police_officer.mp3"}, {"word": "teachers' room", "image": "assets_v2/level15/teachers_room.jpg", "audio": "assets_v2/level15/teachers_room.mp3"}, {"word": "baseball player", "image": "assets_v2/level15/baseball_player.png", "audio": "assets_v2/level15/baseball_player.mp3"}, {"word": "wash the dishes", "image": "assets_v2/level15/wash_the_dishes.jpg", "audio": "assets_v2/level15/wash_the_dishes.mp3"}]};
+
+const LEVEL_META = {
+  1:{label:"レベル1", desc:"いろ", cls:"l1"},
+  2:{label:"レベル2", desc:"やさい", cls:"l2"},
+  3:{label:"レベル3", desc:"くだもの", cls:"l3"},
+  4:{label:"レベル4", desc:"スポーツ", cls:"l4"},
+  5:{label:"レベル5", desc:"たべもの メニュー1", cls:"l5"},
+  6:{label:"レベル6", desc:"あじ など", cls:"l6"},
+  7:{label:"レベル7", desc:"かぞく", cls:"l7"},
+  8:{label:"レベル8", desc:"1にちの こうどう", cls:"l8"},
+  9:{label:"レベル9", desc:"きょうしつの なまえ", cls:"l9"},
+  10:{label:"レベル10", desc:"みのまわりの もの", cls:"l10"},
+  11:{label:"レベル11", desc:"しょくぎょう", cls:"l11"},
+  12:{label:"レベル12", desc:"たんごミックス1", cls:"l12"},
+  13:{label:"レベル13", desc:"たんごミックス2", cls:"l13"},
+  14:{label:"レベル14", desc:"たんごミックス3", cls:"l14"},
+  15:{label:"レベル15", desc:"たんごミックス4", cls:"l15"},
+};
+
+/* Cycling color palette for level cards beyond the first 5 (so new levels never need CSS edits) */
+const LEVEL_COLORS = [
+  ["#7ee8c7","#3fb98d"], ["#8fd1ff","#4fa3e3"], ["#ffd27f","#ff9f43"],
+  ["#ffa3c7","#ff6fa5"], ["#c39bff","#9b5de5"], ["#ffe08a","#f4a13a"],
+  ["#a0e7e5","#38b6a8"], ["#ffb4b4","#e85a5a"],
+];
+function levelGradient(level){
+  const [a,b] = LEVEL_COLORS[(level-1) % LEVEL_COLORS.length];
+  return `linear-gradient(160deg, ${a}, ${b})`;
+}
+
+/* ================= State ================= */
+let state = {
+  level:null,
+  order:[],
+  index:0,
+  mistakesThisWord:false,
+  perfectCount:0,
+  correctCount:0,
+  typedSoFar:'',
+};
+
+/* ================= Sound (Web Audio synthesized) ================= */
+let actx;
+function getCtx(){
+  if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  return actx;
+}
+function beep(freq, start, dur, type='sine', gain=0.18){
+  const ctx = getCtx();
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  g.gain.value = 0;
+  osc.connect(g); g.connect(ctx.destination);
+  const t0 = ctx.currentTime + start;
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(gain, t0 + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.05);
+}
+function sfxCorrectLetter(){ beep(880, 0, 0.08, 'sine', 0.12); }
+function sfxWrongLetter(){ beep(160, 0, 0.15, 'sawtooth', 0.15); }
+function sfxWordDone(){ beep(660,0,0.12,'triangle',0.16); beep(880,0.1,0.16,'triangle',0.16); }
+function sfxFanfare(){
+  const notes = [523.25,659.25,783.99,1046.5,1318.5];
+  notes.forEach((f,i)=> beep(f, i*0.14, 0.35, 'triangle', 0.2));
+  beep(1046.5, notes.length*0.14, 0.5, 'square', 0.15);
+}
+function sfxGoodJob(){
+  const notes = [523.25,659.25,783.99];
+  notes.forEach((f,i)=> beep(f, i*0.15, 0.3, 'triangle', 0.18));
+}
+
+/* ================= Confetti ================= */
+function launchConfetti(){
+  const colors = ['#ff6fa5','#4fc3f7','#ffd54f','#66bb6a','#ba68c8','#ff9f43'];
+  for(let i=0;i<60;i++){
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.style.left = Math.random()*100 + 'vw';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.animationDuration = (2 + Math.random()*1.5) + 's';
+    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    document.body.appendChild(el);
+    setTimeout(()=> el.remove(), 4000);
+  }
+}
+
+/* ================= Best score storage ================= */
+function loadBest(level){
+  try{
+    return parseInt(localStorage.getItem('typingapp_best_lv'+level) || '0', 10);
+  }catch(e){ return 0; }
+}
+function saveBest(level, score){
+  try{
+    const cur = loadBest(level);
+    if(score > cur) localStorage.setItem('typingapp_best_lv'+level, String(score));
+  }catch(e){}
+}
+
+/* ================= Screens ================= */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ================= Build level select ================= */
+function buildLevelGrid(){
+  const grid = document.getElementById('levelGrid');
+  grid.innerHTML = '';
+  Object.keys(LEVEL_META).forEach(lvKey=>{
+    const lv = parseInt(lvKey,10);
+    const meta = LEVEL_META[lv];
+    const best = loadBest(lv);
+    const btn = document.createElement('button');
+    btn.className = 'level-card';
+    btn.style.background = levelGradient(lv);
+    btn.innerHTML = `
+      <div class="lv-num">${lv}</div>
+      <div>${meta.label}</div>
+      <div class="lv-desc">${meta.desc}</div>
+      ${best>0 ? `<div class="best-badge">ベスト ${best}/10</div>` : ''}
+    `;
+    btn.addEventListener('click', ()=> startLevel(lv));
+    grid.appendChild(btn);
+  });
+}
+
+/* ================= Game logic ================= */
+function startLevel(level){
+  const words = WORD_DATA[level];
+  if(!words || words.length === 0){
+    alert('この レベルの もんだいが みつかりませんでした。');
+    return;
+  }
+  state.level = level;
+  state.order = words.slice(); // fixed order (already curated); could shuffle if desired
+  state.index = 0;
+  state.perfectCount = 0;
+  state.correctCount = 0;
+  showScreen('screen-game');
+  loadWord();
+}
+
+function currentWord(){
+  return state.order[state.index];
+}
+
+function loadWord(){
+  const w = currentWord();
+  state.mistakesThisWord = false;
+
+  document.getElementById('progressLabel').textContent = (state.index+1) + ' / ' + state.order.length;
+  document.getElementById('progressFill').style.width = Math.round((state.index/state.order.length)*100) + '%';
+  document.getElementById('starsLabel').textContent = '⭐️' + state.perfectCount;
+
+  document.getElementById('wordImage').src = w.image;
+  document.getElementById('wordImage').alt = w.word;
+  document.getElementById('modelWord').textContent = w.word;
+
+  const audioEl = document.getElementById('wordAudio');
+  audioEl.src = w.audio;
+  audioEl.play().catch(()=>{ /* autoplay may be blocked; user can tap speaker */ });
+
+  buildLetterBoxes(w.word);
+
+  state.typedSoFar = '';
+  const input = document.getElementById('typeInput');
+  input.value = '';
+  input.focus();
+}
+
+function buildLetterBoxes(word){
+  const wrap = document.getElementById('letterBoxes');
+  wrap.innerHTML = '';
+  for(let i=0;i<word.length;i++){
+    const box = document.createElement('div');
+    box.className = 'letter-box' + (word[i] === ' ' ? ' space' : '');
+    box.id = 'lbox-' + i;
+    wrap.appendChild(box);
+  }
+}
+
+function handleChar(ch){
+  const w = currentWord();
+  const target = w.word.toLowerCase();
+  const idx = state.typedSoFar.length;
+  const chLower = ch.toLowerCase();
+
+  if(idx >= target.length || chLower !== target[idx]){
+    // wrong keystroke
+    state.mistakesThisWord = true;
+    sfxWrongLetter();
+    const box = document.getElementById('lbox-' + Math.min(idx, target.length-1));
+    if(box){
+      box.classList.add('wrong');
+      box.textContent = ch;
+      setTimeout(()=>{ box.classList.remove('wrong'); box.textContent=''; }, 250);
+    }
+    return;
+  }
+
+  // correct so far
+  state.typedSoFar += chLower;
+  const box = document.getElementById('lbox-' + idx);
+  box.classList.add('filled');
+  box.textContent = w.word[idx];
+  sfxCorrectLetter();
+
+  if(state.typedSoFar.length === target.length){
+    // word complete
+    sfxWordDone();
+    if(!state.mistakesThisWord) state.perfectCount++;
+    state.correctCount++;
+    document.getElementById('starsLabel').textContent = '⭐️' + state.perfectCount;
+    const input = document.getElementById('typeInput');
+    input.value = '';
+    input.disabled = true;
+    setTimeout(()=>{
+      input.disabled = false;
+      nextWord();
+    }, 700);
+  }
+}
+
+function nextWord(){
+  state.index++;
+  if(state.index >= state.order.length){
+    finishLevel();
+  } else {
+    loadWord();
+  }
+}
+
+function finishLevel(){
+  document.getElementById('progressFill').style.width = '100%';
+  saveBest(state.level, state.perfectCount);
+
+  const total = state.order.length;
+  const perfect = state.perfectCount;
+
+  const emojiEl = document.getElementById('resultEmoji');
+  const titleEl = document.getElementById('resultTitle');
+  const scoreEl = document.getElementById('resultScore');
+
+  if(perfect === total){
+    emojiEl.textContent = '🎉🏆🎉';
+    titleEl.textContent = 'パーフェクト！すごい！';
+    scoreEl.textContent = `${perfect} / ${total} もん ノーミスクリア！`;
+    sfxFanfare();
+    launchConfetti();
+  } else if(perfect >= total*0.7){
+    emojiEl.textContent = '😄🌟';
+    titleEl.textContent = 'よくできました！';
+    scoreEl.textContent = `${perfect} / ${total} もん ノーミス せいかい`;
+    sfxGoodJob();
+  } else {
+    emojiEl.textContent = '💪🙂';
+    titleEl.textContent = 'よくがんばったね！';
+    scoreEl.textContent = `${perfect} / ${total} もん ノーミス せいかい`;
+    sfxGoodJob();
+  }
+
+  buildLevelGrid(); // refresh best scores in background
+  showScreen('screen-result');
+}
+
+/* ================= Events ================= */
+document.getElementById('typeInput').addEventListener('input', (e)=>{
+  // no-op: typing is handled via the document-level keydown listener below,
+  // which is more reliable across browsers/devices (avoids the hidden input
+  // losing focus or the space key scrolling the page mid-word).
+});
+
+document.addEventListener('keydown', (e)=>{
+  if(!document.getElementById('screen-game').classList.contains('active')) return;
+  if(document.getElementById('typeInput').disabled) return;
+  // Only handle single printable characters (letters, space). Ignore Backspace,
+  // Enter, Tab, Shift, arrow keys, etc. (their e.key length is not 1).
+  if(e.key.length !== 1) return;
+  e.preventDefault(); // stop the space key from scrolling the page, etc.
+  handleChar(e.key);
+});
+
+document.getElementById('speakBtn').addEventListener('click', ()=>{
+  const audioEl = document.getElementById('wordAudio');
+  audioEl.currentTime = 0;
+  audioEl.play().catch(()=>{});
+});
+document.getElementById('backBtn').addEventListener('click', ()=>{
+  showScreen('screen-select');
+  buildLevelGrid();
+});
+document.getElementById('retryBtn').addEventListener('click', ()=>{
+  startLevel(state.level);
+});
+document.getElementById('homeBtn').addEventListener('click', ()=>{
+  showScreen('screen-select');
+  buildLevelGrid();
+});
+
+// keep focus on hidden input whenever the game screen is active and user taps the card
+document.getElementById('screen-game').addEventListener('click', ()=>{
+  document.getElementById('typeInput').focus();
+});
+
+/* ================= Init ================= */
+buildLevelGrid();
+</script>
+</body>
+</html>
