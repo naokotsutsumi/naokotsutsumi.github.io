@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>えいたんご タイピング（音声つき）</title>
+<style>
+  :root{
+    --pink:#ff6fa5; --blue:#4fc3f7; --yellow:#ffd54f; --green:#66bb6a;
+    --purple:#ba68c8; --bg1:#fff6e9; --bg2:#e3f6ff; --ink:#3a3a3a; --red:#e05c5c;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; width:100%; min-height:100%;
+    font-family:"Hiragino Maru Gothic ProN","Comic Sans MS","Trebuchet MS",sans-serif;
+    background:linear-gradient(160deg,var(--bg2),var(--bg1));
+    color:var(--ink);
+  }
+  #app{ width:100%; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:24px 16px 60px; }
+
+  h1.title{ font-size:1.8rem; color:var(--pink); text-shadow:2px 2px 0 #fff; margin:0 0 6px; text-align:center; }
+  .subtitle{ color:#888; font-size:0.9rem; margin-bottom:22px; text-align:center; }
+
+  .card{
+    background:#fff; border-radius:26px; padding:32px 28px; width:100%; max-width:560px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.1);
+  }
+
+  /* ---- start screen ---- */
+  .field-block{ margin-bottom:22px; }
+  .field-block label.group-label{ display:block; font-weight:bold; color:#c98a2b; font-size:0.95rem; margin-bottom:10px; }
+  .option-row{ display:flex; flex-wrap:wrap; gap:10px; }
+  #countRow .option-btn{ flex:1 1 calc(50% - 10px); min-width:110px; }
+  .option-btn{
+    flex:1; min-width:140px; background:#fff; border:3px solid #ffe3b0; border-radius:16px;
+    padding:14px 12px; font-size:0.95rem; font-weight:bold; color:var(--ink); cursor:pointer;
+    font-family:inherit; transition:background .15s, border-color .15s; text-align:center;
+  }
+  .option-btn:hover{ background:#fff3e0; border-color:#ffcf7a; }
+  .option-btn.selected{ background:var(--pink); border-color:var(--pink); color:#fff; }
+  .option-btn .opt-sub{ display:block; font-size:0.75rem; font-weight:normal; opacity:0.85; margin-top:2px; }
+
+  select#genreSelect{
+    width:100%; font-size:1rem; padding:12px 14px; border-radius:14px; border:3px solid #ffe3b0;
+    font-family:inherit; color:var(--ink); background:#fff; outline:none;
+  }
+  select#genreSelect:focus{ border-color:var(--pink); }
+
+  .start-btn{
+    width:100%; border:none; background:var(--pink); color:#fff; font-size:1.2rem; font-weight:bold;
+    padding:18px; border-radius:20px; cursor:pointer; box-shadow:0 5px 0 #d94f86;
+    font-family:inherit; margin-top:6px; transition:background .15s;
+  }
+  .start-btn:hover{ background:#ff85b3; }
+  .start-btn:active{ transform:translateY(4px); box-shadow:0 1px 0 #d94f86; }
+  .start-btn:disabled{ background:#ddd; box-shadow:0 5px 0 #bbb; cursor:default; }
+  .word-count-note{ font-size:0.8rem; color:#999; margin-top:8px; text-align:center; }
+
+  /* ---- play screen ---- */
+  .play-top{ display:flex; justify-content:space-between; align-items:center; width:100%; max-width:560px; margin-bottom:14px; font-size:0.9rem; color:#888; }
+  .progress-pill{ background:#fff; border-radius:14px; padding:6px 14px; font-weight:bold; color:var(--pink); box-shadow:0 2px 0 rgba(0,0,0,0.06); }
+  .timer-pill{ background:#fff; border-radius:14px; padding:6px 14px; font-weight:bold; color:#4a90a4; box-shadow:0 2px 0 rgba(0,0,0,0.06); }
+
+  .prompt-box{ text-align:center; margin-bottom:22px; }
+  .prompt-genre{ font-size:0.78rem; color:#aaa; margin-bottom:8px; }
+  .prompt-main{ font-size:2rem; font-weight:bold; color:var(--ink); line-height:1.4; word-break:break-word; }
+  .prompt-main.word-mode{ color:var(--pink); font-size:2.4rem; letter-spacing:1px; }
+  .prompt-kana{ font-size:1rem; color:#e07b3f; margin-top:6px; }
+
+  .type-display{
+    font-size:2.2rem; font-weight:bold; letter-spacing:2px; text-align:center;
+    min-height:60px; padding:14px; border-radius:16px; background:#f7f7f7; margin-bottom:16px;
+    word-break:break-all; font-family:"Trebuchet MS","Comic Sans MS",monospace,sans-serif;
+  }
+  .type-display .ch-correct{ color:var(--green); }
+  .type-display .ch-wrong{ color:#fff; background:var(--red); border-radius:6px; padding:0 2px; }
+  .type-display .ch-pending{ color:#ccc; }
+  .type-display .cursor{ display:inline-block; width:2px; background:var(--pink); animation:blink 1s step-end infinite; }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  #hiddenInput{
+    position:absolute; opacity:0; width:1px; height:1px; pointer-events:none;
+  }
+  .tap-hint{ text-align:center; color:#bbb; font-size:0.85rem; margin-bottom:10px; }
+
+  .feedback-banner{
+    text-align:center; font-size:1.3rem; font-weight:bold; border-radius:16px; padding:12px; margin-bottom:14px;
+    display:none;
+  }
+  .feedback-banner.show-correct{ display:block; background:#e9f9ec; color:#3a9a52; }
+  .feedback-banner.show-wrong{ display:block; background:#fdeaea; color:#c94b4b; }
+  .feedback-banner .correct-answer{ font-size:1rem; font-weight:normal; margin-top:4px; }
+
+  .play-btn-row{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .mini-btn{
+    border:none; border-radius:14px; padding:10px 18px; font-size:0.9rem; font-weight:bold; cursor:pointer;
+    font-family:inherit; transition:background .15s;
+  }
+  .mini-btn.hint{ background:var(--yellow); color:#7a5b00; box-shadow:0 3px 0 #e0b93d; }
+  .mini-btn.hint:hover{ background:#ffe082; }
+  .mini-btn.skip{ background:#f2f2f2; color:#888; box-shadow:0 3px 0 #d8d8d8; }
+  .mini-btn.skip:hover{ background:#e8e8e8; }
+  .mini-btn.next{ background:var(--blue); color:#fff; box-shadow:0 3px 0 #2f9fd6; }
+  .mini-btn.next:hover{ background:#3fb6ea; }
+  .mini-btn:active{ transform:translateY(3px); box-shadow:0 0 0 transparent; }
+  .mini-btn:disabled{ opacity:0.4; cursor:default; }
+
+  .hint-text{ text-align:center; color:#c98a2b; font-size:1rem; margin-bottom:10px; min-height:1.4em; }
+
+  /* ---- result screen ---- */
+  .result-score-row{ display:flex; gap:14px; justify-content:center; margin-bottom:22px; flex-wrap:wrap; }
+  .result-stat{ background:var(--bg1); border-radius:18px; padding:16px 22px; text-align:center; min-width:110px; }
+  .result-stat .num{ font-size:1.8rem; font-weight:bold; color:var(--pink); }
+  .result-stat .label{ font-size:0.78rem; color:#999; margin-top:2px; }
+
+  .miss-list{ margin-bottom:20px; }
+  .miss-list h3{ font-size:1rem; color:#c98a2b; margin-bottom:10px; }
+  .miss-item{
+    display:flex; justify-content:space-between; align-items:center; background:#fff9ec;
+    border-radius:12px; padding:10px 14px; margin-bottom:6px; font-size:0.95rem;
+  }
+  .miss-item .miss-word{ font-weight:bold; color:var(--ink); }
+  .miss-item .miss-meaning{ color:#888; font-size:0.85rem; }
+  .miss-item .miss-tag{ font-size:0.72rem; padding:3px 10px; border-radius:10px; font-weight:bold; }
+  .miss-item .miss-tag.wrong{ background:#fdeaea; color:#c94b4b; }
+  .miss-item .miss-tag.hint{ background:#fff6da; color:#a3810a; }
+  .miss-item .miss-tag.skip{ background:#f0f0f0; color:#888; }
+
+  .result-btn-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .result-btn-row .modal-btn{
+    flex:1; min-width:140px; border:none; border-radius:16px; padding:14px; font-size:0.95rem; font-weight:bold;
+    cursor:pointer; font-family:inherit;
+  }
+  .result-btn-row .primary{ background:var(--pink); color:#fff; box-shadow:0 4px 0 #d94f86; }
+  .result-btn-row .secondary{ background:#f2f2f2; color:#777; box-shadow:0 4px 0 #d8d8d8; }
+  .empty-miss{ text-align:center; color:#3a9a52; font-weight:bold; padding:14px; }
+
+  .hidden{ display:none !important; }
+
+  .speak-btn{
+    border:none; background:var(--blue); color:#fff; width:64px; height:64px; border-radius:50%;
+    font-size:1.8rem; cursor:pointer; box-shadow:0 4px 0 #2f9fd6; transition:background .15s;
+    display:block; margin:0 auto 18px;
+  }
+  .speak-btn:hover{ background:#3fb6ea; }
+  .speak-btn:active{ transform:translateY(3px); box-shadow:0 1px 0 #2f9fd6; }
+  .speak-btn.playing{ animation:pulse 0.6s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.08); } }
+  .tts-note{ text-align:center; font-size:0.75rem; color:#bbb; margin-top:-10px; margin-bottom:14px; }
+
+  .quit-btn{
+    background:none; border:none; color:#bbb; font-size:0.85rem; cursor:pointer; font-family:inherit;
+    padding:6px 10px; border-radius:12px; transition:background .15s, color .15s;
+  }
+  .quit-btn:hover{ background:#fdeaea; color:#c94b4b; }
+
+  @media (max-width:480px){
+    h1.title{ font-size:1.4rem; }
+    .prompt-main{ font-size:1.6rem; }
+    .prompt-main.word-mode{ font-size:1.9rem; }
+    .type-display{ font-size:1.7rem; }
+    .card{ padding:24px 18px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1 class="title">⌨️ えいたんご タイピング</h1>
+  <div class="subtitle">おとを 聞いて、キーボードで うちこもう！</div>
+
+  <!-- ================= START SCREEN ================= -->
+  <div class="card" id="startScreen">
+    <div class="field-block">
+      <label class="group-label">🎯 どちらの もんだいで れんしゅうする？</label>
+      <div class="option-row" id="modeRow">
+        <button type="button" class="option-btn" data-mode="meaning">①意味と発音を聞いて うつ<span class="opt-sub">日本語の意味＋おと → えいご</span></button>
+        <button type="button" class="option-btn" data-mode="word">②つづりと音声を聞いて うつ<span class="opt-sub">えいごを見ながら＋おと → うつ</span></button>
+      </div>
+    </div>
+
+    <div class="field-block">
+      <label class="group-label">📚 ジャンル</label>
+      <select id="genreSelect"><option value="">ぜんぶ（すべてのジャンル）</option></select>
+    </div>
+
+    <div class="field-block">
+      <label class="group-label">🔢 もんだい数</label>
+      <div class="option-row" id="countRow">
+        <button type="button" class="option-btn" data-count="10">10問</button>
+        <button type="button" class="option-btn" data-count="20">20問</button>
+        <button type="button" class="option-btn" data-count="30">30問</button>
+        <button type="button" class="option-btn" data-count="0">ぜんぶ</button>
+      </div>
+      <div class="word-count-note" id="countNote"></div>
+    </div>
+
+    <button type="button" class="start-btn" id="startBtn" disabled>スタート！</button>
+  </div>
+
+  <!-- ================= PLAY SCREEN ================= -->
+  <div class="card hidden" id="playScreen">
+    <div class="play-top">
+      <span class="progress-pill" id="progressPill">1 / 10</span>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="timer-pill" id="timerPill">⏱ 0:00</span>
+        <button type="button" class="quit-btn" id="quitBtn">✕ やめる</button>
+      </div>
+    </div>
+
+    <div class="prompt-box">
+      <div class="prompt-genre" id="promptGenre"></div>
+      <div class="prompt-main" id="promptMain"></div>
+      <div class="prompt-kana" id="promptKana"></div>
+    </div>
+
+    <button type="button" class="speak-btn" id="speakBtn">🔊</button>
+    <div class="tts-note">※ ブラウザの読み上げ機能を使っています</div>
+
+    <div class="type-display" id="typeDisplay"></div>
+    <input type="text" id="hiddenInput" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="tap-hint" id="tapHint">画面をタップして、キーボードでうちはじめよう</div>
+
+    <div class="hint-text" id="hintText"></div>
+
+    <div class="feedback-banner" id="feedbackBanner"></div>
+
+    <div class="play-btn-row">
+      <button type="button" class="mini-btn hint" id="hintBtn">💡 ヒント</button>
+      <button type="button" class="mini-btn skip" id="skipBtn">⏭ スキップ</button>
+      <button type="button" class="mini-btn next hidden" id="nextBtn">つぎへ →</button>
+    </div>
+  </div>
+
+  <!-- ================= RESULT SCREEN ================= -->
+  <div class="card hidden" id="resultScreen">
+    <h1 class="title" style="font-size:1.5rem;">🎉 けっか</h1>
+    <div class="result-score-row">
+      <div class="result-stat"><div class="num" id="resCorrect">0</div><div class="label">1かいで せいかい</div></div>
+      <div class="result-stat"><div class="num" id="resTotal">0</div><div class="label">もんだい数</div></div>
+      <div class="result-stat"><div class="num" id="resTime">0:00</div><div class="label">かかった時間</div></div>
+    </div>
+
+    <div class="miss-list" id="missListWrap">
+      <h3>📖 もう一度 見ておきたい ことば</h3>
+      <div id="missList"></div>
+    </div>
+
+    <div class="result-btn-row">
+      <button type="button" class="modal-btn primary hidden" id="retryMissBtn">まちがえた語だけ もう一度</button>
+      <button type="button" class="modal-btn secondary" id="restartSameBtn">同じ 設定で もう一度</button>
+      <button type="button" class="modal-btn secondary" id="backToStartBtn">設定に もどる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= Data ================= */
+const WORD_DATA = [{"w": "fine", "m": "元気な", "k": "ファイン", "g": "気分"}, {"w": "good", "m": "良い", "k": "グドゥ", "g": "気分"}, {"w": "great", "m": "すばらしい、すごい、とても良い", "k": "グレイトゥ", "g": "気分"}, {"w": "happy", "m": "楽しい、幸せな", "k": "ハピー", "g": "気分"}, {"w": "sad", "m": "悲しい", "k": "サドゥ", "g": "気分"}, {"w": "nervous", "m": "緊張して", "k": "ナーヴァス", "g": "気分"}, {"w": "tired", "m": "つかれた", "k": "タイアードゥ", "g": "気分"}, {"w": "sleepy", "m": "ねむい", "k": "スリーピー", "g": "気分"}, {"w": "busy", "m": "いそがしい", "k": "ビジー", "g": "気分"}, {"w": "hungry", "m": "空腹な", "k": "ハンググリー", "g": "気分"}, {"w": "thirsty", "m": "のどがかわいた", "k": "サースティー", "g": "気分"}, {"w": "white", "m": "白", "k": "ワイトゥ", "g": "色"}, {"w": "red", "m": "赤", "k": "レドゥ", "g": "色"}, {"w": "orange", "m": "だいだい、オレンジ", "k": "オランジュ", "g": "色"}, {"w": "yellow", "m": "黄", "k": "イェロウ", "g": "色"}, {"w": "green", "m": "緑", "k": "グリーン", "g": "色"}, {"w": "pink", "m": "もも（色）", "k": "ピングク", "g": "色"}, {"w": "purple", "m": "むらさき", "k": "パーパル", "g": "色"}, {"w": "brown", "m": "茶", "k": "ブラウン", "g": "色"}, {"w": "black", "m": "黒", "k": "ブラク", "g": "色"}, {"w": "blue", "m": "青", "k": "ブルー", "g": "色"}, {"w": "circle", "m": "円", "k": "サーカル", "g": "形"}, {"w": "cross", "m": "十字形", "k": "クロス", "g": "形"}, {"w": "diamond", "m": "ひし形", "k": "ダイマンドゥ", "g": "形"}, {"w": "heart", "m": "ハート形", "k": "ハートゥ", "g": "形"}, {"w": "rectangle", "m": "長方形", "k": "レクタングガル", "g": "形"}, {"w": "square", "m": "正方形", "k": "スクウェー", "g": "形"}, {"w": "star", "m": "星形、星", "k": "スター", "g": "形"}, {"w": "triangle", "m": "三角形、トライアングル", "k": "トゥライアングガル", "g": "形"}, {"w": "baseball", "m": "野球", "k": "ベイスボル", "g": "スポーツ"}, {"w": "basketball", "m": "バスケットボール", "k": "バスカトゥボル", "g": "スポーツ"}, {"w": "volleyball", "m": "バレーボール", "k": "ヴァリーボル", "g": "スポーツ"}, {"w": "dodgeball", "m": "ドッジボール", "k": "", "g": "スポーツ"}, {"w": "rugby", "m": "ラグビー", "k": "ラグビー", "g": "スポーツ"}, {"w": "soccer", "m": "サッカー", "k": "サカー", "g": "スポーツ"}, {"w": "tennis", "m": "テニス", "k": "テナス", "g": "スポーツ"}, {"w": "table tennis", "m": "卓球", "k": "テイバル テナス", "g": "スポーツ"}, {"w": "badminton", "m": "バドミントン", "k": "バドゥミンタン", "g": "スポーツ"}, {"w": "cricket", "m": "クリケット", "k": "クリカトゥ", "g": "スポーツ"}, {"w": "gymnastics", "m": "体操", "k": "ジムナスティクス", "g": "スポーツ"}, {"w": "track and field", "m": "陸上競技", "k": "トゥラク アンドゥ フィールドゥ", "g": "スポーツ"}, {"w": "judo", "m": "柔道", "k": "ジュードウ", "g": "スポーツ"}, {"w": "kendo", "m": "剣道", "k": "", "g": "スポーツ"}, {"w": "sumo", "m": "相撲", "k": "スーモウ", "g": "スポーツ"}, {"w": "swimming", "m": "水泳", "k": "スウィミング", "g": "スポーツ"}, {"w": "skateboarding", "m": "スケートボード", "k": "スケイトゥボーディング", "g": "スポーツ"}, {"w": "skiing", "m": "スキー", "k": "スキーイング", "g": "スポーツ"}, {"w": "dancing", "m": "ダンス、踊り", "k": "ダンシング", "g": "スポーツ"}, {"w": "rice", "m": "ご飯", "k": "ライス", "g": "食べ物"}, {"w": "rice ball", "m": "おにぎり", "k": "ライス ボル", "g": "食べ物"}, {"w": "curry and rice", "m": "カレーライス", "k": "カリー アンドゥ ライス", "g": "食べ物"}, {"w": "grilled eel", "m": "ウナギのかば焼き", "k": "グリルドゥ イール", "g": "食べ物"}, {"w": "grilled fish", "m": "焼き魚", "k": "グリルドゥ フィシュ", "g": "食べ物"}, {"w": "bread", "m": "パン", "k": "ブレドゥ", "g": "食べ物"}, {"w": "sandwich", "m": "サンドイッチ", "k": "サンドゥウィチュ", "g": "食べ物"}, {"w": "pancake", "m": "パンケーキ", "k": "パンケイク", "g": "食べ物"}, {"w": "pizza", "m": "ピザ", "k": "ピートゥサ", "g": "食べ物"}, {"w": "hamburger", "m": "ハンバーガー", "k": "ハムバーガー", "g": "食べ物"}, {"w": "hot dog", "m": "ホットドッグ", "k": "ハトゥ ドグ", "g": "食べ物"}, {"w": "French fries", "m": "フライドポテト", "k": "フレンチュ フライズ", "g": "食べ物"}, {"w": "fried chicken", "m": "フライドチキン", "k": "フライドゥ チカン", "g": "食べ物"}, {"w": "sausage", "m": "ソーセージ", "k": "ソサジュ", "g": "食べ物"}, {"w": "steak", "m": "ステーキ", "k": "ステイク", "g": "食べ物"}, {"w": "omelet", "m": "オムレツ", "k": "アムラトゥ", "g": "食べ物"}, {"w": "spaghetti", "m": "スパゲッティ", "k": "スパゲティー", "g": "食べ物"}, {"w": "pie", "m": "パイ", "k": "パイ", "g": "食べ物"}, {"w": "salad", "m": "サラダ", "k": "サラドゥ", "g": "食べ物"}, {"w": "soup", "m": "スープ", "k": "スープ", "g": "食べ物"}, {"w": "ramen", "m": "ラーメン", "k": "", "g": "食べ物（JF）"}, {"w": "soba", "m": "そば", "k": "", "g": "食べ物（JF）"}, {"w": "beef bowl", "m": "牛丼", "k": "ビーフ ボウル", "g": "食べ物（JF）"}, {"w": "sushi", "m": "寿司", "k": "スーシー", "g": "食べ物（JF）"}, {"w": "tempura", "m": "天ぷら", "k": "", "g": "食べ物（JF）"}, {"w": "coffee", "m": "コーヒー", "k": "カフィー", "g": "飲み物"}, {"w": "tea", "m": "紅茶、茶", "k": "ティー", "g": "飲み物"}, {"w": "green tea", "m": "緑茶", "k": "グリーン ティー", "g": "飲み物"}, {"w": "soda", "m": "ソーダ", "k": "ソウダ", "g": "飲み物"}, {"w": "milk", "m": "牛乳", "k": "ミルク", "g": "飲み物"}, {"w": "water", "m": "水、水をやる", "k": "ウォター", "g": "飲み物"}, {"w": "mineral water", "m": "ミネラルウォーター", "k": "ミナーアル ウォター", "g": "飲み物"}, {"w": "cake", "m": "ケーキ", "k": "ケイク", "g": "デザート"}, {"w": "donut", "m": "ドーナツ", "k": "ドウナトゥ", "g": "デザート"}, {"w": "parfait", "m": "パフェ", "k": "パーフェイ", "g": "デザート"}, {"w": "pudding", "m": "プリン", "k": "プディング", "g": "デザート"}, {"w": "ice cream", "m": "アイスクリーム", "k": "アイス クリーム", "g": "デザート"}, {"w": "shaved ice", "m": "かき氷", "k": "シェイヴドゥ アイス", "g": "デザート"}, {"w": "chocolate", "m": "チョコレート", "k": "チョクラトゥ", "g": "デザート"}, {"w": "popcorn", "m": "ポップコーン", "k": "パプコーン", "g": "デザート"}, {"w": "potato chips", "m": "ポテトチップス", "k": "パテイトウ チプス", "g": "デザート"}, {"w": "apple", "m": "リンゴ", "k": "アパル", "g": "果物・野菜"}, {"w": "banana", "m": "バナナ", "k": "バナナ", "g": "果物・野菜"}, {"w": "bean", "m": "豆", "k": "ビーン", "g": "果物・野菜"}, {"w": "broccoli", "m": "ブロッコリー", "k": "ブラカリー", "g": "果物・野菜"}, {"w": "cabbage", "m": "キャベツ", "k": "カバジュ", "g": "果物・野菜"}, {"w": "cherry", "m": "サクランボ", "k": "チェリー", "g": "果物・野菜"}, {"w": "corn", "m": "トウモロコシ", "k": "コーン", "g": "果物・野菜"}, {"w": "cucumber", "m": "キュウリ", "k": "クユーカムバー", "g": "果物・野菜"}, {"w": "eggplant", "m": "ナス", "k": "エグプラントゥ", "g": "果物・野菜"}, {"w": "grapes", "m": "ブドウ", "k": "グレイプス", "g": "果物・野菜"}, {"w": "green pepper", "m": "ピーマン", "k": "グリーン ペパー", "g": "果物・野菜"}, {"w": "kiwi fruit", "m": "キウイフルーツ", "k": "キーウィー フルートゥ", "g": "果物・野菜"}, {"w": "lemon", "m": "レモン", "k": "レマン", "g": "果物・野菜"}, {"w": "lettuce", "m": "レタス", "k": "レタス", "g": "果物・野菜"}, {"w": "melon", "m": "メロン", "k": "メラン", "g": "果物・野菜"}, {"w": "mushroom", "m": "キノコ", "k": "マシュルーム", "g": "果物・野菜"}, {"w": "nut", "m": "ナッツ、木の実", "k": "ナトゥ", "g": "果物・野菜"}, {"w": "onion", "m": "タマネギ", "k": "アンヤン", "g": "果物・野菜"}, {"w": "peach", "m": "モモ", "k": "ピーチュ", "g": "果物・野菜"}, {"w": "pineapple", "m": "パイナップル", "k": "パイナパル", "g": "果物・野菜"}, {"w": "potato", "m": "ジャガイモ", "k": "パテイトウ", "g": "果物・野菜"}, {"w": "spinach", "m": "ホウレンソウ", "k": "スピナチュ", "g": "果物・野菜"}, {"w": "strawberry", "m": "イチゴ", "k": "ストゥロベリー", "g": "果物・野菜"}, {"w": "tomato", "m": "トマト", "k": "タメイトウ", "g": "果物・野菜"}, {"w": "watermelon", "m": "スイカ", "k": "ウォターメラン", "g": "果物・野菜"}, {"w": "meat", "m": "肉", "k": "ミートゥ", "g": "食材"}, {"w": "beef", "m": "牛肉", "k": "ビーフ", "g": "食材"}, {"w": "chicken", "m": "とり肉、ニワトリ", "k": "チカン", "g": "食材"}, {"w": "pork", "m": "ぶた肉", "k": "ポーク", "g": "食材"}, {"w": "bacon", "m": "ベーコン", "k": "ベイカン", "g": "食材"}, {"w": "ham", "m": "ハム", "k": "ハム", "g": "食材"}, {"w": "cheese", "m": "チーズ", "k": "チーズ", "g": "食材"}, {"w": "egg", "m": "たまご", "k": "エグ", "g": "食材"}, {"w": "fish", "m": "魚", "k": "フィシュ", "g": "食材"}, {"w": "salmon", "m": "サケ", "k": "サマン", "g": "食材"}, {"w": "octopus", "m": "タコ", "k": "アクタプス", "g": "食材"}, {"w": "crab", "m": "カニ", "k": "クラブ", "g": "食材"}, {"w": "bitter", "m": "苦い", "k": "ビター", "g": "味など"}, {"w": "sweet", "m": "あまい", "k": "スウィートゥ", "g": "味など"}, {"w": "salty", "m": "塩からい", "k": "ソルティー", "g": "味など"}, {"w": "sour", "m": "すっぱい", "k": "サウアー", "g": "味など"}, {"w": "spicy", "m": "からい、ぴりっとした", "k": "スパイシー", "g": "味など"}, {"w": "delicious", "m": "とてもおいしい", "k": "ディリシャス", "g": "味など"}, {"w": "soft", "m": "やわらかい", "k": "サフトゥ", "g": "味など"}, {"w": "hard", "m": "かたい", "k": "ハードゥ", "g": "味など"}, {"w": "cold", "m": "冷たい、寒い", "k": "コウルドゥ", "g": "味など"}, {"w": "hot", "m": "熱い、暑い", "k": "ハトゥ", "g": "味など"}, {"w": "bad", "m": "悪い、良くない、悪い", "k": "バドゥ", "g": "味など"}, {"w": "bear", "m": "クマ", "k": "ベー", "g": "動物"}, {"w": "elephant", "m": "ゾウ", "k": "エラファントゥ", "g": "動物"}, {"w": "bat", "m": "コウモリ、バット", "k": "バトゥ", "g": "動物"}, {"w": "desert", "m": "砂漠", "k": "デザートゥ", "g": "自然"}, {"w": "forest", "m": "森", "k": "フォラストゥ", "g": "自然"}, {"w": "rainforest", "m": "熱帯雨林", "k": "ラインフォラストゥ", "g": "自然"}, {"w": "lake", "m": "湖", "k": "レイク", "g": "自然"}, {"w": "mountain", "m": "山", "k": "マウンタン", "g": "自然"}, {"w": "river", "m": "川", "k": "リヴァー", "g": "自然"}, {"w": "savanna", "m": "サバンナ", "k": "サヴァナ", "g": "自然"}, {"w": "sea", "m": "海", "k": "シー", "g": "自然"}, {"w": "whale", "m": "クジラ", "k": "ウェイル", "g": "海の生き物"}, {"w": "dolphin", "m": "イルカ", "k": "ダルファン", "g": "海の生き物"}, {"w": "penguin", "m": "ペンギン", "k": "ペンググワン", "g": "海の生き物"}, {"w": "sea turtle", "m": "ウミガメ", "k": "シー タータル", "g": "海の生き物"}, {"w": "shark", "m": "サメ", "k": "シャーク", "g": "海の生き物"}, {"w": "jellyfish", "m": "クラゲ", "k": "ジェリーフィシュ", "g": "海の生き物"}, {"w": "ant", "m": "アリ", "k": "アントゥ", "g": "虫"}, {"w": "beetle", "m": "カブトムシ", "k": "ビータル", "g": "虫"}, {"w": "stag beetle", "m": "クワガタムシ", "k": "スタグ ビータル", "g": "虫"}, {"w": "butterfly", "m": "チョウ", "k": "バターフライ", "g": "虫"}, {"w": "dragonfly", "m": "トンボ", "k": "", "g": "虫"}, {"w": "grasshopper", "m": "バッタ", "k": "グラスハパー", "g": "虫"}, {"w": "mantis", "m": "カマキリ", "k": "マンティス", "g": "虫"}, {"w": "spider", "m": "クモ", "k": "スパイダー", "g": "虫"}, {"w": "forest loss", "m": "森林がなくなること", "k": "フォラストゥ ロス", "g": "生き物の問題・できること"}, {"w": "plant trees", "m": "木を植える", "k": "プラントゥ トゥリーズ", "g": "生き物の問題・できること"}, {"w": "global warming", "m": "地球温暖化", "k": "グロウバル ウォーミング", "g": "生き物の問題・できること"}, {"w": "save energy", "m": "エネルギーを節約する", "k": "セイヴ エナージー", "g": "生き物の問題・できること"}, {"w": "plastic", "m": "プラスチック", "k": "プラスティク", "g": "生き物の問題・できること"}, {"w": "use eco-friendly bags", "m": "エコバッグを使う", "k": "ユース バグズ", "g": "生き物の問題・できること"}, {"w": "refuse", "m": "ことわる", "k": "ラフユーズ", "g": "生き物の問題・できること"}, {"w": "reduce", "m": "へらす", "k": "ラドゥース", "g": "生き物の問題・できること"}, {"w": "reuse", "m": "再利用する", "k": "リーユース", "g": "生き物の問題・できること"}, {"w": "recycle", "m": "再生利用する", "k": "リーサイカル", "g": "生き物の問題・できること"}, {"w": "hunting", "m": "狩猟", "k": "ハンティング", "g": "生き物の問題・できること"}, {"w": "overfishing", "m": "乱獲", "k": "オウヴァーフィシング", "g": "生き物の問題・できること"}, {"w": "air pollution", "m": "大気汚染", "k": "エー パルーシャン", "g": "生き物の問題・できること"}, {"w": "chemicals", "m": "化学物質", "k": "ケミカルズ", "g": "生き物の問題・できること"}, {"w": "traffic accidents", "m": "交通事故", "k": "トゥラフィク アクサダントゥス", "g": "生き物の問題・できること"}, {"w": "active", "m": "活動的な", "k": "アクティヴ", "g": "性格など"}, {"w": "brave", "m": "勇敢な", "k": "ブレイヴ", "g": "性格など"}, {"w": "friendly", "m": "友好的な", "k": "フレンドゥリー", "g": "性格など"}, {"w": "funny", "m": "おかしい", "k": "ファニー", "g": "性格など"}, {"w": "kind", "m": "親切な", "k": "カインドゥ", "g": "性格など"}, {"w": "shy", "m": "内気な", "k": "シャイ", "g": "性格など"}, {"w": "smart", "m": "利口な", "k": "スマートゥ", "g": "性格など"}, {"w": "strong", "m": "強い", "k": "ストゥロング", "g": "性格など"}, {"w": "gentle", "m": "優しい、親切な", "k": "ジェンタル", "g": "性格など"}, {"w": "grandfather", "m": "おじいさん", "k": "グランドゥファザー", "g": "家族"}, {"w": "grandmother", "m": "おばあさん", "k": "グランドゥマザー", "g": "家族"}, {"w": "father", "m": "お父さん", "k": "ファザー", "g": "家族"}, {"w": "mother", "m": "お母さん", "k": "マザー", "g": "家族"}, {"w": "uncle", "m": "おじさん", "k": "アングカル", "g": "家族"}, {"w": "aunt", "m": "おばさん", "k": "アントゥ", "g": "家族"}, {"w": "brother", "m": "お兄さん、弟", "k": "ブラザー", "g": "家族"}, {"w": "me", "m": "わたしを（に）", "k": "ミー", "g": "家族"}, {"w": "sister", "m": "お姉さん、妹", "k": "シスター", "g": "家族"}, {"w": "cousin", "m": "いとこ", "k": "カザン", "g": "家族"}, {"w": "spell", "m": "つづる", "k": "スペル", "g": "動作など（５年）"}, {"w": "like", "m": "好きである、いいね", "k": "ライク", "g": "動作など（５年）"}, {"w": "listen", "m": "聞く", "k": "リサン", "g": "動作など（５年）"}, {"w": "want", "m": "ほしい", "k": "ワントゥ", "g": "動作など（５年）"}, {"w": "play", "m": "演奏する、（スポーツなどを）する", "k": "プレイ", "g": "動作など（５年）"}, {"w": "walk", "m": "歩く", "k": "ウォク", "g": "動作など（５年）"}, {"w": "run", "m": "走る", "k": "ラン", "g": "動作など（５年）"}, {"w": "dance", "m": "踊る", "k": "ダンス", "g": "動作など（５年）"}, {"w": "jump", "m": "跳ぶ", "k": "ジャムプ", "g": "動作など（５年）"}, {"w": "catch", "m": "とる、つかまえる", "k": "カチュ", "g": "動作など（５年）"}, {"w": "swim", "m": "泳ぐ", "k": "スウィム", "g": "動作など（５年）"}, {"w": "fly", "m": "飛ぶ", "k": "フライ", "g": "動作など（５年）"}, {"w": "sing", "m": "歌う", "k": "シング", "g": "動作など（５年）"}, {"w": "cook", "m": "料理をする、コック、料理人", "k": "クク", "g": "動作など（５年）"}, {"w": "have", "m": "ある、持っている", "k": "ハヴ", "g": "動作など（５年）"}, {"w": "go", "m": "行く、進む", "k": "ゴウ", "g": "動作など（５年）"}, {"w": "turn", "m": "向きを変える、曲がる", "k": "ターン", "g": "動作など（５年）"}, {"w": "see", "m": "見る、見える", "k": "シー", "g": "動作など（５年）"}, {"w": "look", "m": "見る、目を向ける", "k": "ルク", "g": "動作など（５年）"}, {"w": "drink", "m": "飲む", "k": "ドゥリングク", "g": "動作など（５年）"}, {"w": "eat", "m": "食べる", "k": "イートゥ", "g": "動作など（５年）"}, {"w": "buy", "m": "買う", "k": "バイ", "g": "動作など（５年）"}, {"w": "speak", "m": "（言語を）話す", "k": "スピーク", "g": "動作など（６年）"}, {"w": "make", "m": "作る", "k": "メイク", "g": "動作など（６年）"}, {"w": "wear", "m": "身につけている、着ている", "k": "ウェー", "g": "動作など（６年）"}, {"w": "talk", "m": "話す", "k": "トク", "g": "動作など（６年）"}, {"w": "watch", "m": "（テレビなどを）見る、腕時計", "k": "ワチュ", "g": "動作など（６年）"}, {"w": "read", "m": "読む", "k": "レドゥ", "g": "動作など（６年）"}, {"w": "help", "m": "手伝う", "k": "ヘルプ", "g": "動作など（６年）"}, {"w": "practice", "m": "練習する", "k": "プラクタス", "g": "動作など（６年）"}, {"w": "clean", "m": "そうじをする、きれいな", "k": "クリーン", "g": "動作など（６年）"}, {"w": "enjoy", "m": "楽しむ", "k": "エンジョイ", "g": "動作など（６年）"}, {"w": "visit", "m": "訪問する", "k": "ヴィジトゥ", "g": "動作など（６年）"}, {"w": "ride", "m": "乗る", "k": "ライドゥ", "g": "動作など（６年）"}, {"w": "come", "m": "来る", "k": "カム", "g": "動作など（６年）"}, {"w": "get", "m": "手に入れる", "k": "ゲトゥ", "g": "動作など（６年）"}, {"w": "save", "m": "救う", "k": "セイヴ", "g": "動作など（６年）"}, {"w": "stop", "m": "止まる", "k": "スタプ", "g": "動作など（６年）"}, {"w": "study", "m": "勉強する", "k": "スタディー", "g": "動作など（６年）"}, {"w": "join", "m": "参加する", "k": "ジョイン", "g": "動作など（６年）"}, {"w": "work", "m": "働く", "k": "ワーク", "g": "動作など（６年）"}, {"w": "call", "m": "呼ぶ", "k": "コル", "g": "動作など"}, {"w": "chat", "m": "チャットする、おしゃべりする", "k": "チャトゥ", "g": "動作など"}, {"w": "check", "m": "確認する", "k": "チェク", "g": "動作など"}, {"w": "climb", "m": "登る", "k": "クライム", "g": "動作など"}, {"w": "collect", "m": "集める、あつめる（集める）", "k": "カレクトゥ", "g": "動作など"}, {"w": "cut", "m": "切る", "k": "カトゥ", "g": "動作など"}, {"w": "dig", "m": "掘る", "k": "ディグ", "g": "動作など"}, {"w": "disappear", "m": "消え失せる", "k": "ディサピー", "g": "動作など"}, {"w": "draw", "m": "描く", "k": "ドゥロ", "g": "動作など"}, {"w": "drive", "m": "運転する", "k": "ドゥライヴ", "g": "動作など"}, {"w": "feed", "m": "えさをやる", "k": "フィードゥ", "g": "動作など"}, {"w": "grow", "m": "育てる", "k": "グロウ", "g": "動作など"}, {"w": "hit", "m": "打つ", "k": "ヒトゥ", "g": "動作など"}, {"w": "hop", "m": "跳ねる", "k": "ハプ", "g": "動作など"}, {"w": "hug", "m": "抱く", "k": "ハグ", "g": "動作など"}, {"w": "keep", "m": "保つ", "k": "キープ", "g": "動作など"}, {"w": "kick", "m": "蹴る", "k": "キク", "g": "動作など"}, {"w": "meet", "m": "会う", "k": "ミートゥ", "g": "動作など"}, {"w": "mix", "m": "混ぜる", "k": "ミクス", "g": "動作など"}, {"w": "whip", "m": "泡立てる", "k": "ウィプ", "g": "動作など"}, {"w": "put", "m": "置く", "k": "プトゥ", "g": "動作など"}, {"w": "sit", "m": "座る", "k": "シトゥ", "g": "動作など"}, {"w": "sleep", "m": "眠る", "k": "スリープ", "g": "動作など"}, {"w": "stand", "m": "立つ", "k": "スタンドゥ", "g": "動作など"}, {"w": "teach", "m": "教える", "k": "ティーチュ", "g": "動作など"}, {"w": "travel", "m": "旅をする", "k": "トゥラヴァル", "g": "動作など"}, {"w": "try", "m": "試す、挑戦する", "k": "トゥライ", "g": "動作など"}, {"w": "wait", "m": "待つ", "k": "ウェイトゥ", "g": "動作など"}, {"w": "wash", "m": "洗う", "k": "ワシュ", "g": "動作など"}, {"w": "write", "m": "書く", "k": "ライトゥ", "g": "動作など"}, {"w": "ate", "m": "食べた", "k": "エイトゥ", "g": "したこと"}, {"w": "went", "m": "行った", "k": "ウェントゥ", "g": "したこと"}, {"w": "saw", "m": "見た、見えた", "k": "ソ", "g": "したこと"}, {"w": "had", "m": "持っていた", "k": "ハドゥ", "g": "したこと"}, {"w": "made", "m": "作った", "k": "メイドゥ", "g": "したこと"}, {"w": "enjoyed", "m": "楽しんだ", "k": "エンジョイドゥ", "g": "したこと"}, {"w": "played", "m": "演奏した、（スポーツなどを）した", "k": "プレイドゥ", "g": "したこと"}, {"w": "watched", "m": "（テレビなどを）見た", "k": "ワチュトゥ", "g": "したこと"}, {"w": "always", "m": "いつも", "k": "オルウェイズ", "g": "頻度"}, {"w": "usually", "m": "たいてい、ふだん", "k": "ユージャワリー", "g": "頻度"}, {"w": "sometimes", "m": "ときどき", "k": "サムタイムズ", "g": "頻度"}, {"w": "never", "m": "決して…ない", "k": "ネヴァー", "g": "頻度"}, {"w": "get up", "m": "起きる", "k": "ゲトゥ アプ", "g": "一日の生活"}, {"w": "comb my hair", "m": "髪をとかす", "k": "コウム マイ ヘー", "g": "一日の生活"}, {"w": "take out the garbage", "m": "ごみを出す", "k": "テイク アウトゥ ザ ガービジュ", "g": "一日の生活"}, {"w": "get the newspaper", "m": "新聞を取る", "k": "ゲトゥ ザ ヌーズペイパー", "g": "一日の生活"}, {"w": "have breakfast", "m": "朝食を食べる", "k": "ハヴ ブレクファストゥ", "g": "一日の生活"}, {"w": "brush my teeth", "m": "歯をみがく", "k": "ブラシュ マイ ティース", "g": "一日の生活"}, {"w": "go to school", "m": "学校へ行く", "k": "ゴウ トゥー スクール", "g": "一日の生活"}, {"w": "study English", "m": "英語を勉強する", "k": "スタディー インググリシュ", "g": "一日の生活"}, {"w": "have lunch", "m": "昼食を食べる", "k": "ハヴ ランチュ", "g": "一日の生活"}, {"w": "go home", "m": "家へ帰る", "k": "ゴウ ホウム", "g": "一日の生活"}, {"w": "play soccer", "m": "サッカーをする", "k": "プレイ サカー", "g": "一日の生活"}, {"w": "walk my dog", "m": "イヌの散歩をする", "k": "ウォク マイ ドグ", "g": "一日の生活"}, {"w": "do my homework", "m": "宿題をする", "k": "ドゥー マイ ホウムワーク", "g": "一日の生活"}, {"w": "have dinner", "m": "夕食を食べる", "k": "ハヴ ディナー", "g": "一日の生活"}, {"w": "wash the dishes", "m": "皿をあらう", "k": "ワシュ ザ ディシャズ", "g": "一日の生活"}, {"w": "watch TV", "m": "テレビを見る", "k": "ワチュ ティーヴィー", "g": "一日の生活"}, {"w": "take a bath", "m": "風呂に入る", "k": "テイク ア バス", "g": "一日の生活"}, {"w": "go to bed", "m": "ねる", "k": "ゴウ トゥー ベドゥ", "g": "一日の生活"}, {"w": "shirt", "m": "シャツ", "k": "シャートゥ", "g": "衣類"}, {"w": "T-shirt", "m": "Tシャツ", "k": "ティーシャートゥ", "g": "衣類"}, {"w": "sweatshirt", "m": "トレーナー", "k": "スウェトゥシャートゥ", "g": "衣類"}, {"w": "sweater", "m": "セーター", "k": "スウェター", "g": "衣類"}, {"w": "uniform", "m": "制服", "k": "ユーナフォーム", "g": "衣類"}, {"w": "pants", "m": "ズボン", "k": "パントゥス", "g": "衣類"}, {"w": "jeans", "m": "ジーンズ", "k": "ジーンズ", "g": "衣類"}, {"w": "cap", "m": "（ふちのない）ぼうし", "k": "カプ", "g": "衣類"}, {"w": "hat", "m": "（ふちのある）ぼうし", "k": "ハトゥ", "g": "衣類"}, {"w": "gloves", "m": "手ぶくろ", "k": "グラヴズ", "g": "衣類"}, {"w": "socks", "m": "靴下", "k": "サクス", "g": "衣類"}, {"w": "shoes", "m": "靴", "k": "シューズ", "g": "衣類"}, {"w": "hair", "m": "髪", "k": "ヘー", "g": "からだ"}, {"w": "head", "m": "頭", "k": "ヘドゥ", "g": "からだ"}, {"w": "face", "m": "顔", "k": "フェイス", "g": "からだ"}, {"w": "shoulder", "m": "肩", "k": "ショウルダー", "g": "からだ"}, {"w": "hand", "m": "手", "k": "ハンドゥ", "g": "からだ"}, {"w": "arm", "m": "腕", "k": "アーム", "g": "からだ"}, {"w": "knee", "m": "ひざ", "k": "ニー", "g": "からだ"}, {"w": "eye", "m": "目", "k": "アイ", "g": "からだ"}, {"w": "ear", "m": "耳", "k": "イーー", "g": "からだ"}, {"w": "nose", "m": "鼻", "k": "ノウズ", "g": "からだ"}, {"w": "mouth", "m": "口", "k": "マウス", "g": "からだ"}, {"w": "teeth", "m": "歯", "k": "ティース", "g": "からだ"}, {"w": "neck", "m": "首", "k": "ネク", "g": "からだ"}, {"w": "leg", "m": "脚", "k": "レグ", "g": "からだ"}, {"w": "toe", "m": "足の指", "k": "トウ", "g": "からだ"}, {"w": "house", "m": "家", "k": "ハウス", "g": "町"}, {"w": "park", "m": "公園", "k": "パーク", "g": "町"}, {"w": "library", "m": "図書館、図書室", "k": "ライブレリー", "g": "町"}, {"w": "museum", "m": "博物館、美術館", "k": "ムユージーアム", "g": "町"}, {"w": "hospital", "m": "病院", "k": "ハスピタル", "g": "町"}, {"w": "bus stop", "m": "バス停", "k": "バス スタプ", "g": "町"}, {"w": "station", "m": "駅", "k": "ステイシャン", "g": "町"}, {"w": "police station", "m": "警察署", "k": "パリース ステイシャン", "g": "町"}, {"w": "fire station", "m": "消防署", "k": "ファイアー ステイシャン", "g": "町"}, {"w": "post office", "m": "郵便局", "k": "ポウストゥ オフィス", "g": "町"}, {"w": "bookstore", "m": "書店", "k": "ブクストー", "g": "町"}, {"w": "restaurant", "m": "レストラン", "k": "レスターアントゥ", "g": "町"}, {"w": "supermarket", "m": "スーパーマーケット", "k": "スーパーマーキトゥ", "g": "町"}, {"w": "castle", "m": "城", "k": "カサル", "g": "町"}, {"w": "shrine", "m": "神社", "k": "シュライン", "g": "町"}, {"w": "temple", "m": "寺", "k": "テムパル", "g": "町"}, {"w": "church", "m": "教会", "k": "チャーチュ", "g": "町"}, {"w": "aquarium", "m": "水族館", "k": "アクウェリーアム", "g": "町"}, {"w": "stadium", "m": "スタジアム", "k": "ステイディーアム", "g": "町"}, {"w": "zoo", "m": "動物園", "k": "ズー", "g": "町"}, {"w": "amusement park", "m": "遊園地", "k": "アムユーズマントゥ パーク", "g": "町"}, {"w": "convenience store", "m": "コンビニエンスストア", "k": "カンヴィーンヤンス ストー", "g": "町"}, {"w": "elementary school", "m": "小学校", "k": "エラメントゥリー スクール", "g": "町"}, {"w": "junior high school", "m": "中学校", "k": "ジューンヤー ハイ スクール", "g": "町"}, {"w": "by", "m": "そばに", "k": "バイ", "g": "位置"}, {"w": "in", "m": "中に", "k": "イン", "g": "位置"}, {"w": "on", "m": "上に", "k": "アン", "g": "位置"}, {"w": "under", "m": "下に", "k": "アンダー", "g": "位置"}, {"w": "English", "m": "英語", "k": "インググリシュ", "g": "教科"}, {"w": "Japanese", "m": "国語", "k": "ジャパニーズ", "g": "教科"}, {"w": "calligraphy", "m": "書写", "k": "カリグラフィー", "g": "教科"}, {"w": "social studies", "m": "社会科", "k": "ソウシャル スタディーズ", "g": "教科"}, {"w": "math", "m": "算数", "k": "マス", "g": "教科"}, {"w": "science", "m": "理科", "k": "サイアンス", "g": "教科"}, {"w": "music", "m": "音楽", "k": "ムユージク", "g": "教科"}, {"w": "arts and crafts", "m": "図画工作", "k": "アートゥス アンドゥ クラフトゥス", "g": "教科"}, {"w": "home economics", "m": "家庭科", "k": "ホウム エカナミクス", "g": "教科"}, {"w": "P.E.", "m": "体育", "k": "", "g": "教科"}, {"w": "moral education", "m": "道徳", "k": "モラル エジャケイシャン", "g": "教科"}, {"w": "classroom", "m": "教室", "k": "クラスルーム", "g": "学校"}, {"w": "computer room", "m": "コンピューター室", "k": "カムプユーター ルーム", "g": "学校"}, {"w": "gym", "m": "体育館", "k": "ジム", "g": "学校"}, {"w": "music room", "m": "音楽室", "k": "ムユージク ルーム", "g": "学校"}, {"w": "playground", "m": "運動場", "k": "プレイグラウンドゥ", "g": "学校"}, {"w": "school nurse's office", "m": "保健室", "k": "スクール ナース エス オフィス", "g": "学校"}, {"w": "restroom", "m": "トイレ", "k": "レストゥルーム", "g": "学校"}, {"w": "swimming pool", "m": "プール", "k": "スウィミング プール", "g": "学校"}, {"w": "school principal's office", "m": "校長室", "k": "スクール プリンサパル エス オフィス", "g": "学校"}, {"w": "crayon", "m": "クレヨン", "k": "クレイアン", "g": "文房具"}, {"w": "marker", "m": "マーカー", "k": "マーカー", "g": "文房具"}, {"w": "pen", "m": "ペン", "k": "ペン", "g": "文房具"}, {"w": "pencil", "m": "えんぴつ", "k": "ペンサル", "g": "文房具"}, {"w": "pencil case", "m": "筆箱", "k": "ペンサル ケイス", "g": "文房具"}, {"w": "eraser", "m": "消しゴム", "k": "イレイサー", "g": "文房具"}, {"w": "ruler", "m": "定規", "k": "ルーラー", "g": "文房具"}, {"w": "glue", "m": "のり", "k": "グルー", "g": "文房具"}, {"w": "stapler", "m": "ホッチキス", "k": "ステイパラー", "g": "文房具"}, {"w": "notebook", "m": "ノート", "k": "ノウトゥブク", "g": "文房具"}, {"w": "pencil sharpener", "m": "えんぴつけずり", "k": "ペンサル", "g": "文房具"}, {"w": "recorder", "m": "リコーダー", "k": "リコーダー", "g": "楽器"}, {"w": "harmonica", "m": "ハーモニカ", "k": "ハーマニカ", "g": "楽器"}, {"w": "piano", "m": "ピアノ", "k": "ピーアノウ", "g": "楽器"}, {"w": "guitar", "m": "ギター", "k": "ギター", "g": "楽器"}, {"w": "violin", "m": "バイオリン", "k": "ヴァイアリン", "g": "楽器"}, {"w": "drum", "m": "ドラム", "k": "ドゥラム", "g": "楽器"}, {"w": "xylophone", "m": "木琴", "k": "ザイラフォウン", "g": "楽器"}, {"w": "keyboard harmonica", "m": "鍵盤ハーモニカ", "k": "キーボードゥ ハーマニカ", "g": "楽器"}, {"w": "bag", "m": "かばん", "k": "バグ", "g": "身の回りのもの"}, {"w": "glove", "m": "グローブ", "k": "グラヴ", "g": "身の回りのもの"}, {"w": "racket", "m": "ラケット", "k": "ラキトゥ", "g": "身の回りのもの"}, {"w": "soccer shoes", "m": "サッカーシューズ", "k": "サカー シューズ", "g": "身の回りのもの"}, {"w": "umbrella", "m": "かさ", "k": "アムブレラ", "g": "身の回りのもの"}, {"w": "glass", "m": "コップ", "k": "グラス", "g": "身の回りのもの"}, {"w": "mug", "m": "マグカップ", "k": "マグ", "g": "身の回りのもの"}, {"w": "textbook", "m": "教科書", "k": "テクストゥブク", "g": "身の回りのもの"}, {"w": "comic book", "m": "マンガ本", "k": "カミク ブク", "g": "身の回りのもの"}, {"w": "dictionary", "m": "辞書", "k": "ディクシャネリー", "g": "身の回りのもの"}, {"w": "present", "m": "プレゼント", "k": "プレザントゥ", "g": "身の回りのもの"}, {"w": "treasure", "m": "宝物", "k": "トゥレジャー", "g": "身の回りのもの"}, {"w": "sticker", "m": "ステッカー、シール", "k": "スティカー", "g": "身の回りのもの"}, {"w": "ticket", "m": "チケット", "k": "ティカトゥ", "g": "身の回りのもの"}, {"w": "TV", "m": "テレビ", "k": "ティーヴィー", "g": "身の回りのもの"}, {"w": "computer", "m": "コンピューター", "k": "カムプユーター", "g": "身の回りのもの"}, {"w": "smartphone", "m": "スマートフォン、スマートフォン（スマホ）", "k": "スマートゥフォウン", "g": "身の回りのもの"}, {"w": "tablet", "m": "タブレット", "k": "タブラトゥ", "g": "身の回りのもの"}, {"w": "desk", "m": "机", "k": "デスク", "g": "身の回りのもの"}, {"w": "chair", "m": "いす", "k": "チェー", "g": "身の回りのもの"}, {"w": "bed", "m": "ベッド", "k": "ベドゥ", "g": "身の回りのもの"}, {"w": "calendar", "m": "カレンダー", "k": "カランダー", "g": "身の回りのもの"}, {"w": "camping", "m": "キャンプ", "k": "カムピング", "g": "遊びなど"}, {"w": "fishing", "m": "魚つり", "k": "フィシング", "g": "遊びなど"}, {"w": "hiking", "m": "ハイキング", "k": "ハイキング", "g": "遊びなど"}, {"w": "shopping", "m": "買い物", "k": "シャピング", "g": "遊びなど"}, {"w": "reading", "m": "読書", "k": "リーディング", "g": "遊びなど"}, {"w": "drawing", "m": "絵（線画）をかくこと", "k": "ドゥロイング", "g": "遊びなど"}, {"w": "jogging", "m": "ジョギング", "k": "ジャギング", "g": "遊びなど"}, {"w": "swinging", "m": "ぶらんこ乗り", "k": "スウィングイング", "g": "遊びなど"}, {"w": "playing the piano", "m": "ピアノをひくこと", "k": "プレイイング ザ ピーアノウ", "g": "遊びなど"}, {"w": "playing video games", "m": "テレビゲームをすること", "k": "プレイイング ヴィディーオウ ゲイムズ", "g": "遊びなど"}, {"w": "seeing movies", "m": "映画を見ること", "k": "シーイング ムーヴィーズ", "g": "遊びなど"}, {"w": "cards", "m": "カード、トランプ", "k": "カードゥズ", "g": "遊びなど"}, {"w": "jump rope", "m": "縄とび、なわとび", "k": "ジャムプ ロウプ", "g": "遊びなど"}, {"w": "tag", "m": "おにごっこ", "k": "タグ", "g": "遊びなど"}, {"w": "rock-paper-scissors", "m": "じゃんけん", "k": "", "g": "遊びなど"}, {"w": "field trip", "m": "遠足、社会科見学", "k": "フィールドゥ トゥリプ", "g": "学校行事"}, {"w": "school trip", "m": "修学旅行", "k": "スクール トゥリプ", "g": "学校行事"}, {"w": "chorus contest", "m": "合唱コンクール", "k": "コラス カンテストゥ", "g": "学校行事"}, {"w": "volunteer day", "m": "ボランティアの日", "k": "ヴァランティー デイ", "g": "学校行事"}, {"w": "drama festival", "m": "学芸会", "k": "ドゥラマ フェスタヴァル", "g": "学校行事"}, {"w": "music festival", "m": "音楽祭", "k": "ムユージク フェスタヴァル", "g": "学校行事"}, {"w": "school festival", "m": "学園祭", "k": "スクール フェスタヴァル", "g": "学校行事"}, {"w": "sports day", "m": "運動会", "k": "スポートゥス デイ", "g": "学校行事"}, {"w": "evacuation drill", "m": "避難訓練", "k": "イヴァクヤウェイシャン ドゥリル", "g": "学校行事"}, {"w": "swimming meet", "m": "水泳競技会", "k": "スウィミング ミートゥ", "g": "学校行事"}, {"w": "summer vacation", "m": "夏休み", "k": "サマー ヴェイケイシャン", "g": "学校行事"}, {"w": "entrance ceremony", "m": "入学式", "k": "エントゥランス セラモウニー", "g": "学校行事"}, {"w": "graduation ceremony", "m": "卒業式", "k": "グラジューエイシャン セラモウニー", "g": "学校行事"}, {"w": "memory", "m": "思い出", "k": "メマーイー", "g": "学校行事"}, {"w": "birthday", "m": "誕生日", "k": "バースデイ", "g": "年中行事"}, {"w": "New Year's Day", "m": "元日", "k": "ヌー イー エス デイ", "g": "年中行事"}, {"w": "cherry blossom viewing", "m": "花見", "k": "チェリー ブラサム ヴユーイング", "g": "年中行事"}, {"w": "Star Festival", "m": "七夕", "k": "スター フェスタヴァル", "g": "年中行事"}, {"w": "fireworks festival", "m": "花火大会", "k": "ファイーワークス フェスタヴァル", "g": "年中行事"}, {"w": "Halloween", "m": "ハロウィーン", "k": "ハラウィーン", "g": "年中行事"}, {"w": "Christmas", "m": "クリスマス", "k": "クリスマス", "g": "年中行事"}, {"w": "New Year's Eve", "m": "おおみそか", "k": "ヌー イー エス イーヴ", "g": "年中行事"}, {"w": "nice", "m": "すてきな、親切な", "k": "ナイス", "g": "感想・様子"}, {"w": "amazing", "m": "おどろくほどすばらしい", "k": "アメイジング", "g": "感想・様子"}, {"w": "fantastic", "m": "すばらしい、すてきな", "k": "ファンタスティク", "g": "感想・様子"}, {"w": "wonderful", "m": "すばらしい、おどろくべき", "k": "ワンダーファル", "g": "感想・様子"}, {"w": "beautiful", "m": "美しい", "k": "ブユータファル", "g": "感想・様子"}, {"w": "cool", "m": "かっこいい", "k": "クール", "g": "感想・様子"}, {"w": "cute", "m": "かわいい", "k": "クユートゥ", "g": "感想・様子"}, {"w": "favorite", "m": "お気に入りの", "k": "フェイヴァーイトゥ", "g": "感想・様子"}, {"w": "interesting", "m": "おもしろい", "k": "イントゥラスティング", "g": "感想・様子"}, {"w": "exciting", "m": "わくわくさせる", "k": "イクサイティング", "g": "感想・様子"}, {"w": "famous", "m": "有名な", "k": "フェイマス", "g": "感想・様子"}, {"w": "popular", "m": "人気のある", "k": "パプヤラー", "g": "感想・様子"}, {"w": "colorful", "m": "色あざやかな", "k": "カラーファル", "g": "感想・様子"}, {"w": "international", "m": "国際的な", "k": "インターナシャナル", "g": "感想・様子"}, {"w": "fun", "m": "楽しいこと", "k": "ファン", "g": "感想・様子"}, {"w": "big", "m": "大きい", "k": "ビグ", "g": "状態"}, {"w": "small", "m": "小さい", "k": "スモル", "g": "状態"}, {"w": "long", "m": "長い", "k": "ロング", "g": "状態"}, {"w": "short", "m": "短い、低い", "k": "ショートゥ", "g": "状態"}, {"w": "new", "m": "新しい", "k": "ヌー", "g": "状態"}, {"w": "old", "m": "古い、年をとった", "k": "オウルドゥ", "g": "状態"}, {"w": "fast", "m": "速い", "k": "ファストゥ", "g": "状態"}, {"w": "slow", "m": "おそい", "k": "スロウ", "g": "状態"}, {"w": "high", "m": "高い", "k": "ハイ", "g": "状態"}, {"w": "low", "m": "低い", "k": "ロウ", "g": "状態"}, {"w": "artist", "m": "芸術家", "k": "アータストゥ", "g": "職業"}, {"w": "writer", "m": "作家", "k": "ライター", "g": "職業"}, {"w": "singer", "m": "歌手", "k": "シングアー", "g": "職業"}, {"w": "comedian", "m": "お笑い芸人", "k": "カミーディーアン", "g": "職業"}, {"w": "nurse", "m": "看護師", "k": "ナース", "g": "職業"}, {"w": "vet", "m": "獣医", "k": "ヴェトゥ", "g": "職業"}, {"w": "zookeeper", "m": "動物園の飼育員", "k": "", "g": "職業"}, {"w": "baker", "m": "パン焼き職人", "k": "ベイカー", "g": "職業"}, {"w": "farmer", "m": "農場主", "k": "ファーマー", "g": "職業"}, {"w": "police officer", "m": "警察官", "k": "パリース オファサー", "g": "職業"}, {"w": "fire fighter", "m": "消防士", "k": "ファイアー ファイター", "g": "職業"}, {"w": "pilot", "m": "パイロット", "k": "パイラトゥ", "g": "職業"}, {"w": "programmer", "m": "プログラマー", "k": "プロウグラマー", "g": "職業"}, {"w": "office worker", "m": "会社員", "k": "オフィス ワーカー", "g": "職業"}, {"w": "astronaut", "m": "宇宙飛行士", "k": "アストゥラナトゥ", "g": "職業"}, {"w": "teacher", "m": "先生", "k": "ティーチャー", "g": "職業"}, {"w": "scientist", "m": "科学者", "k": "サイアンティストゥ", "g": "職業"}, {"w": "flight attendant", "m": "客室乗務員", "k": "フライトゥ アテンダントゥ", "g": "職業"}, {"w": "baseball player", "m": "野球選手", "k": "ベイスボル プレイアー", "g": "職業"}, {"w": "mountaineer", "m": "登山家", "k": "マウンティニー", "g": "職業"}, {"w": "baseball team", "m": "野球部", "k": "ベイスボル ティーム", "g": "部活動"}, {"w": "softball team", "m": "ソフトボール部", "k": "ソフトゥボル ティーム", "g": "部活動"}, {"w": "basketball team", "m": "バスケットボール部", "k": "バスカトゥボル ティーム", "g": "部活動"}, {"w": "volleyball team", "m": "バレーボール部", "k": "ヴァリーボル ティーム", "g": "部活動"}, {"w": "soccer team", "m": "サッカー部", "k": "サカー ティーム", "g": "部活動"}, {"w": "tennis team", "m": "テニス部", "k": "テナス ティーム", "g": "部活動"}, {"w": "table tennis team", "m": "卓球部", "k": "テイバル テナス ティーム", "g": "部活動"}, {"w": "badminton team", "m": "バドミントン部", "k": "バドゥミンタン ティーム", "g": "部活動"}, {"w": "dance team", "m": "ダンス部", "k": "ダンス ティーム", "g": "部活動"}, {"w": "track and field team", "m": "陸上部", "k": "トゥラク アンドゥ フィールドゥ ティーム", "g": "部活動"}, {"w": "art club", "m": "美術部", "k": "アートゥ クラブ", "g": "部活動"}, {"w": "drama club", "m": "演劇部", "k": "ドゥラマ クラブ", "g": "部活動"}, {"w": "brass band", "m": "ブラスバンド部", "k": "ブラス バンドゥ", "g": "部活動"}, {"w": "chorus", "m": "合唱部", "k": "コラス", "g": "部活動"}, {"w": "broadcasting club", "m": "放送部", "k": "ブロドゥカスティング クラブ", "g": "部活動"}, {"w": "newspaper club", "m": "新聞部", "k": "ヌーズペイパー クラブ", "g": "部活動"}, {"w": "photography club", "m": "写真部", "k": "ファタグラフィー クラブ", "g": "部活動"}];
+const GENRES = ["からだ", "したこと", "スポーツ", "デザート", "一日の生活", "位置", "動作など", "動作など（５年）", "動作など（６年）", "動物", "味など", "学校", "学校行事", "家族", "年中行事", "形", "性格など", "感想・様子", "教科", "文房具", "果物・野菜", "楽器", "気分", "海の生き物", "状態", "生き物の問題・できること", "町", "職業", "自然", "色", "虫", "衣類", "身の回りのもの", "遊びなど", "部活動", "頻度", "食べ物", "食べ物（JF）", "食材", "飲み物"];
+
+/* ================= Utility ================= */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function formatTime(sec){
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+/* ================= Genre select ================= */
+const genreSelect = document.getElementById('genreSelect');
+GENRES.forEach(g => {
+  const opt = document.createElement('option');
+  opt.value = g;
+  opt.textContent = g;
+  genreSelect.appendChild(opt);
+});
+
+/* ================= Start screen state ================= */
+let selectedMode = null;
+let selectedCount = null;
+
+const modeRow = document.getElementById('modeRow');
+const countRow = document.getElementById('countRow');
+const startBtn = document.getElementById('startBtn');
+const countNote = document.getElementById('countNote');
+
+modeRow.querySelectorAll('.option-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    modeRow.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedMode = btn.dataset.mode;
+    updateStartBtn();
+  });
+});
+countRow.querySelectorAll('.option-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    countRow.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedCount = Number(btn.dataset.count);
+    updateStartBtn();
+  });
+});
+genreSelect.addEventListener('change', updateCountNote);
+
+function poolForGenre(){
+  const g = genreSelect.value;
+  return g ? WORD_DATA.filter(w => w.g === g) : WORD_DATA;
+}
+function updateCountNote(){
+  const pool = poolForGenre();
+  countNote.textContent = `このジャンルには ${pool.length}語 あります`;
+}
+function updateStartBtn(){
+  startBtn.disabled = !(selectedMode && selectedCount !== null);
+}
+updateCountNote();
+
+/* ================= Screens ================= */
+const startScreen = document.getElementById('startScreen');
+const playScreen = document.getElementById('playScreen');
+const resultScreen = document.getElementById('resultScreen');
+function showScreen(el){
+  [startScreen, playScreen, resultScreen].forEach(s => s.classList.add('hidden'));
+  el.classList.remove('hidden');
+}
+
+/* ================= Game state ================= */
+let queue = [];       // words for this round
+let qIndex = 0;
+let typed = '';
+let usedHintThisWord = false;
+let hadWrongAttemptThisWord = false;
+let results = [];     // {entry, status: 'correct'|'hint'|'wrong'|'skip'}
+let startTime = null;
+let timerHandle = null;
+let currentMode = 'meaning';
+let awaitingNext = false;
+
+const progressPill = document.getElementById('progressPill');
+const timerPill = document.getElementById('timerPill');
+const promptGenre = document.getElementById('promptGenre');
+const promptMain = document.getElementById('promptMain');
+const promptKana = document.getElementById('promptKana');
+const typeDisplay = document.getElementById('typeDisplay');
+const hiddenInput = document.getElementById('hiddenInput');
+const tapHint = document.getElementById('tapHint');
+const hintText = document.getElementById('hintText');
+const feedbackBanner = document.getElementById('feedbackBanner');
+const hintBtn = document.getElementById('hintBtn');
+const skipBtn = document.getElementById('skipBtn');
+const nextBtn = document.getElementById('nextBtn');
+const speakBtn = document.getElementById('speakBtn');
+
+/* ================= Text-to-speech (no real audio files available) ================= */
+let ttsVoice = null;
+function pickVoice(){
+  const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  ttsVoice = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang && v.lang.startsWith('en')) || null;
+}
+if(window.speechSynthesis){
+  pickVoice();
+  window.speechSynthesis.onvoiceschanged = pickVoice;
+}
+
+function speakCurrentWord(){
+  if(!window.speechSynthesis) return;
+  const entry = queue[qIndex];
+  if(!entry) return;
+  window.speechSynthesis.cancel();
+  speakBtn.classList.add('playing');
+  const stopPlaying = () => speakBtn.classList.remove('playing');
+  const utter1 = new SpeechSynthesisUtterance(entry.w);
+  utter1.lang = 'en-US';
+  utter1.rate = 0.85;
+  if(ttsVoice) utter1.voice = ttsVoice;
+  utter1.onerror = stopPlaying;
+  const utter2 = new SpeechSynthesisUtterance(entry.w);
+  utter2.lang = 'en-US';
+  utter2.rate = 0.85;
+  if(ttsVoice) utter2.voice = ttsVoice;
+  utter2.onend = stopPlaying;
+  utter2.onerror = stopPlaying;
+  window.speechSynthesis.speak(utter1);
+  window.speechSynthesis.speak(utter2);
+  setTimeout(stopPlaying, 3500); // 保険: onendが発火しない環境でもボタンのアニメーションを止める
+}
+speakBtn.addEventListener('click', speakCurrentWord);
+
+/* ---- quit mid-round ---- */
+const quitBtn = document.getElementById('quitBtn');
+quitBtn.addEventListener('click', () => {
+  if(confirm('とちゅうで やめますか？\n（ここまでの きろくは のこりません）')){
+    if(window.speechSynthesis) window.speechSynthesis.cancel();
+    stopTimer();
+    showScreen(startScreen);
+  }
+});
+
+startBtn.addEventListener('click', () => {
+  const pool = poolForGenre();
+  const n = selectedCount === 0 ? pool.length : Math.min(selectedCount, pool.length);
+  queue = shuffle(pool).slice(0, n);
+  currentMode = selectedMode;
+  startRound();
+});
+
+function startRound(){
+  qIndex = 0;
+  results = [];
+  startTime = Date.now();
+  showScreen(playScreen);
+  startTimer();
+  loadQuestion();
+}
+
+function startTimer(){
+  stopTimer();
+  timerHandle = setInterval(() => {
+    const sec = Math.floor((Date.now() - startTime) / 1000);
+    timerPill.textContent = `⏱ ${formatTime(sec)}`;
+  }, 500);
+}
+function stopTimer(){ if(timerHandle){ clearInterval(timerHandle); timerHandle = null; } }
+
+function loadQuestion(){
+  awaitingNext = false;
+  typed = '';
+  usedHintThisWord = false;
+  hadWrongAttemptThisWord = false;
+  hintText.textContent = '';
+  feedbackBanner.className = 'feedback-banner';
+  feedbackBanner.textContent = '';
+  skipBtn.classList.remove('hidden');
+  nextBtn.classList.add('hidden');
+
+  const entry = queue[qIndex];
+  progressPill.textContent = `${qIndex + 1} / ${queue.length}`;
+
+  if(currentMode === 'meaning'){
+    promptGenre.textContent = entry.g || '';
+    promptMain.textContent = entry.m;
+    promptMain.className = 'prompt-main';
+    promptKana.textContent = '';
+    hintBtn.classList.remove('hidden');
+    hintBtn.disabled = false;
+  } else {
+    promptGenre.textContent = entry.g || '';
+    promptMain.textContent = entry.w;
+    promptMain.className = 'prompt-main word-mode';
+    promptKana.textContent = entry.k ? `よみかた: ${entry.k}` : '';
+    hintBtn.classList.add('hidden');
+  }
+
+  renderTypeDisplay();
+  hiddenInput.value = '';
+  speakCurrentWord();
+  focusInput();
+}
+
+function focusInput(){
+  hiddenInput.focus();
+}
+
+function currentTarget(){
+  return queue[qIndex].w.toLowerCase();
+}
+
+function renderTypeDisplay(){
+  const target = currentTarget();
+  let html = '';
+  for(let i = 0; i < target.length; i++){
+    const tch = target[i];
+    if(i < typed.length){
+      const uch = typed[i].toLowerCase();
+      if(uch === tch){ html += `<span class="ch-correct">${escapeHtml(target[i])}</span>`; }
+      else{ html += `<span class="ch-wrong">${escapeHtml(target[i])}</span>`; }
+    } else if(i === typed.length){
+      html += `<span class="ch-pending cursor">${escapeHtml(target[i])}</span>`;
+    } else {
+      html += `<span class="ch-pending">${escapeHtml(target[i])}</span>`;
+    }
+  }
+  typeDisplay.innerHTML = html;
+}
+
+hiddenInput.addEventListener('input', () => {
+  if(awaitingNext) return;
+  const raw = hiddenInput.value;
+  // keep letters, spaces, hyphens and apostrophes (many words are compound: "hot dog", "twenty-one")
+  const target = currentTarget();
+  typed = raw.replace(/[^a-zA-Z \-']/g, '').slice(0, target.length + 5);
+  renderTypeDisplay();
+
+  if(typed.length >= target.length){
+    if(typed.toLowerCase() === target){
+      let status;
+      if(usedHintThisWord) status = 'hint';
+      else if(hadWrongAttemptThisWord) status = 'corrected';
+      else status = 'correct';
+      finishWord(status);
+    } else {
+      hadWrongAttemptThisWord = true;
+    }
+  }
+});
+
+tapHint.addEventListener('click', focusInput);
+typeDisplay.addEventListener('click', focusInput);
+document.getElementById('playScreen').addEventListener('click', (e) => {
+  if(e.target.closest('button')) return;
+  focusInput();
+});
+
+hintBtn.addEventListener('click', () => {
+  if(awaitingNext) return;
+  usedHintThisWord = true;
+  hintText.textContent = `つづり: ${queue[qIndex].w}`;
+  hintBtn.disabled = true;
+});
+
+skipBtn.addEventListener('click', () => {
+  if(awaitingNext) return;
+  finishWord('skip');
+});
+
+function finishWord(status){
+  awaitingNext = true;
+  const entry = queue[qIndex];
+  results.push({ entry, status });
+
+  skipBtn.classList.add('hidden');
+  hintBtn.disabled = true;
+  nextBtn.classList.remove('hidden');
+
+  if(status === 'correct'){
+    feedbackBanner.className = 'feedback-banner show-correct';
+    feedbackBanner.textContent = '⭕ せいかい！';
+  } else if(status === 'corrected'){
+    feedbackBanner.className = 'feedback-banner show-correct';
+    feedbackBanner.textContent = '⭕ せいかい！（うちなおしたね）';
+  } else if(status === 'hint'){
+    feedbackBanner.className = 'feedback-banner show-correct';
+    feedbackBanner.innerHTML = '⭕ せいかい！（ヒントを見たよ）';
+  } else if(status === 'skip'){
+    feedbackBanner.className = 'feedback-banner show-wrong';
+    feedbackBanner.innerHTML = `⏭ スキップ<div class="correct-answer">こたえ: <b>${escapeHtml(entry.w)}</b>（${escapeHtml(entry.m)}）</div>`;
+  } else {
+    feedbackBanner.className = 'feedback-banner show-wrong';
+    feedbackBanner.innerHTML = `✕ おしい！<div class="correct-answer">こたえ: <b>${escapeHtml(entry.w)}</b>（${escapeHtml(entry.m)}）</div>`;
+  }
+
+  // small delay auto-advance for smooth correct-flow; manual button still available for hint/wrong/skip
+  if(status === 'correct' || status === 'corrected'){
+    setTimeout(() => { if(awaitingNext) advance(); }, 700);
+  }
+}
+
+nextBtn.addEventListener('click', advance);
+
+function advance(){
+  qIndex++;
+  if(qIndex >= queue.length){
+    finishRound();
+  } else {
+    loadQuestion();
+  }
+}
+
+function finishRound(){
+  stopTimer();
+  const totalSec = Math.floor((Date.now() - startTime) / 1000);
+  const correctCount = results.filter(r => r.status === 'correct').length;
+
+  document.getElementById('resCorrect').textContent = correctCount;
+  document.getElementById('resTotal').textContent = results.length;
+  document.getElementById('resTime').textContent = formatTime(totalSec);
+
+  const missList = document.getElementById('missList');
+  const misses = results.filter(r => r.status !== 'correct');
+  const retryBtn = document.getElementById('retryMissBtn');
+
+  if(misses.length === 0){
+    missList.innerHTML = '<div class="empty-miss">パーフェクト！ぜんぶ 1かいで せいかいだったよ 🎉</div>';
+    retryBtn.classList.add('hidden');
+  } else {
+    missList.innerHTML = '';
+    const tagInfo = {
+      hint:      { cls: 'hint', label: 'ヒント使用' },
+      corrected: { cls: 'hint', label: 'うちなおし' },
+      skip:      { cls: 'skip', label: 'スキップ' },
+      wrong:     { cls: 'wrong', label: 'まちがい' }
+    };
+    misses.forEach(r => {
+      const info = tagInfo[r.status] || tagInfo.wrong;
+      const row = document.createElement('div');
+      row.className = 'miss-item';
+      row.innerHTML = `<span><span class="miss-word">${escapeHtml(r.entry.w)}</span> <span class="miss-meaning">${escapeHtml(r.entry.m)}</span></span><span class="miss-tag ${info.cls}">${info.label}</span>`;
+      missList.appendChild(row);
+    });
+    retryBtn.classList.remove('hidden');
+  }
+
+  showScreen(resultScreen);
+}
+
+document.getElementById('retryMissBtn').addEventListener('click', () => {
+  const misses = results.filter(r => r.status !== 'correct').map(r => r.entry);
+  queue = shuffle(misses);
+  startRound();
+});
+document.getElementById('restartSameBtn').addEventListener('click', () => {
+  const pool = poolForGenre();
+  const n = selectedCount === 0 ? pool.length : Math.min(selectedCount, pool.length);
+  queue = shuffle(pool).slice(0, n);
+  startRound();
+});
+document.getElementById('backToStartBtn').addEventListener('click', () => {
+  showScreen(startScreen);
+});
+
+/* keep focus on hidden input while playing (helps mobile/tablet keyboards pop up) */
+document.addEventListener('keydown', (e) => {
+  if(!playScreen.classList.contains('hidden') && document.activeElement !== hiddenInput){
+    if(e.key.length === 1 || e.key === 'Backspace'){ focusInput(); }
+  }
+});
+</script>
+</body>
+</html>
