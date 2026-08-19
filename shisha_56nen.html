@@ -222,10 +222,10 @@
   }
   .genko{
     display:grid;
-    grid-template-columns:repeat(15,1fr);
-    grid-template-rows:repeat(20,1fr);
-    width:159mm;
-    height:212mm;
+    grid-template-columns:repeat(18,1fr);
+    grid-template-rows:repeat(23,1fr);
+    width:167.4mm;
+    height:213.9mm;
     border:1.4px solid var(--ink);
   }
   .genko .cell{
@@ -237,7 +237,7 @@
     align-items:center;
     justify-content:center;
     font-family:"Klee One",serif;
-    font-size:8.4mm;
+    font-size:7.3mm;
     line-height:1;
     color:var(--ink);
   }
@@ -251,9 +251,11 @@
     line-height:1;
     transform:translate(15%,-20%);
   }
-  .genko .cell .rotate{
+  .genko .cell .vchar{
     display:inline-block;
-    transform:rotate(90deg);
+    writing-mode:vertical-rl;
+    text-orientation:mixed;
+    line-height:1;
   }
 
   .foot-note{
@@ -293,7 +295,7 @@
 
   <div class="controls">
     <h1><span class="eyebrow">朝学習 10分</span>視写プリント作成</h1>
-    <p class="sub">題材文を入力すると、B4横向き・300字詰め（15列×20行／5・6年生用）原稿用紙のお手本＆書き写しシートを作ります。</p>
+    <p class="sub">題材文を入力すると、B4横向き・414字詰め（18列×23行／5・6年生用）原稿用紙のお手本＆書き写しシートを作ります。</p>
 
     <div class="card">
       <label class="field-label" for="printTitle">プリントタイトル（原稿用紙の右上に印字されます）</label>
@@ -318,7 +320,7 @@
 
       <div class="meta">
         <span>文字数：<strong id="charCount">0</strong> 字</span>
-        <span>枚数（300字/枚）：<strong id="pageCount">0</strong> 枚</span>
+        <span>枚数（414字/枚）：<strong id="pageCount">0</strong> 枚</span>
       </div>
 
       <div class="actions">
@@ -332,7 +334,7 @@
   <div class="sheet-scale-wrap" id="sheetsWrap"></div>
 
 <script>
-const COLS = 15, ROWS = 20, PER_PAGE = COLS*ROWS;
+const COLS = 18, ROWS = 23, PER_PAGE = COLS*ROWS;
 
 // 行頭禁則：この文字が列(行)の先頭に来る場合は前の列の最後のマスに押し込む
 function isPushable(ch){
@@ -385,18 +387,12 @@ function buildPages(text){
   return pages;
 }
 
-// 縦書きで90度回転させて表示すべき文字（長音記号・ダッシュ・波ダッシュ等）
-const ROTATE_CHARS = new Set(['ー','−','‐','—','〜','~','―']);
-
+// 縦書き時の文字の向きはブラウザのtext-orientationに任せる（音引き・かぎ括弧等も自動で正しい向きになる）
 function renderCharInto(container, ch){
-  if(ROTATE_CHARS.has(ch)){
-    const span = document.createElement('span');
-    span.className = 'rotate';
-    span.textContent = ch;
-    container.appendChild(span);
-  } else {
-    container.appendChild(document.createTextNode(ch));
-  }
+  const span = document.createElement('span');
+  span.className = 'vchar';
+  span.textContent = ch;
+  container.appendChild(span);
 }
 
 function buildGenko(cells, isModel){

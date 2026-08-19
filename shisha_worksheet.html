@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>視写プリント作成</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2b2a28;
+    --paper:#faf7f0;
+    --line:#c9c0ab;
+    --accent:#a8562f;
+    --accent-soft:#e9d9c6;
+    --panel:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Zen Maru Gothic","Hiragino Sans",sans-serif;
+    background:#eee7d8;
+    color:var(--ink);
+  }
+
+  /* ---------- screen-only control panel ---------- */
+  .controls{
+    max-width:900px;
+    margin:0 auto;
+    padding:28px 24px 40px;
+  }
+  .controls h1{
+    font-size:22px;
+    letter-spacing:.04em;
+    margin:0 0 4px;
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .controls h1 .eyebrow{
+    font-size:12px;
+    letter-spacing:.18em;
+    color:var(--accent);
+    font-weight:700;
+  }
+  .controls p.sub{
+    margin:0 0 22px;
+    color:#6b6355;
+    font-size:13px;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px;
+    margin-bottom:16px;
+  }
+  label.field-label{
+    display:block;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.06em;
+    color:#7a7263;
+    margin-bottom:8px;
+  }
+  textarea{
+    width:100%;
+    min-height:140px;
+    font-size:16px;
+    line-height:1.8;
+    font-family:"Klee One","Zen Maru Gothic",sans-serif;
+    padding:12px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    resize:vertical;
+    background:#fffdf9;
+    color:var(--ink);
+  }
+  textarea:focus, select:focus{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+  }
+  .row{
+    display:flex;
+    gap:24px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+    margin-top:16px;
+  }
+  .field{ flex:1; min-width:200px; }
+  .seg{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .seg button{
+    flex:1;
+    padding:10px 12px;
+    background:#fffdf9;
+    border:none;
+    border-right:1px solid var(--line);
+    cursor:pointer;
+    font-size:14px;
+    font-family:inherit;
+    color:var(--ink);
+  }
+  .seg button:last-child{ border-right:none; }
+  .seg button.active{
+    background:var(--accent);
+    color:#fff;
+    font-weight:700;
+  }
+  .meta{
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    color:#847c6c;
+    margin-top:10px;
+  }
+  .meta strong{ color:var(--ink); }
+  .actions{
+    display:flex;
+    gap:12px;
+    margin-top:20px;
+  }
+  button.primary{
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:12px 22px;
+    border-radius:8px;
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:.03em;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  button.primary:hover{ background:#8f4626; }
+  .hint{
+    font-size:12px;
+    color:#847c6c;
+    margin-top:10px;
+    line-height:1.6;
+  }
+
+  /* ---------- print sheet (B4 landscape, 400字詰め) ---------- */
+  .sheet{
+    background:var(--paper);
+    width:364mm;
+    height:257mm;
+    margin:0 auto 24px;
+    padding:6mm 8mm 6mm;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    box-shadow:0 2px 10px rgba(0,0,0,.15);
+  }
+  .sheet-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    border-bottom:1.5px solid var(--ink);
+    padding-bottom:2mm;
+    margin-bottom:3mm;
+    font-family:"Klee One",sans-serif;
+  }
+  .head-left{
+    display:flex;
+    flex-direction:row;
+    gap:14mm;
+    font-size:12px;
+    color:#4a453c;
+    padding-top:1mm;
+  }
+  .head-left .field-line{
+    display:flex;
+    align-items:baseline;
+    gap:2mm;
+    white-space:nowrap;
+  }
+  .head-left .blank{
+    border-bottom:1px solid var(--ink);
+    display:inline-block;
+    min-width:46mm;
+    height:5mm;
+  }
+  .head-right{
+    text-align:right;
+    max-width:62%;
+  }
+  .head-right .head-title{
+    font-size:16px;
+    font-weight:700;
+    line-height:1.5;
+    color:var(--ink);
+  }
+  .head-right .head-pagenum{
+    font-size:11px;
+    color:#8a8272;
+    margin-top:2mm;
+  }
+  .grids{
+    flex:1;
+    display:flex;
+    gap:10mm;
+    justify-content:center;
+  }
+  .grids.hand-left{ flex-direction:row-reverse; }
+  .grid-block{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .grid-label{
+    font-family:"Klee One",sans-serif;
+    font-size:11px;
+    color:#8a8272;
+    letter-spacing:.12em;
+    margin-bottom:2mm;
+    text-align:center;
+  }
+  .genko{
+    display:grid;
+    grid-template-columns:repeat(10,1fr);
+    grid-template-rows:repeat(20,1fr);
+    width:106mm;
+    height:212mm;
+    border:1.4px solid var(--ink);
+  }
+  .genko .cell{
+    position:relative;
+    min-height:0;
+    min-width:0;
+    border:0.4px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:"Klee One",serif;
+    font-size:8.4mm;
+    line-height:1;
+    color:var(--ink);
+  }
+  .genko.model .cell{ color:#3b3630; }
+  .genko.copy .cell{ background:#fffefb; }
+  .genko .cell .punct{
+    position:absolute;
+    right:0.2mm;
+    top:0.2mm;
+    font-size:0.55em;
+    line-height:1;
+    transform:translate(15%,-20%);
+  }
+  .genko .cell .vchar{
+    display:inline-block;
+    writing-mode:vertical-rl;
+    text-orientation:mixed;
+    line-height:1;
+  }
+
+  .foot-note{
+    text-align:center;
+    font-size:9px;
+    color:#a79f8e;
+    margin-top:2mm;
+    font-family:"Klee One",sans-serif;
+  }
+
+  @media print{
+    body{ background:#fff; }
+    .controls{ display:none; }
+    .sheet{
+      box-shadow:none;
+      margin:0;
+      page-break-after:always;
+    }
+    .sheet:last-child{ page-break-after:auto; }
+    @page{
+      size:364mm 257mm;
+      margin:0;
+    }
+  }
+  @media screen{
+    .sheet-scale-wrap{
+      overflow-x:auto;
+      padding:0 10px;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <div class="controls">
+    <h1><span class="eyebrow">朝学習 10分</span>視写プリント作成</h1>
+    <p class="sub">題材文を入力すると、B4横向き・200字詰め（10列×20行）原稿用紙のお手本＆書き写しシートを作ります。</p>
+
+    <div class="card">
+      <label class="field-label" for="printTitle">プリントタイトル（原稿用紙の右上に印字されます）</label>
+      <input type="text" id="printTitle" placeholder="例：６年生視写プリント４　吾輩は猫である"
+        style="width:100%;padding:10px 12px;font-size:15px;font-family:'Klee One','Zen Maru Gothic',sans-serif;border:1px solid var(--line);border-radius:8px;background:#fffdf9;color:var(--ink);"
+        value="６年生視写プリント４　吾輩は猫である">
+    </div>
+
+    <div class="card">
+      <label class="field-label" for="srcText">題材文（視写させたい文章）</label>
+      <textarea id="srcText" placeholder="ここに視写させたい文章を入力してください。（改行を入れると、その列の残りは空欄のまま次の列の先頭から続きます）">吾輩は猫である。名前はまだ無い。どこで生れたかとんと見当がつかぬ。何でも薄暗いじめじめした所でニャーニャー泣いていた事だけは記憶している。吾輩はここで始めて人間というものを見た。しかもあとで聞くとそれは書生という人間中で一番獰悪な種族であったそうだ。</textarea>
+
+      <div class="row">
+        <div class="field">
+          <label class="field-label">利き手</label>
+          <div class="seg" id="handSeg">
+            <button data-hand="right" class="active">右利き用（お手本は左）</button>
+            <button data-hand="left">左利き用（お手本は右）</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="meta">
+        <span>文字数：<strong id="charCount">0</strong> 字</span>
+        <span>枚数（200字/枚）：<strong id="pageCount">0</strong> 枚</span>
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="genBtn">プリントを作成する</button>
+        <button class="primary" id="printBtn" style="background:#4a4438;">PDFとして保存／印刷</button>
+      </div>
+      <p class="hint">「PDFとして保存／印刷」を押すと印刷ダイアログが開きます。送り先プリンタを「PDFに保存」にすると、B4横向きのPDFファイルとして書き出せます。（プリンタ設定で用紙サイズを「B4」、向きを「横」にしてください）<br>※「。」「、」が行（列）の先頭に来る場合は、自動的に前の行の最後のマスに小さく押し込んで表示します（禁則処理）。<br>※文章中で改行すると、その列の残りは空欄のまま次の列の先頭から続きが配置されます（段落分け）。</p>
+    </div>
+  </div>
+
+  <div class="sheet-scale-wrap" id="sheetsWrap"></div>
+
+<script>
+const COLS = 10, ROWS = 20, PER_PAGE = COLS*ROWS;
+
+// 行頭禁則：この文字が列(行)の先頭に来る場合は前の列の最後のマスに押し込む
+function isPushable(ch){
+  return ch === '。' || ch === '、';
+}
+
+// 字下げ・空白として扱う文字（このマスは空欄のまま1マス消費する）
+function isBlankSpace(ch){
+  return ch === ' ' || ch === '\u3000' || ch === '\t';
+}
+
+// テキスト全体を、禁則処理と改行（次の列の先頭へ送る）を反映した「マス目の配列」のページ単位に分割する
+function buildPages(text){
+  const pages = [];
+  let idx = 0;
+  if(text.length === 0) return [[]];
+  while(idx < text.length){
+    const cells = []; // {main, punct}
+    while(idx < text.length && cells.length < PER_PAGE){
+      const ch = text[idx];
+
+      if(ch === '\n'){
+        idx++;
+        // 現在の列の途中で改行された場合、残りのマスを空欄にして次の列の先頭へ送る
+        if(cells.length % ROWS !== 0){
+          const remain = ROWS - (cells.length % ROWS);
+          for(let k=0; k<remain && cells.length<PER_PAGE; k++){
+            cells.push({ main: null, punct: null });
+          }
+        }
+        continue;
+      }
+
+      const atColStart = cells.length % ROWS === 0;
+      if(atColStart && cells.length > 0 && isPushable(ch)){
+        // 前の列（＝直前のマス）に追い込む
+        cells[cells.length - 1].punct = ch;
+        idx++;
+      } else if(isBlankSpace(ch)){
+        // 字下げ・空白：文字なしのまま1マス消費する
+        cells.push({ main: null, punct: null });
+        idx++;
+      } else {
+        cells.push({ main: ch, punct: null });
+        idx++;
+      }
+    }
+    pages.push(cells);
+  }
+  return pages;
+}
+
+// 縦書き時の文字の向きはブラウザのtext-orientationに任せる（音引き・かぎ括弧等も自動で正しい向きになる）
+function renderCharInto(container, ch){
+  const span = document.createElement('span');
+  span.className = 'vchar';
+  span.textContent = ch;
+  container.appendChild(span);
+}
+
+function buildGenko(cells, isModel){
+  const grid = document.createElement('div');
+  grid.className = 'genko ' + (isModel ? 'model' : 'copy');
+  for(let i=0;i<PER_PAGE;i++){
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    if(isModel){
+      const data = cells[i];
+      if(data && data.main){
+        if(isPushable(data.main)){
+          // 句読点は縦書きの慣例に合わせ、マスの左上に小さく配置する
+          const m = document.createElement('span');
+          m.className = 'punct';
+          m.textContent = data.main;
+          cell.appendChild(m);
+        } else {
+          renderCharInto(cell, data.main);
+        }
+        if(data.punct){
+          const p = document.createElement('span');
+          p.className = 'punct';
+          p.textContent = data.punct;
+          cell.appendChild(p);
+        }
+      }
+    }
+    // column-major, right-to-left: col 20 (rightmost) holds cells 0-19, etc.
+    const colFromRight = Math.floor(i/ROWS);
+    const row = (i % ROWS) + 1;
+    const col = COLS - colFromRight;
+    cell.style.gridColumn = col;
+    cell.style.gridRow = row;
+    grid.appendChild(cell);
+  }
+  return grid;
+}
+
+function render(){
+  const raw = document.getElementById('srcText').value;
+  const text = raw.replace(/\r\n/g,'\n').replace(/^\n+|\n+$/g,'');
+  const hand = document.querySelector('#handSeg button.active').dataset.hand;
+  const printTitle = document.getElementById('printTitle').value;
+
+  document.getElementById('charCount').textContent = text.replace(/\n/g,'').length;
+  const pages = buildPages(text);
+  const pageCount = pages.length;
+  document.getElementById('pageCount').textContent = pageCount;
+
+  const wrap = document.getElementById('sheetsWrap');
+  wrap.innerHTML = '';
+
+  for(let p=0; p<pageCount; p++){
+    const chunk = pages[p];
+
+    const sheet = document.createElement('div');
+    sheet.className = 'sheet';
+
+    const head = document.createElement('div');
+    head.className = 'sheet-head';
+
+    const headLeft = document.createElement('div');
+    headLeft.className = 'head-left';
+    const dateLine = document.createElement('div');
+    dateLine.className = 'field-line';
+    dateLine.innerHTML = '学習日：<span class="blank"></span>';
+    const nameLine = document.createElement('div');
+    nameLine.className = 'field-line';
+    nameLine.innerHTML = 'なまえ：<span class="blank"></span>';
+    headLeft.appendChild(dateLine);
+    headLeft.appendChild(nameLine);
+
+    const headRight = document.createElement('div');
+    headRight.className = 'head-right';
+    const titleEl = document.createElement('div');
+    titleEl.className = 'head-title';
+    titleEl.textContent = printTitle;
+    headRight.appendChild(titleEl);
+    if(pageCount > 1){
+      const pageEl = document.createElement('div');
+      pageEl.className = 'head-pagenum';
+      pageEl.textContent = `（${p+1}／${pageCount}枚目）`;
+      headRight.appendChild(pageEl);
+    }
+
+    head.appendChild(headLeft);
+    head.appendChild(headRight);
+    sheet.appendChild(head);
+
+    const grids = document.createElement('div');
+    grids.className = 'grids ' + (hand === 'left' ? 'hand-left' : '');
+
+    const modelBlock = document.createElement('div');
+    modelBlock.className = 'grid-block';
+    modelBlock.innerHTML = '<div class="grid-label">お　手　本</div>';
+    modelBlock.appendChild(buildGenko(chunk, true));
+
+    const copyBlock = document.createElement('div');
+    copyBlock.className = 'grid-block';
+    copyBlock.innerHTML = '<div class="grid-label">書　き　写　す</div>';
+    copyBlock.appendChild(buildGenko(chunk, false));
+
+    grids.appendChild(modelBlock);
+    grids.appendChild(copyBlock);
+    sheet.appendChild(grids);
+
+    const foot = document.createElement('div');
+    foot.className = 'foot-note';
+    foot.textContent = '朝学習 10分視写';
+    sheet.appendChild(foot);
+
+    wrap.appendChild(sheet);
+  }
+}
+
+document.getElementById('handSeg').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  document.querySelectorAll('#handSeg button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+});
+document.getElementById('genBtn').addEventListener('click', render);
+document.getElementById('printBtn').addEventListener('click', ()=>{ render(); window.print(); });
+document.getElementById('srcText').addEventListener('input', render);
+document.getElementById('printTitle').addEventListener('input', render);
+
+render();
+</script>
+</body>
+</html>

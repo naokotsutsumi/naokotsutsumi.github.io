@@ -251,9 +251,11 @@
     line-height:1;
     transform:translate(15%,-20%);
   }
-  .genko .cell .rotate{
+  .genko .cell .vchar{
     display:inline-block;
-    transform:rotate(90deg);
+    writing-mode:vertical-rl;
+    text-orientation:mixed;
+    line-height:1;
   }
 
   .foot-note{
@@ -385,18 +387,12 @@ function buildPages(text){
   return pages;
 }
 
-// 縦書きで90度回転させて表示すべき文字（長音記号・ダッシュ・波ダッシュ等）
-const ROTATE_CHARS = new Set(['ー','−','‐','—','〜','~','―']);
-
+// 縦書き時の文字の向きはブラウザのtext-orientationに任せる（音引き・かぎ括弧等も自動で正しい向きになる）
 function renderCharInto(container, ch){
-  if(ROTATE_CHARS.has(ch)){
-    const span = document.createElement('span');
-    span.className = 'rotate';
-    span.textContent = ch;
-    container.appendChild(span);
-  } else {
-    container.appendChild(document.createTextNode(ch));
-  }
+  const span = document.createElement('span');
+  span.className = 'vchar';
+  span.textContent = ch;
+  container.appendChild(span);
 }
 
 function buildGenko(cells, isModel){
