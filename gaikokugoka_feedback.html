@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>外国語科 ふりかえりノート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1C2B4A;
+    --navy-soft:#324567;
+    --parchment:#F3EEDD;
+    --paper:#FBF8EF;
+    --teal:#3F8F7C;
+    --teal-dark:#2C6558;
+    --gold:#C79A46;
+    --gold-dark:#9C7A34;
+    --ink:#24314F;
+    --ink-soft:#5D6B85;
+    --line:#DDD4B8;
+    --coral:#C1543A;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--parchment);
+    background-image:
+      linear-gradient(180deg, rgba(28,43,74,0.03) 1px, transparent 1px);
+    background-size: 100% 34px;
+    font-family:'Klee One',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    padding:22px 0 60px;
+  }
+  .wrap{max-width:1180px;width:100%;margin:0 auto;padding:0 clamp(16px,3.5vw,56px);}
+  .qGrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px;}
+  .qGrid .perspective-card{margin-bottom:0;}
+  .top{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    border-bottom:2px solid var(--navy); padding-bottom:12px; margin-bottom:20px;
+  }
+  .brand{
+    font-family:'Klee One',serif;
+    font-weight:600;
+    font-size:25px;
+    color:var(--navy);
+    letter-spacing:2px;
+  }
+  .brand small{
+    display:block; font-family:'Klee One',sans-serif; font-size:11px;
+    color:var(--ink-soft); letter-spacing:3px; font-weight:500; margin-bottom:2px;
+  }
+  .datebadge{
+    font-size:14px; color:var(--ink-soft); font-weight:500;
+    border:1px solid var(--gold); border-radius:2px; padding:5px 12px;
+    background:var(--paper);
+  }
+  .card{
+    background:var(--paper);
+    border-radius:6px;
+    border:1px solid var(--line);
+    padding:20px 20px;
+    margin-bottom:14px;
+  }
+  .goalcard{
+    background:var(--navy);
+    color:#EFE9D6;
+    position:relative;
+    overflow:hidden;
+  }
+  .goalcard::before{
+    content:'';
+    position:absolute; top:-30px; right:-30px; width:110px; height:110px;
+    border:2px solid rgba(199,154,70,0.35); border-radius:50%;
+  }
+  .goalcard .label{
+    font-size:12px; letter-spacing:2px; font-weight:600; color:#C79A46;
+    text-transform:uppercase;
+  }
+  .goalcard .unit{
+    font-size:15px; margin-top:6px; opacity:0.9; font-weight:500;
+  }
+  .goalcard .goal{
+    font-family:'Klee One',serif;
+    font-size:21px; font-weight:600; margin-top:10px; line-height:1.7;
+  }
+  label.fieldlabel{
+    display:block; font-weight:600; font-size:16px; margin-bottom:10px;
+    color:var(--navy); letter-spacing:0.5px;
+  }
+  input[type=text]{
+    width:100%; font-size:17px; padding:12px 14px; border-radius:4px;
+    border:1px solid var(--line); font-family:inherit; color:var(--ink);
+    background:#fff;
+  }
+  input[type=text]:focus{outline:none; border-color:var(--teal);}
+  .nameWarn{display:none; color:var(--coral); font-size:12px; font-weight:600; margin-top:8px; line-height:1.7;}
+  .pwgate{display:none; max-width:420px; margin:60px auto;}
+  .pwgate input[type=password]{
+    width:100%; font-size:20px; padding:12px 14px; border-radius:4px;
+    border:1px solid var(--line); font-family:inherit; color:var(--ink);
+    background:#fff; letter-spacing:4px; text-align:center;
+  }
+  .pwgate input[type=password]:focus{outline:none; border-color:var(--teal);}
+  .pwgate .pwbtnrow{display:flex; gap:10px; margin-top:14px;}
+  .pwgate .pwbtnrow button{flex:1; padding:12px; border-radius:4px; font-weight:600; cursor:pointer; font-family:'Klee One',serif; font-size:14px; letter-spacing:1px;}
+  .pwgate .pwGo{background:var(--navy); color:#EFE9D6; border:none;}
+  .pwgate .pwCancel{background:var(--paper); color:var(--ink-soft); border:1px solid var(--line);}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+  .chip{
+    background:#EFE6C9; border:1px solid var(--gold); color:var(--gold-dark);
+    font-size:13px; font-weight:600; padding:7px 13px; border-radius:2px;
+    cursor:pointer;
+  }
+  .chip:hover{background:#E7DBAF;}
+  .perspective{margin-bottom:16px;}
+  .ptitle{
+    display:flex; align-items:center; gap:10px; margin-bottom:6px;
+  }
+  .pbadge{
+    width:26px;height:26px;border-radius:50%; background:var(--navy); color:#EFE9D6;
+    display:flex;align-items:center;justify-content:center; font-size:13px; font-weight:600;
+    flex-shrink:0;
+    font-family:'Klee One',serif;
+  }
+  .ptext{font-weight:600; font-size:17px;}
+  .pdesc{font-size:14px; color:var(--ink-soft); margin:0 0 10px 36px; line-height:1.7;}
+  .levels{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-left:36px;
+  }
+  .lv{
+    background:#fff; border:1px solid var(--line); border-radius:4px;
+    padding:10px 4px; text-align:center; cursor:pointer;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .lv .seal{
+    width:22px;height:22px;border-radius:50%;border:2px solid var(--gold);
+    margin:0 auto 6px; display:flex; align-items:center; justify-content:center;
+    font-family:'Klee One',serif; font-size:12px; font-weight:600; color:var(--gold-dark);
+  }
+  .lv .ltext{font-size:12px; font-weight:600; color:var(--ink-soft); line-height:1.35;}
+  .lv:hover{border-color:var(--teal);}
+  .lv.selected{background:var(--teal); border-color:var(--teal-dark);}
+  .lv.selected .seal{background:var(--gold); border-color:var(--gold-dark); color:#fff;}
+  .lv.selected .ltext{color:#fff;}
+  textarea{
+    width:100%; min-height:80px; font-size:17px; padding:12px 14px;
+    border-radius:4px; border:1px solid var(--line); font-family:inherit;
+    color:var(--ink); resize:vertical; background:#fff; line-height:1.7;
+  }
+  textarea:focus{outline:none; border-color:var(--teal);}
+  .err{color:var(--coral); font-size:14px; font-weight:600; margin-top:8px; display:none;}
+  .submitbtn{
+    width:100%; padding:17px; font-size:17px; font-weight:600;
+    font-family:'Klee One',serif;
+    letter-spacing:3px;
+    color:#EFE9D6; background:var(--navy);
+    border:none; border-radius:4px; cursor:pointer;
+    transition:background .12s ease;
+  }
+  .submitbtn:hover{background:var(--navy-soft);}
+  .doneWrap{display:none; text-align:center; padding:50px 20px;}
+  .doneWrap .stamp{
+    width:96px;height:96px;border-radius:50%;
+    border:3px solid var(--gold);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 20px; font-family:'Klee One',serif;
+    font-size:15px; font-weight:600; color:var(--gold-dark);
+    letter-spacing:2px; line-height:1.4;
+    animation:pop .5s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes pop{0%{transform:scale(0.3) rotate(-15deg);opacity:0;}100%{transform:scale(1) rotate(0);opacity:1;}}
+  .doneWrap h2{font-family:'Klee One',serif; font-size:20px; margin:0 0 10px; color:var(--navy);}
+  .doneWrap p{color:var(--ink-soft); font-size:15px; margin:0 0 24px; line-height:1.9;}
+  .again{
+    background:var(--paper); border:1px solid var(--navy); color:var(--navy);
+    font-weight:600; font-family:'Klee One',serif;
+    padding:12px 28px; border-radius:4px; cursor:pointer; font-size:14px; letter-spacing:1px;
+  }
+  .teacherlink{text-align:center; margin-top:20px;}
+  .teacherlink button{
+    background:none; border:none; color:var(--ink-soft); font-size:13px;
+    text-decoration:underline; cursor:pointer; font-family:inherit;
+  }
+  .tpanel{display:none;}
+  .tpanel .card{border:1px dashed var(--line);}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .savebtn{
+    background:var(--teal); color:#fff; border:none; border-radius:4px;
+    padding:11px 20px; font-weight:600; cursor:pointer; font-size:14px;
+    font-family:inherit;
+  }
+  .miniNote{font-size:13px; color:var(--ink-soft); margin-top:8px; line-height:1.75;}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin-top:10px;}
+  th,td{border-bottom:1px solid var(--line); padding:7px 5px; text-align:left; vertical-align:top;}
+  th{color:var(--ink-soft); font-weight:600; font-size:12.5px;}
+  .refreshbtn{
+    background:none; border:1px solid var(--line); border-radius:4px;
+    padding:8px 14px; font-size:13px; cursor:pointer; color:var(--ink); font-family:inherit;
+  }
+  .copybox{width:100%; min-height:100px; font-size:12px; font-family:monospace; margin-top:10px; border-radius:4px; border:1px solid var(--line); padding:10px;}
+  .emptyMsg{color:var(--ink-soft); font-size:13px; padding:10px 0;}
+  .summaryGrid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:10px;}
+  .sumBox{background:#fff; border:1px solid var(--line); border-radius:4px; padding:10px; text-align:center;}
+  .sumBox .sn{font-size:11px; color:var(--ink-soft); font-weight:600; margin-bottom:4px;}
+  .sumBox .sv{font-family:'Klee One',serif; font-size:18px; color:var(--navy); font-weight:600;}
+  .sumBlock{margin-bottom:18px;}
+  .sumTitle{font-weight:600; font-size:14px; color:var(--navy); margin-bottom:8px;}
+  .barRow{display:flex; align-items:center; gap:8px; margin-bottom:6px;}
+  .barLabel{width:100px; font-size:13px; color:var(--ink-soft); flex-shrink:0; line-height:1.3;}
+  .barTrack{flex:1; background:#EDE6D2; border-radius:2px; height:16px; overflow:hidden;}
+  .barFill{height:100%; background:var(--teal); border-radius:2px; transition:width .3s ease;}
+  .barCount{width:34px; text-align:right; font-size:12px; font-weight:600; color:var(--ink); flex-shrink:0;}
+  .opinionList{list-style:none; margin:0; padding:0;}
+  .opinionList li{
+    background:#fff; border:1px solid var(--line); border-radius:4px;
+    padding:10px 13px; margin-bottom:8px; font-size:14px; line-height:1.8;
+  }
+  .opinionList .otag{font-size:10px; font-weight:600; color:var(--gold-dark); border:1px solid var(--gold); border-radius:2px; padding:1px 6px; margin-right:6px;}
+  .opinionList .oname{font-weight:600; color:var(--navy); margin-right:6px;}
+  .copyOpinionBtn{
+    background:none; border:1px solid var(--line); border-radius:4px;
+    padding:7px 14px; font-size:12px; cursor:pointer; color:var(--ink); font-family:inherit;
+    margin-top:6px;
+  }
+  .wcLinkNote{font-size:12px; color:var(--ink-soft); margin-top:8px; line-height:1.7;}
+  .wcLinkNote a{color:var(--teal-dark);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand"><small>ELEMENTARY ENGLISH</small>外国語科 ふりかえりノート</div>
+    <div class="datebadge" id="dateBadge">-</div>
+  </div>
+
+  <div id="studentView">
+
+    <div class="card goalcard">
+      <div class="label" id="gradeLabel">FOREIGN LANGUAGE</div>
+      <div class="unit" id="unitLabel">単元：－</div>
+      <div class="goal" id="goalLabel">本時のめあて：－</div>
+    </div>
+
+    <div class="card">
+      <label class="fieldlabel">名前（ひらがなで入力）</label>
+      <input type="text" id="nameInput" placeholder="例：つつみ なおこ">
+      <div class="nameWarn" id="nameWarn">漢字が使われています。あいうえお順に並べ替えるので、ひらがなで入力し直してください</div>
+    </div>
+
+    <div class="qGrid">
+    <div class="card perspective-card">
+      <div class="perspective" style="margin-bottom:0;">
+        <div class="ptitle"><span class="pbadge">知</span><span class="ptext">知識・技能</span></div>
+        <p class="pdesc">今日学んだ英語の表現や語彙の意味・使い方を理解し、聞いたり話したりすることに生かせましたか。</p>
+        <div class="levels" data-q="q1">
+          <div class="lv" data-v="4"><span class="seal">A</span><span class="ltext">よく<br>できた</span></div>
+          <div class="lv" data-v="3"><span class="seal">B</span><span class="ltext">できた</span></div>
+          <div class="lv" data-v="2"><span class="seal">C</span><span class="ltext">もう少し</span></div>
+          <div class="lv" data-v="1"><span class="seal">D</span><span class="ltext">がんばり<br>たい</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card perspective-card">
+      <div class="perspective" style="margin-bottom:0;">
+        <div class="ptitle"><span class="pbadge">思</span><span class="ptext">思考・判断・表現</span></div>
+        <p class="pdesc">伝えたいことに合わせて、表現や話す内容を自分で考えたり選んだりできましたか。</p>
+        <div class="levels" data-q="q2">
+          <div class="lv" data-v="4"><span class="seal">A</span><span class="ltext">よく<br>できた</span></div>
+          <div class="lv" data-v="3"><span class="seal">B</span><span class="ltext">できた</span></div>
+          <div class="lv" data-v="2"><span class="seal">C</span><span class="ltext">もう少し</span></div>
+          <div class="lv" data-v="1"><span class="seal">D</span><span class="ltext">がんばり<br>たい</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card perspective-card">
+      <div class="perspective" style="margin-bottom:0;">
+        <div class="ptitle"><span class="pbadge">態</span><span class="ptext">主体的に学習に取り組む態度</span></div>
+        <p class="pdesc">相手に伝わるように工夫しながら、進んでコミュニケーションを図ろうとしましたか。</p>
+        <div class="levels" data-q="q3">
+          <div class="lv" data-v="4"><span class="seal">A</span><span class="ltext">よく<br>できた</span></div>
+          <div class="lv" data-v="3"><span class="seal">B</span><span class="ltext">できた</span></div>
+          <div class="lv" data-v="2"><span class="seal">C</span><span class="ltext">もう少し</span></div>
+          <div class="lv" data-v="1"><span class="seal">D</span><span class="ltext">がんばり<br>たい</span></div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <div class="card">
+      <label class="fieldlabel">今日、できるようになったこと</label>
+      <textarea id="canDoInput" placeholder="例：値段をたずねたり答えたりする表現を使うことができた"></textarea>
+      <div class="chips">
+        <div class="chip" data-target="canDoInput" data-text="新しい単語や表現を覚えることができた">新しい単語や表現を覚えられた</div>
+        <div class="chip" data-target="canDoInput" data-text="友達と英語でやり取りすることができた">友達と英語でやり取りできた</div>
+        <div class="chip" data-target="canDoInput" data-text="聞き取ったことをもとに考えることができた">聞き取ったことをもとに考えられた</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <label class="fieldlabel">次にがんばりたいこと</label>
+      <textarea id="nextInput" placeholder="例：もっと自分から質問してみたい"></textarea>
+      <div class="chips">
+        <div class="chip" data-target="nextInput" data-text="もっと自分から進んで話しかけたい">もっと自分から話しかけたい</div>
+        <div class="chip" data-target="nextInput" data-text="今日学んだ表現を使えるようにしたい">今日の表現を使えるようにしたい</div>
+        <div class="chip" data-target="nextInput" data-text="発音をもっと練習したい">発音をもっと練習したい</div>
+      </div>
+      <div class="err" id="errMsg">名前と、3つの観点すべてに答えてください</div>
+    </div>
+
+    <button class="submitbtn" id="submitBtn">記録する</button>
+
+    <div class="teacherlink"><button id="openTeacher">教師用画面</button></div>
+  </div>
+
+  <div class="pwgate" id="pwGate">
+    <div class="card">
+      <label class="fieldlabel">教師用パスワード</label>
+      <input type="password" id="pwInput" inputmode="numeric" placeholder="••••">
+      <div class="err" id="pwErr" style="display:none;">パスワードが違います</div>
+      <div class="miniNote">初期パスワードは 0000 です。教師用画面の設定から変更できます。</div>
+      <div class="pwbtnrow">
+        <button class="pwCancel" id="pwCancel">戻る</button>
+        <button class="pwGo" id="pwGo">進む</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="doneWrap" id="doneView">
+    <div class="stamp">記録<br>完了</div>
+    <h2>記録しました</h2>
+    <p>今日の学びを、次の時間に生かしていきましょう。</p>
+    <button class="again" id="againBtn">次の人が入力する</button>
+  </div>
+
+  <div class="tpanel" id="teacherPanel">
+    <div class="card">
+      <label class="fieldlabel">学年・組</label>
+      <div class="row2">
+        <input type="text" id="tGrade" placeholder="例：5年">
+        <input type="text" id="tClass" placeholder="例：2組">
+      </div>
+    </div>
+    <div class="card">
+      <label class="fieldlabel">単元名</label>
+      <input type="text" id="tUnit" placeholder="例：Unit 6 I want to go to Italy.">
+    </div>
+    <div class="card">
+      <label class="fieldlabel">本時のめあて</label>
+      <textarea id="tGoal" placeholder="例：行きたい国とその理由を伝え合おう"></textarea>
+      <div style="margin-top:16px;">
+        <label class="fieldlabel">教師用パスワードの変更（任意）</label>
+        <input type="password" id="tPassword" inputmode="numeric" placeholder="変更する場合のみ入力">
+      </div>
+      <div style="margin-top:12px;"><button class="savebtn" id="saveSettings">設定を保存する</button></div>
+      <div class="miniNote">保存すると、同じ日付・同じリンクを共有している児童全員の画面に反映されます。</div>
+    </div>
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <label class="fieldlabel" style="margin:0;">今日の記録状況（<span id="dateForList">-</span>）</label>
+        <button class="refreshbtn" id="refreshList">更新</button>
+      </div>
+      <div id="summaryArea"></div>
+      <div id="listArea"><div class="emptyMsg">まだ記録はありません。</div></div>
+      <div style="margin-top:12px;"><button class="savebtn" id="copyBtn" style="background:var(--ink-soft);">表として書き出す</button></div>
+      <textarea class="copybox" id="copyBox" readonly style="display:none;"></textarea>
+      <div class="miniNote">「表として書き出す」を押すと、下にタブ区切りテキストが表示されます。全選択してコピーし、指導要録や通知表作成用のExcel・スプレッドシートに貼り付けてください。</div>
+    </div>
+    <div class="teacherlink"><button id="closeTeacher">児童用画面にもどる</button></div>
+  </div>
+
+</div>
+
+<script>
+function todayStr(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+function todayDisplay(){
+  const d = new Date();
+  const w = ['日','月','火','水','木','金','土'][d.getDay()];
+  return (d.getMonth()+1)+'月'+d.getDate()+'日（'+w+'）';
+}
+const dateKey = todayStr();
+document.getElementById('dateBadge').textContent = todayDisplay();
+document.getElementById('dateForList').textContent = todayDisplay();
+
+let selections = {q1:null,q2:null,q3:null};
+let manualFlags = {canDo:false, next:false};
+document.getElementById('canDoInput').addEventListener('input', ()=>{ manualFlags.canDo = true; });
+document.getElementById('nextInput').addEventListener('input', ()=>{ manualFlags.next = true; });
+
+const nameInputEl = document.getElementById('nameInput');
+const nameWarnEl = document.getElementById('nameWarn');
+nameInputEl.addEventListener('input', ()=>{
+  nameWarnEl.style.display = /[\u4E00-\u9FFF]/.test(nameInputEl.value) ? 'block' : 'none';
+});
+
+document.querySelectorAll('.chip').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    const ta = document.getElementById(c.getAttribute('data-target'));
+    const t = c.getAttribute('data-text');
+    ta.value = ta.value ? (ta.value + '。' + t) : t;
+  });
+});
+
+document.querySelectorAll('.levels').forEach(group=>{
+  const qid = group.getAttribute('data-q');
+  group.querySelectorAll('.lv').forEach(f=>{
+    f.addEventListener('click', ()=>{
+      group.querySelectorAll('.lv').forEach(x=>x.classList.remove('selected'));
+      f.classList.add('selected');
+      selections[qid] = parseInt(f.getAttribute('data-v'),10);
+    });
+  });
+});
+
+async function loadSettings(){
+  try{
+    const r = await window.storage.get('settings:subject', true);
+    if(r && r.value){
+      const s = JSON.parse(r.value);
+      document.getElementById('gradeLabel').textContent = '外国語科（' + (s.grade||'') + (s.className? ' '+s.className:'') + '）';
+      document.getElementById('unitLabel').textContent = '単元：' + (s.unit || '－');
+      document.getElementById('goalLabel').textContent = '本時のめあて：' + (s.goal || '－');
+      document.getElementById('tGrade').value = s.grade||'';
+      document.getElementById('tClass').value = s.className||'';
+      document.getElementById('tUnit').value = s.unit||'';
+      document.getElementById('tGoal').value = s.goal||'';
+    }
+  }catch(e){}
+}
+loadSettings();
+
+document.getElementById('saveSettings').addEventListener('click', async ()=>{
+  const existingRaw = await window.storage.get('settings:subject', true).catch(()=>null);
+  const existing = existingRaw && existingRaw.value ? JSON.parse(existingRaw.value) : {};
+  const newPw = document.getElementById('tPassword').value.trim();
+  const s = {
+    grade: document.getElementById('tGrade').value.trim(),
+    className: document.getElementById('tClass').value.trim(),
+    unit: document.getElementById('tUnit').value.trim(),
+    goal: document.getElementById('tGoal').value.trim(),
+    teacherPassword: newPw ? newPw : (existing.teacherPassword || '0000')
+  };
+  try{
+    await window.storage.set('settings:subject', JSON.stringify(s), true);
+    document.getElementById('tPassword').value = '';
+    await loadSettings();
+    alertLike('設定を保存しました');
+  }catch(e){
+    alertLike('保存に失敗しました。もう一度お試しください。');
+  }
+});
+function alertLike(msg){
+  const btn = document.getElementById('saveSettings');
+  const orig = btn.textContent;
+  btn.textContent = msg;
+  setTimeout(()=>{btn.textContent = orig;}, 1600);
+}
+
+document.getElementById('submitBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('nameInput').value.trim();
+  const canDo = document.getElementById('canDoInput').value.trim();
+  const next = document.getElementById('nextInput').value.trim();
+  const err = document.getElementById('errMsg');
+  if(!name || selections.q1===null || selections.q2===null || selections.q3===null){
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  const settingsRaw = await window.storage.get('settings:subject', true).catch(()=>null);
+  const settings = settingsRaw && settingsRaw.value ? JSON.parse(settingsRaw.value) : {};
+  const record = {
+    name: name,
+    grade: settings.grade || '',
+    className: settings.className || '',
+    unit: settings.unit || '',
+    goal: settings.goal || '',
+    q1: selections.q1, q2: selections.q2, q3: selections.q3,
+    canDo: canDo, next: next,
+    canDoManual: manualFlags.canDo, nextManual: manualFlags.next,
+    submittedAt: new Date().toISOString()
+  };
+  const key = 'subject:' + dateKey + ':' + name;
+  try{
+    await window.storage.set(key, JSON.stringify(record), true);
+  }catch(e){}
+  document.getElementById('studentView').style.display = 'none';
+  document.getElementById('doneView').style.display = 'block';
+});
+
+document.getElementById('againBtn').addEventListener('click', ()=>{
+  document.getElementById('nameInput').value = '';
+  document.getElementById('canDoInput').value = '';
+  document.getElementById('nextInput').value = '';
+  selections = {q1:null,q2:null,q3:null};
+  manualFlags = {canDo:false, next:false};
+  nameWarnEl.style.display = 'none';
+  document.querySelectorAll('.lv').forEach(f=>f.classList.remove('selected'));
+  document.getElementById('doneView').style.display = 'none';
+  document.getElementById('studentView').style.display = 'block';
+});
+
+document.getElementById('openTeacher').addEventListener('click', ()=>{
+  document.getElementById('studentView').style.display = 'none';
+  document.getElementById('pwGate').style.display = 'block';
+  document.getElementById('pwInput').value = '';
+  document.getElementById('pwErr').style.display = 'none';
+  document.getElementById('pwInput').focus();
+});
+document.getElementById('pwCancel').addEventListener('click', ()=>{
+  document.getElementById('pwGate').style.display = 'none';
+  document.getElementById('studentView').style.display = 'block';
+});
+async function attemptTeacherLogin(){
+  const input = document.getElementById('pwInput').value.trim();
+  const raw = await window.storage.get('settings:subject', true).catch(()=>null);
+  const s = raw && raw.value ? JSON.parse(raw.value) : {};
+  const correctPw = s.teacherPassword || '0000';
+  if(input === correctPw){
+    document.getElementById('pwGate').style.display = 'none';
+    document.getElementById('teacherPanel').style.display = 'block';
+    refreshList();
+  }else{
+    document.getElementById('pwErr').style.display = 'block';
+  }
+}
+document.getElementById('pwGo').addEventListener('click', attemptTeacherLogin);
+document.getElementById('pwInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter') attemptTeacherLogin(); });
+document.getElementById('closeTeacher').addEventListener('click', ()=>{
+  document.getElementById('teacherPanel').style.display = 'none';
+  document.getElementById('studentView').style.display = 'block';
+});
+
+const levelLabel = {4:'A',3:'B',2:'C',1:'D'};
+const levelText = {4:'よくできた',3:'できた',2:'もう少し',1:'がんばりたい'};
+
+async function refreshList(){
+  const area = document.getElementById('listArea');
+  const sumArea = document.getElementById('summaryArea');
+  area.innerHTML = '<div class="emptyMsg">読み込み中…</div>';
+  sumArea.innerHTML = '';
+  try{
+    const listRes = await window.storage.list('subject:' + dateKey + ':', true);
+    const keys = (listRes && listRes.keys) ? listRes.keys : [];
+    if(keys.length === 0){
+      area.innerHTML = '<div class="emptyMsg">まだ記録はありません。</div>';
+      return;
+    }
+    const rows = [];
+    for(const k of keys){
+      try{
+        const r = await window.storage.get(k, true);
+        if(r && r.value) rows.push(JSON.parse(r.value));
+      }catch(e){}
+    }
+    rows.sort((a,b)=> a.name.localeCompare(b.name,'ja'));
+
+    let sumHtml = '';
+
+    const opinions = [];
+    rows.forEach(r=>{
+      if(r.canDoManual && r.canDo && r.canDo.trim()) opinions.push({name:r.name, tag:'できるようになったこと', text:r.canDo});
+      if(r.nextManual && r.next && r.next.trim()) opinions.push({name:r.name, tag:'次にがんばりたいこと', text:r.next});
+    });
+    sumHtml += '<div class="sumBlock"><div class="sumTitle">自分の言葉で入力された記述（' + opinions.length + '件）</div>';
+    sumHtml += '<div class="miniNote">次の授業のめあて設定にご活用ください。観点別の自己評価はここには表示していません（一覧の下の「表として書き出す」からのみ確認できます）。</div>';
+    if(opinions.length === 0){
+      sumHtml += '<div class="emptyMsg">自分の言葉で入力された記述はまだありません。</div>';
+    }else{
+      sumHtml += '<ul class="opinionList">' + opinions.map(o => '<li><span class="otag">' + escapeHtml(o.tag) + '</span><span class="oname">' + escapeHtml(o.name) + '</span>' + escapeHtml(o.text) + '</li>').join('') + '</ul>';
+      sumHtml += '<button class="copyOpinionBtn" id="copyOpinionsBtn">記述だけコピーする</button>';
+      sumHtml += '<div class="wcLinkNote">コピーしたテキストは、無料のテキストマイニング・ワードクラウドツール（例：<a href="https://textmining.userlocal.jp/" target="_blank" rel="noopener">User Local テキストマイニング</a>）に貼り付けると、よく使われている言葉を自動で可視化できます。このアプリから自動で送信することはできないため、貼り付けは手動になります。</div>';
+    }
+    sumHtml += '</div>';
+    sumArea.innerHTML = sumHtml;
+    window._lastOpinions = opinions;
+
+    const opinionBtn = document.getElementById('copyOpinionsBtn');
+    if(opinionBtn){
+      opinionBtn.addEventListener('click', ()=>{
+        const text = (window._lastOpinions||[]).map(o=>o.text).join('\n');
+        navigator.clipboard.writeText(text).then(()=>{
+          opinionBtn.textContent = 'コピーしました';
+          setTimeout(()=>{opinionBtn.textContent = '記述だけコピーする';}, 1600);
+        }).catch(()=>{
+          alert(text);
+        });
+      });
+    }
+
+    let html = '<table><tr><th>名前</th><th>できるようになったこと</th><th>次にがんばりたいこと</th></tr>';
+    rows.forEach(r=>{
+      html += '<tr><td>'+escapeHtml(r.name)+'</td><td>'+escapeHtml(r.canDo||'')+(r.canDoManual?'':' <span style="color:var(--ink-soft);font-size:11px;">(定型文)</span>')+'</td><td>'+escapeHtml(r.next||'')+(r.nextManual?'':' <span style="color:var(--ink-soft);font-size:11px;">(定型文)</span>')+'</td></tr>';
+    });
+    html += '</table><div class="miniNote">記録人数：' + rows.length + '人　※観点別評価（知識・技能／思考・判断・表現／主体的に学習に取り組む態度）はこの画面には表示されません。</div>';
+    area.innerHTML = html;
+    window._lastRows = rows;
+  }catch(e){
+    area.innerHTML = '<div class="emptyMsg">読み込みに失敗しました。「更新」をもう一度押してください。</div>';
+  }
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+document.getElementById('refreshList').addEventListener('click', refreshList);
+
+document.getElementById('copyBtn').addEventListener('click', ()=>{
+  const rows = window._lastRows || [];
+  let tsv = '日付\t学年\t組\t名前\t知識・技能\t思考・判断・表現\t主体的に学習に取り組む態度\tできるようになったこと\t次にがんばりたいこと\n';
+  rows.forEach(r=>{
+    tsv += [dateKey, r.grade, r.className, r.name, levelText[r.q1], levelText[r.q2], levelText[r.q3], (r.canDo||'').replace(/\n/g,' '), (r.next||'').replace(/\n/g,' ')].join('\t') + '\n';
+  });
+  const box = document.getElementById('copyBox');
+  box.value = tsv;
+  box.style.display = 'block';
+  box.focus();
+  box.select();
+});
+</script>
+</body>
+</html>

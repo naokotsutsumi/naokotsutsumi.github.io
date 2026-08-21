@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>外国語活動 ふりかえりカード</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky:#4FB8E8;
+    --sky-dark:#2E90BE;
+    --sun:#FFC94A;
+    --sun-dark:#E8A80F;
+    --coral:#FF6F59;
+    --coral-dark:#E0523C;
+    --cream:#FFFBF2;
+    --card:#FFFFFF;
+    --ink:#1F3350;
+    --ink-soft:#5B6B84;
+    --line:#E7E1D2;
+    --good:#4FB87F;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(79,184,232,0.16), transparent 40%),
+      radial-gradient(circle at 90% 85%, rgba(255,201,74,0.20), transparent 45%),
+      var(--cream);
+    font-family:'Klee One',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    padding:20px 0 60px;
+  }
+  .wrap{max-width:1180px;width:100%;margin:0 auto;padding:0 clamp(16px,3.5vw,56px);}
+  .qGrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px;}
+  .qGrid .qcard{margin-bottom:0;}
+  .top{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:16px;
+  }
+  .brand{
+    font-family:'Klee One',sans-serif;
+    font-weight:600;
+    font-size:22px;
+    color:var(--sky-dark);
+    display:flex; align-items:center; gap:8px;
+    letter-spacing:0.5px;
+  }
+  .brand .dot{
+    width:12px;height:12px;border-radius:50%;background:var(--sun);
+    box-shadow:0 0 0 4px rgba(255,201,74,0.25);
+  }
+  .datebadge{
+    background:var(--card); border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px; font-size:13px; color:var(--ink-soft); font-weight:500;
+  }
+  .card{
+    background:var(--card);
+    border-radius:22px;
+    border:1px solid var(--line);
+    padding:22px 20px;
+    margin-bottom:16px;
+    position:relative;
+  }
+  .goalcard{
+    background:linear-gradient(135deg, var(--sky) 0%, var(--sky-dark) 100%);
+    color:#fff;
+    border:none;
+  }
+  .goalcard .label{
+    font-size:12px; opacity:0.85; font-weight:600; letter-spacing:1px;
+    text-transform:uppercase;
+  }
+  .goalcard .unit{
+    font-size:14px; opacity:0.95; margin-top:4px; font-weight:500;
+  }
+  .goalcard .goal{
+    font-family:'Klee One',sans-serif;
+    font-size:20px; font-weight:600; margin-top:8px; line-height:1.5;
+  }
+  label.fieldlabel{
+    display:block; font-weight:600; font-size:15px; margin-bottom:10px;
+    color:var(--ink);
+  }
+  input[type=text]{
+    width:100%; font-size:17px; padding:13px 14px; border-radius:14px;
+    border:2px solid var(--line); font-family:inherit; color:var(--ink);
+    background:#FFFDF8;
+  }
+  input[type=text]:focus{outline:none; border-color:var(--sky);}
+  .nameWarn{display:none; color:var(--coral-dark); font-size:12px; font-weight:600; margin-top:8px; line-height:1.6;}
+  .pwgate{display:none; max-width:420px; margin:60px auto;}
+  .pwgate input[type=password]{
+    width:100%; font-size:20px; padding:13px 14px; border-radius:14px;
+    border:2px solid var(--line); font-family:inherit; color:var(--ink);
+    background:#FFFDF8; letter-spacing:4px; text-align:center;
+  }
+  .pwgate input[type=password]:focus{outline:none; border-color:var(--sky);}
+  .pwgate .pwbtnrow{display:flex; gap:10px; margin-top:14px;}
+  .pwgate .pwbtnrow button{flex:1; padding:13px; border-radius:14px; font-weight:600; cursor:pointer; font-family:'Klee One',sans-serif; font-size:14px;}
+  .pwgate .pwGo{background:var(--sky); color:#fff; border:none;}
+  .pwgate .pwCancel{background:var(--card); color:var(--ink-soft); border:2px solid var(--line);}
+  .qcard{margin-bottom:14px;}
+  .qtext{
+    font-weight:600; font-size:16px; margin-bottom:12px; line-height:1.5;
+  }
+  .qnum{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:24px;height:24px;border-radius:50%;background:var(--sky);
+    color:#fff; font-size:13px; font-weight:600; margin-right:8px;
+    vertical-align:-4px;
+  }
+  .faces{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:8px;
+  }
+  .face{
+    background:#FFFDF8; border:2px solid var(--line); border-radius:16px;
+    padding:12px 4px 10px; text-align:center; cursor:pointer;
+    transition:transform .12s ease, border-color .12s ease, background .12s ease;
+    user-select:none;
+  }
+  .face:hover{border-color:var(--sky);}
+  .face .emoji{font-size:28px; display:block; margin-bottom:6px;}
+  .face .ftext{font-size:11px; font-weight:600; color:var(--ink-soft); line-height:1.3;}
+  .face.selected{
+    background:var(--sky); border-color:var(--sky-dark); transform:translateY(-3px);
+  }
+  .face.selected .ftext{color:#fff;}
+  textarea{
+    width:100%; min-height:90px; font-size:16px; padding:13px 14px;
+    border-radius:14px; border:2px solid var(--line); font-family:inherit;
+    color:var(--ink); resize:vertical; background:#FFFDF8; line-height:1.6;
+  }
+  textarea:focus{outline:none; border-color:var(--sky);}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+  .chip{
+    background:#FFF3DC; border:1px solid #F0D9A3; color:#8A6414;
+    font-size:12px; font-weight:600; padding:6px 12px; border-radius:999px;
+    cursor:pointer;
+  }
+  .chip:hover{background:#FFE9BC;}
+  .err{color:var(--coral-dark); font-size:13px; font-weight:600; margin-top:8px; display:none;}
+  .submitbtn{
+    width:100%; padding:18px; font-size:18px; font-weight:600;
+    font-family:'Klee One',sans-serif;
+    color:#fff; background:linear-gradient(135deg, var(--coral), var(--coral-dark));
+    border:none; border-radius:18px; cursor:pointer; letter-spacing:1px;
+    box-shadow:0 6px 0 var(--coral-dark);
+    transition:transform .1s ease, box-shadow .1s ease;
+  }
+  .submitbtn:active{transform:translateY(4px); box-shadow:0 2px 0 var(--coral-dark);}
+  .stampsrow{
+    display:flex; gap:6px; justify-content:center; margin:6px 0 18px;
+  }
+  .stampdot{
+    width:10px;height:10px;border-radius:50%;background:var(--line);
+  }
+  .stampdot.filled{background:var(--sun-dark);}
+  .doneWrap{display:none; text-align:center; padding:40px 20px;}
+  .doneWrap .stamp{
+    width:110px;height:110px;border-radius:50%;
+    background:linear-gradient(135deg, var(--sun), var(--sun-dark));
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 18px; font-size:52px;
+    animation:pop .5s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes pop{0%{transform:scale(0.3);opacity:0;}100%{transform:scale(1);opacity:1;}}
+  .doneWrap h2{font-family:'Klee One',sans-serif; font-size:22px; margin:0 0 8px;}
+  .doneWrap p{color:var(--ink-soft); font-size:14px; margin:0 0 22px;}
+  .again{
+    background:var(--card); border:2px solid var(--sky); color:var(--sky-dark);
+    font-weight:600; font-family:'Klee One',sans-serif;
+    padding:12px 26px; border-radius:14px; cursor:pointer; font-size:15px;
+  }
+  .teacherlink{
+    text-align:center; margin-top:22px;
+  }
+  .teacherlink button{
+    background:none; border:none; color:var(--ink-soft); font-size:12px;
+    text-decoration:underline; cursor:pointer; font-family:inherit;
+  }
+  .tpanel{display:none;}
+  .tpanel .card{border:1px dashed var(--line);}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .savebtn{
+    background:var(--sky); color:#fff; border:none; border-radius:12px;
+    padding:11px 20px; font-weight:600; cursor:pointer; font-size:14px;
+    font-family:inherit;
+  }
+  .miniNote{font-size:12px; color:var(--ink-soft); margin-top:8px; line-height:1.6;}
+  table{width:100%; border-collapse:collapse; font-size:13px; margin-top:10px;}
+  th,td{border-bottom:1px solid var(--line); padding:7px 6px; text-align:left; vertical-align:top;}
+  th{color:var(--ink-soft); font-weight:600; font-size:12px;}
+  .refreshbtn{
+    background:none; border:1px solid var(--line); border-radius:10px;
+    padding:8px 14px; font-size:13px; cursor:pointer; color:var(--ink); font-family:inherit;
+  }
+  .copybox{width:100%; min-height:100px; font-size:12px; font-family:monospace; margin-top:10px; border-radius:10px; border:1px solid var(--line); padding:10px;}
+  .emptyMsg{color:var(--ink-soft); font-size:13px; padding:10px 0;}
+  .sumBlock{margin-bottom:18px;}
+  .sumTitle{font-weight:600; font-size:13px; color:var(--ink); margin-bottom:8px;}
+  .barRow{display:flex; align-items:center; gap:8px; margin-bottom:6px;}
+  .barLabel{width:120px; font-size:12px; color:var(--ink-soft); flex-shrink:0; line-height:1.3;}
+  .barTrack{flex:1; background:#F0EBDC; border-radius:6px; height:16px; overflow:hidden;}
+  .barFill{height:100%; background:var(--sky); border-radius:6px; transition:width .3s ease;}
+  .barCount{width:34px; text-align:right; font-size:12px; font-weight:600; color:var(--ink); flex-shrink:0;}
+  .opinionList{list-style:none; margin:0; padding:0;}
+  .opinionList li{
+    background:#FFFDF8; border:1px solid var(--line); border-radius:10px;
+    padding:9px 12px; margin-bottom:8px; font-size:13px; line-height:1.6;
+  }
+  .opinionList .oname{font-weight:600; color:var(--sky-dark); margin-right:6px;}
+  .copyOpinionBtn{
+    background:none; border:1px solid var(--line); border-radius:10px;
+    padding:7px 14px; font-size:12px; cursor:pointer; color:var(--ink); font-family:inherit;
+    margin-top:6px;
+  }
+  .wcLinkNote{font-size:12px; color:var(--ink-soft); margin-top:8px; line-height:1.7;}
+  .wcLinkNote a{color:var(--sky-dark);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand"><span class="dot"></span>ふりかえりカード</div>
+    <div class="datebadge" id="dateBadge">-</div>
+  </div>
+
+  <div id="studentView">
+
+    <div class="card goalcard">
+      <div class="label" id="gradeLabel">外国語活動</div>
+      <div class="unit" id="unitLabel">たんげん：－</div>
+      <div class="goal" id="goalLabel">きょうのめあて：－</div>
+    </div>
+
+    <div class="card">
+      <label class="fieldlabel">なまえ（ひらがなで かいてね）</label>
+      <input type="text" id="nameInput" placeholder="れい：つつみ なおこ">
+      <div class="nameWarn" id="nameWarn">かんじが つかわれています。あいうえお順に ならべるので、ひらがなで かきなおしてね</div>
+    </div>
+
+    <div class="qGrid">
+    <div class="card qcard">
+      <div class="qtext"><span class="qnum">1</span>たのしく かつどうできたかな？</div>
+      <div class="faces" data-q="q1">
+        <div class="face" data-v="4"><span class="emoji">😄</span><span class="ftext">たのしかった</span></div>
+        <div class="face" data-v="3"><span class="emoji">🙂</span><span class="ftext">まあまあ<br>たのしかった</span></div>
+        <div class="face" data-v="2"><span class="emoji">😐</span><span class="ftext">あまり<br>たのしくなかった</span></div>
+        <div class="face" data-v="1"><span class="emoji">😞</span><span class="ftext">たのしくなかった</span></div>
+      </div>
+    </div>
+
+    <div class="card qcard">
+      <div class="qtext"><span class="qnum">2</span>よく きいたり はなしたり できたかな？</div>
+      <div class="faces" data-q="q2">
+        <div class="face" data-v="4"><span class="emoji">👂</span><span class="ftext">よく できた</span></div>
+        <div class="face" data-v="3"><span class="emoji">🙂</span><span class="ftext">まあまあ<br>できた</span></div>
+        <div class="face" data-v="2"><span class="emoji">😐</span><span class="ftext">あまり<br>できなかった</span></div>
+        <div class="face" data-v="1"><span class="emoji">😞</span><span class="ftext">できなかった</span></div>
+      </div>
+    </div>
+
+    <div class="card qcard">
+      <div class="qtext"><span class="qnum">3</span>ともだちと なかよく できたかな？</div>
+      <div class="faces" data-q="q3">
+        <div class="face" data-v="4"><span class="emoji">🤝</span><span class="ftext">よく できた</span></div>
+        <div class="face" data-v="3"><span class="emoji">🙂</span><span class="ftext">まあまあ<br>できた</span></div>
+        <div class="face" data-v="2"><span class="emoji">😐</span><span class="ftext">あまり<br>できなかった</span></div>
+        <div class="face" data-v="1"><span class="emoji">😞</span><span class="ftext">できなかった</span></div>
+      </div>
+    </div>
+    </div>
+
+    <div class="card">
+      <label class="fieldlabel">きょうのかんそう</label>
+      <textarea id="commentInput" placeholder="がんばったこと、きがついたことを かいてみよう"></textarea>
+      <div class="chips">
+        <div class="chip" data-text="えいごで はなせて うれしかった">えいごで はなせて うれしかった</div>
+        <div class="chip" data-text="あたらしい ことばを おぼえた">あたらしい ことばを おぼえた</div>
+        <div class="chip" data-text="ともだちと なかよく できた">ともだちと なかよく できた</div>
+        <div class="chip" data-text="つぎは もっと おおきな こえで いいたい">つぎは もっと おおきな こえで いいたい</div>
+      </div>
+      <div class="err" id="errMsg">なまえと、3つの しつもんに こたえてね</div>
+    </div>
+
+    <button class="submitbtn" id="submitBtn">これで おくる</button>
+
+    <div class="teacherlink"><button id="openTeacher">せんせいよう がめん</button></div>
+  </div>
+
+  <div class="pwgate" id="pwGate">
+    <div class="card">
+      <label class="fieldlabel">教師用パスワード</label>
+      <input type="password" id="pwInput" inputmode="numeric" placeholder="••••">
+      <div class="err" id="pwErr" style="display:none;">パスワードが違います</div>
+      <div class="miniNote">初期パスワードは 0000 です。教師用画面の「設定」から変更できます。</div>
+      <div class="pwbtnrow">
+        <button class="pwCancel" id="pwCancel">もどる</button>
+        <button class="pwGo" id="pwGo">すすむ</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="doneWrap" id="doneView">
+    <div class="stamp">🌟</div>
+    <h2>おくれました！</h2>
+    <p>きょうも よく がんばりました。<br>また つぎの じかんも たのしみましょう。</p>
+    <button class="again" id="againBtn">つぎの ひとが にゅうりょく する</button>
+  </div>
+
+  <div class="tpanel" id="teacherPanel">
+    <div class="card">
+      <label class="fieldlabel">学年・組</label>
+      <div class="row2">
+        <input type="text" id="tGrade" placeholder="例：3年">
+        <input type="text" id="tClass" placeholder="例：1組">
+      </div>
+    </div>
+    <div class="card">
+      <label class="fieldlabel">単元名</label>
+      <input type="text" id="tUnit" placeholder="例：Unit 5 What do you want?">
+    </div>
+    <div class="card">
+      <label class="fieldlabel">今日のめあて</label>
+      <textarea id="tGoal" placeholder="例：ほしいものをたずねたり、答えたりして伝え合おう"></textarea>
+      <div style="margin-top:16px;">
+        <label class="fieldlabel">教師用パスワードの変更（任意）</label>
+        <input type="password" id="tPassword" inputmode="numeric" placeholder="変更する場合のみ入力">
+      </div>
+      <div style="margin-top:12px;"><button class="savebtn" id="saveSettings">設定を保存する</button></div>
+      <div class="miniNote">保存すると、この端末で見ている児童全員のカードに反映されます（同じ日付・同じリンクを共有している場合）。</div>
+    </div>
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <label class="fieldlabel" style="margin:0;">今日の提出状況（<span id="dateForList">-</span>）</label>
+        <button class="refreshbtn" id="refreshList">更新</button>
+      </div>
+      <div id="summaryArea"></div>
+      <div id="listArea"><div class="emptyMsg">まだ提出はありません。</div></div>
+      <div style="margin-top:12px;"><button class="savebtn" id="copyBtn" style="background:var(--ink-soft);">表として書き出す</button></div>
+      <textarea class="copybox" id="copyBox" readonly style="display:none;"></textarea>
+      <div class="miniNote">「表として書き出す」を押すと、下にタブ区切りテキストが表示されます。全選択してコピーし、Excelやスプレッドシートに貼り付けてください。</div>
+    </div>
+    <div class="teacherlink"><button id="closeTeacher">児童用がめんにもどる</button></div>
+  </div>
+
+</div>
+
+<script>
+function todayStr(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+function todayDisplay(){
+  const d = new Date();
+  const w = ['日','月','火','水','木','金','土'][d.getDay()];
+  return (d.getMonth()+1)+'月'+d.getDate()+'日（'+w+'）';
+}
+const dateKey = todayStr();
+document.getElementById('dateBadge').textContent = todayDisplay();
+document.getElementById('dateForList').textContent = todayDisplay();
+
+let selections = {q1:null,q2:null,q3:null};
+let commentManual = false;
+document.getElementById('commentInput').addEventListener('input', ()=>{ commentManual = true; });
+
+document.querySelectorAll('.faces').forEach(group=>{
+  const qid = group.getAttribute('data-q');
+  group.querySelectorAll('.face').forEach(f=>{
+    f.addEventListener('click', ()=>{
+      group.querySelectorAll('.face').forEach(x=>x.classList.remove('selected'));
+      f.classList.add('selected');
+      selections[qid] = parseInt(f.getAttribute('data-v'),10);
+    });
+  });
+});
+
+const nameInputEl = document.getElementById('nameInput');
+const nameWarnEl = document.getElementById('nameWarn');
+nameInputEl.addEventListener('input', ()=>{
+  nameWarnEl.style.display = /[\u4E00-\u9FFF]/.test(nameInputEl.value) ? 'block' : 'none';
+});
+
+document.querySelectorAll('.chip').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    const ta = document.getElementById('commentInput');
+    const t = c.getAttribute('data-text');
+    ta.value = ta.value ? (ta.value + '。' + t) : t;
+  });
+});
+
+async function loadSettings(){
+  try{
+    const r = await window.storage.get('settings:activity', true);
+    if(r && r.value){
+      const s = JSON.parse(r.value);
+      document.getElementById('gradeLabel').textContent = '外国語活動（' + (s.grade||'') + (s.className? ' '+s.className:'') + '）';
+      document.getElementById('unitLabel').textContent = 'たんげん：' + (s.unit || '－');
+      document.getElementById('goalLabel').textContent = 'きょうのめあて：' + (s.goal || '－');
+      document.getElementById('tGrade').value = s.grade||'';
+      document.getElementById('tClass').value = s.className||'';
+      document.getElementById('tUnit').value = s.unit||'';
+      document.getElementById('tGoal').value = s.goal||'';
+    }
+  }catch(e){}
+}
+loadSettings();
+
+document.getElementById('saveSettings').addEventListener('click', async ()=>{
+  const existingRaw = await window.storage.get('settings:activity', true).catch(()=>null);
+  const existing = existingRaw && existingRaw.value ? JSON.parse(existingRaw.value) : {};
+  const newPw = document.getElementById('tPassword').value.trim();
+  const s = {
+    grade: document.getElementById('tGrade').value.trim(),
+    className: document.getElementById('tClass').value.trim(),
+    unit: document.getElementById('tUnit').value.trim(),
+    goal: document.getElementById('tGoal').value.trim(),
+    teacherPassword: newPw ? newPw : (existing.teacherPassword || '0000')
+  };
+  try{
+    await window.storage.set('settings:activity', JSON.stringify(s), true);
+    document.getElementById('tPassword').value = '';
+    await loadSettings();
+    alertLike('設定を保存しました');
+  }catch(e){
+    alertLike('保存に失敗しました。もう一度お試しください。');
+  }
+});
+
+function alertLike(msg){
+  const btn = document.getElementById('saveSettings');
+  const orig = btn.textContent;
+  btn.textContent = msg;
+  setTimeout(()=>{btn.textContent = orig;}, 1600);
+}
+
+document.getElementById('submitBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('nameInput').value.trim();
+  const comment = document.getElementById('commentInput').value.trim();
+  const err = document.getElementById('errMsg');
+  if(!name || selections.q1===null || selections.q2===null || selections.q3===null){
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  const settingsRaw = await window.storage.get('settings:activity', true).catch(()=>null);
+  const settings = settingsRaw && settingsRaw.value ? JSON.parse(settingsRaw.value) : {};
+  const record = {
+    name: name,
+    grade: settings.grade || '',
+    className: settings.className || '',
+    unit: settings.unit || '',
+    goal: settings.goal || '',
+    q1: selections.q1, q2: selections.q2, q3: selections.q3,
+    comment: comment, commentManual: commentManual,
+    submittedAt: new Date().toISOString()
+  };
+  const key = 'activity:' + dateKey + ':' + name;
+  try{
+    await window.storage.set(key, JSON.stringify(record), true);
+  }catch(e){}
+  document.getElementById('studentView').style.display = 'none';
+  document.getElementById('doneView').style.display = 'block';
+});
+
+document.getElementById('againBtn').addEventListener('click', ()=>{
+  document.getElementById('nameInput').value = '';
+  document.getElementById('commentInput').value = '';
+  selections = {q1:null,q2:null,q3:null};
+  commentManual = false;
+  nameWarnEl.style.display = 'none';
+  document.querySelectorAll('.face').forEach(f=>f.classList.remove('selected'));
+  document.getElementById('doneView').style.display = 'none';
+  document.getElementById('studentView').style.display = 'block';
+});
+
+document.getElementById('openTeacher').addEventListener('click', ()=>{
+  document.getElementById('studentView').style.display = 'none';
+  document.getElementById('pwGate').style.display = 'block';
+  document.getElementById('pwInput').value = '';
+  document.getElementById('pwErr').style.display = 'none';
+  document.getElementById('pwInput').focus();
+});
+document.getElementById('pwCancel').addEventListener('click', ()=>{
+  document.getElementById('pwGate').style.display = 'none';
+  document.getElementById('studentView').style.display = 'block';
+});
+async function attemptTeacherLogin(){
+  const input = document.getElementById('pwInput').value.trim();
+  const raw = await window.storage.get('settings:activity', true).catch(()=>null);
+  const s = raw && raw.value ? JSON.parse(raw.value) : {};
+  const correctPw = s.teacherPassword || '0000';
+  if(input === correctPw){
+    document.getElementById('pwGate').style.display = 'none';
+    document.getElementById('teacherPanel').style.display = 'block';
+    refreshList();
+  }else{
+    document.getElementById('pwErr').style.display = 'block';
+  }
+}
+document.getElementById('pwGo').addEventListener('click', attemptTeacherLogin);
+document.getElementById('pwInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter') attemptTeacherLogin(); });
+document.getElementById('closeTeacher').addEventListener('click', ()=>{
+  document.getElementById('teacherPanel').style.display = 'none';
+  document.getElementById('studentView').style.display = 'block';
+});
+
+const faceLabels = {4:'😄',3:'🙂',2:'😐',1:'😞'};
+
+async function refreshList(){
+  const area = document.getElementById('listArea');
+  const sumArea = document.getElementById('summaryArea');
+  area.innerHTML = '<div class="emptyMsg">読み込み中…</div>';
+  sumArea.innerHTML = '';
+  try{
+    const listRes = await window.storage.list('activity:' + dateKey + ':', true);
+    const keys = (listRes && listRes.keys) ? listRes.keys : [];
+    if(keys.length === 0){
+      area.innerHTML = '<div class="emptyMsg">まだ提出はありません。</div>';
+      return;
+    }
+    const rows = [];
+    for(const k of keys){
+      try{
+        const r = await window.storage.get(k, true);
+        if(r && r.value) rows.push(JSON.parse(r.value));
+      }catch(e){}
+    }
+    rows.sort((a,b)=> a.name.localeCompare(b.name,'ja'));
+
+    const qMeta = {
+      q1: {title:'① たのしく かつどうできたか', labels:{4:'たのしかった',3:'まあまあ',2:'あまり',1:'ぜんぜん'}},
+      q2: {title:'② よく きく・はなす', labels:{4:'よくできた',3:'まあまあ',2:'あまり',1:'できなかった'}},
+      q3: {title:'③ ともだちと なかよく', labels:{4:'よくできた',3:'まあまあ',2:'あまり',1:'できなかった'}}
+    };
+    let sumHtml = '';
+    ['q1','q2','q3'].forEach(qid=>{
+      const meta = qMeta[qid];
+      sumHtml += '<div class="sumBlock"><div class="sumTitle">' + meta.title + '</div>';
+      [4,3,2,1].forEach(lv=>{
+        const count = rows.filter(r=>r[qid]===lv).length;
+        const pct = rows.length ? Math.round(count/rows.length*100) : 0;
+        sumHtml += '<div class="barRow"><div class="barLabel">' + meta.labels[lv] + '</div><div class="barTrack"><div class="barFill" style="width:' + pct + '%;"></div></div><div class="barCount">' + count + '</div></div>';
+      });
+      sumHtml += '</div>';
+    });
+
+    const opinions = rows.filter(r => r.commentManual && r.comment && r.comment.trim().length > 0);
+    sumHtml += '<div class="sumBlock"><div class="sumTitle">今日の感想（自分で入力したもの・' + opinions.length + '件）</div>';
+    if(opinions.length === 0){
+      sumHtml += '<div class="emptyMsg">自分の言葉で入力された感想はまだありません。</div>';
+    }else{
+      sumHtml += '<ul class="opinionList">' + opinions.map(o => '<li><span class="oname">' + escapeHtml(o.name) + '</span>' + escapeHtml(o.comment) + '</li>').join('') + '</ul>';
+      sumHtml += '<button class="copyOpinionBtn" id="copyOpinionsBtn">感想だけコピーする</button>';
+      sumHtml += '<div class="wcLinkNote">コピーしたテキストは、無料のテキストマイニング・ワードクラウドツール（例：<a href="https://textmining.userlocal.jp/" target="_blank" rel="noopener">User Local テキストマイニング</a>）に貼り付けると、よく使われている言葉を自動で可視化できます。このアプリから自動で送信することはできないため、貼り付けは手動になります。</div>';
+    }
+    sumHtml += '</div>';
+    sumArea.innerHTML = sumHtml;
+    window._lastOpinions = opinions;
+
+    const opinionBtn = document.getElementById('copyOpinionsBtn');
+    if(opinionBtn){
+      opinionBtn.addEventListener('click', ()=>{
+        const text = (window._lastOpinions||[]).map(o=>o.comment).join('\n');
+        navigator.clipboard.writeText(text).then(()=>{
+          opinionBtn.textContent = 'コピーしました';
+          setTimeout(()=>{opinionBtn.textContent = '感想だけコピーする';}, 1600);
+        }).catch(()=>{
+          alert(text);
+        });
+      });
+    }
+
+    let html = '<table><tr><th>なまえ</th><th>①</th><th>②</th><th>③</th><th>ひとことかんそう</th></tr>';
+    rows.forEach(r=>{
+      html += '<tr><td>'+escapeHtml(r.name)+'</td><td>'+faceLabels[r.q1]+'</td><td>'+faceLabels[r.q2]+'</td><td>'+faceLabels[r.q3]+'</td><td>'+escapeHtml(r.comment||'')+(r.commentManual?'':' <span style="color:var(--ink-soft);font-size:11px;">(定型文)</span>')+'</td></tr>';
+    });
+    html += '</table><div class="miniNote">提出人数：' + rows.length + '人</div>';
+    area.innerHTML = html;
+    window._lastRows = rows;
+  }catch(e){
+    area.innerHTML = '<div class="emptyMsg">読み込みに失敗しました。「更新」をもう一度押してください。</div>';
+  }
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+document.getElementById('refreshList').addEventListener('click', refreshList);
+
+document.getElementById('copyBtn').addEventListener('click', ()=>{
+  const rows = window._lastRows || [];
+  const scaleText = {4:'たのしかった/できた',3:'まあまあ',2:'あまり',1:'できなかった'};
+  let tsv = '日付\t学年\t組\t名前\t①楽しさ\t②聞く話す\t③友達との関わり\tひとことかんそう\n';
+  rows.forEach(r=>{
+    tsv += [dateKey, r.grade, r.className, r.name, scaleText[r.q1], scaleText[r.q2], scaleText[r.q3], (r.comment||'').replace(/\n/g,' ')].join('\t') + '\n';
+  });
+  const box = document.getElementById('copyBox');
+  box.value = tsv;
+  box.style.display = 'block';
+  box.focus();
+  box.select();
+});
+</script>
+</body>
+</html>
