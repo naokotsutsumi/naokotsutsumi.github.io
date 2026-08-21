@@ -289,6 +289,7 @@
     </div>
 
     <button class="submitbtn" id="submitBtn">これで おくる</button>
+    <div class="err" id="submitErrMsg" style="display:none; text-align:center; margin-top:10px;">つうしんに しっぱいしました。もういちど おしてね</div>
 
     <div class="teacherlink"><button id="openTeacher">せんせいよう がめん</button></div>
   </div>
@@ -352,6 +353,30 @@
 </div>
 
 <script>
+/* ============================================================
+   設定：Google Apps Script のウェブアプリURLをここに貼り付ける
+   例）const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycb.../exec';
+   ============================================================ */
+const APPS_SCRIPT_URL = 'https://script.google.com/a/macros/ozukumamoto.ed.jp/s/AKfycbxp5ZPHso3SnVNlgVltTPopfR943LGYoiE7syHrNLythNFj8U2kAYEyYSx0AtTTnURwNQ/exec';
+/* ============================================================ */
+
+function isConfigured(){
+  return typeof APPS_SCRIPT_URL === 'string' && APPS_SCRIPT_URL.indexOf('https://script.google.com/') === 0;
+}
+async function apiGet(params){
+  const url = APPS_SCRIPT_URL + '?' + new URLSearchParams(params).toString();
+  const res = await fetch(url);
+  return res.json();
+}
+async function apiPost(body){
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
 function todayStr(){
   const d = new Date();
   const y = d.getFullYear();
@@ -367,6 +392,13 @@ function todayDisplay(){
 const dateKey = todayStr();
 document.getElementById('dateBadge').textContent = todayDisplay();
 document.getElementById('dateForList').textContent = todayDisplay();
+
+if(!isConfigured()){
+  const warn = document.createElement('div');
+  warn.style.cssText = 'background:#FFF3CD;border:1px solid #E8B93A;color:#7A5C00;padding:12px 16px;border-radius:12px;font-size:13px;margin-bottom:14px;line-height:1.8;';
+  warn.textContent = '⚠ ほぞんさき（Google Apps Script）がまだ せっていされていません。HTMLファイルの中の APPS_SCRIPT_URL に、はっこうした ウェブアプリのURLを はりつけてください。';
+  document.querySelector('.wrap').prepend(warn);
+}
 
 let selections = {q1:null,q2:null,q3:null};
 let commentManual = false;
@@ -398,10 +430,10 @@ document.querySelectorAll('.chip').forEach(c=>{
 });
 
 async function loadSettings(){
+  if(!isConfigured()) return;
   try{
-    const r = await window.storage.get('settings:activity', true);
-    if(r && r.value){
-      const s = JSON.parse(r.value);
+    const s = await apiGet({action:'getSettings', type:'activity'});
+    if(s && !s.error){
       document.getElementById('gradeLabel').textContent = '外国語活動（' + (s.grade||'') + (s.className? ' '+s.className:'') + '）';
       document.getElementById('unitLabel').textContent = 'たんげん：' + (s.unit || '－');
       document.getElementById('goalLabel').textContent = 'きょうのめあて：' + (s.goal || '－');
@@ -415,23 +447,22 @@ async function loadSettings(){
 loadSettings();
 
 document.getElementById('saveSettings').addEventListener('click', async ()=>{
-  const existingRaw = await window.storage.get('settings:activity', true).catch(()=>null);
-  const existing = existingRaw && existingRaw.value ? JSON.parse(existingRaw.value) : {};
+  if(!isConfigured()){ alertLike('URLがみせっていです'); return; }
   const newPw = document.getElementById('tPassword').value.trim();
   const s = {
     grade: document.getElementById('tGrade').value.trim(),
     className: document.getElementById('tClass').value.trim(),
     unit: document.getElementById('tUnit').value.trim(),
-    goal: document.getElementById('tGoal').value.trim(),
-    teacherPassword: newPw ? newPw : (existing.teacherPassword || '0000')
+    goal: document.getElementById('tGoal').value.trim()
   };
+  if(newPw) s.teacherPassword = newPw;
   try{
-    await window.storage.set('settings:activity', JSON.stringify(s), true);
+    await apiPost({action:'saveSettings', type:'activity', settings: s});
     document.getElementById('tPassword').value = '';
     await loadSettings();
     alertLike('設定を保存しました');
   }catch(e){
-    alertLike('保存に失敗しました。もう一度お試しください。');
+    alertLike('保存に失敗しました。通信を確認してください');
   }
 });
 
@@ -439,36 +470,42 @@ function alertLike(msg){
   const btn = document.getElementById('saveSettings');
   const orig = btn.textContent;
   btn.textContent = msg;
-  setTimeout(()=>{btn.textContent = orig;}, 1600);
+  setTimeout(()=>{btn.textContent = orig;}, 1800);
 }
 
 document.getElementById('submitBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('nameInput').value.trim();
   const comment = document.getElementById('commentInput').value.trim();
   const err = document.getElementById('errMsg');
+  const submitErr = document.getElementById('submitErrMsg');
+  submitErr.style.display = 'none';
   if(!name || selections.q1===null || selections.q2===null || selections.q3===null){
     err.style.display = 'block';
     return;
   }
   err.style.display = 'none';
-  const settingsRaw = await window.storage.get('settings:activity', true).catch(()=>null);
-  const settings = settingsRaw && settingsRaw.value ? JSON.parse(settingsRaw.value) : {};
-  const record = {
-    name: name,
-    grade: settings.grade || '',
-    className: settings.className || '',
-    unit: settings.unit || '',
-    goal: settings.goal || '',
-    q1: selections.q1, q2: selections.q2, q3: selections.q3,
-    comment: comment, commentManual: commentManual,
-    submittedAt: new Date().toISOString()
-  };
-  const key = 'activity:' + dateKey + ':' + name;
+  if(!isConfigured()){
+    submitErr.style.display = 'block';
+    return;
+  }
   try{
-    await window.storage.set(key, JSON.stringify(record), true);
-  }catch(e){}
-  document.getElementById('studentView').style.display = 'none';
-  document.getElementById('doneView').style.display = 'block';
+    const settings = await apiGet({action:'getSettings', type:'activity'}).catch(()=>({}));
+    const record = {
+      name: name,
+      grade: (settings && settings.grade) || '',
+      className: (settings && settings.className) || '',
+      unit: (settings && settings.unit) || '',
+      goal: (settings && settings.goal) || '',
+      q1: selections.q1, q2: selections.q2, q3: selections.q3,
+      comment: comment, commentManual: commentManual,
+      submittedAt: new Date().toISOString()
+    };
+    await apiPost({action:'submitRecord', type:'activity', date: dateKey, record: record});
+    document.getElementById('studentView').style.display = 'none';
+    document.getElementById('doneView').style.display = 'block';
+  }catch(e){
+    submitErr.style.display = 'block';
+  }
 });
 
 document.getElementById('againBtn').addEventListener('click', ()=>{
@@ -494,16 +531,26 @@ document.getElementById('pwCancel').addEventListener('click', ()=>{
   document.getElementById('studentView').style.display = 'block';
 });
 async function attemptTeacherLogin(){
+  const pwErr = document.getElementById('pwErr');
+  if(!isConfigured()){
+    pwErr.textContent = 'ほぞんさきがみせっていのため、ログインできません';
+    pwErr.style.display = 'block';
+    return;
+  }
   const input = document.getElementById('pwInput').value.trim();
-  const raw = await window.storage.get('settings:activity', true).catch(()=>null);
-  const s = raw && raw.value ? JSON.parse(raw.value) : {};
-  const correctPw = s.teacherPassword || '0000';
-  if(input === correctPw){
-    document.getElementById('pwGate').style.display = 'none';
-    document.getElementById('teacherPanel').style.display = 'block';
-    refreshList();
-  }else{
-    document.getElementById('pwErr').style.display = 'block';
+  try{
+    const res = await apiPost({action:'checkPassword', type:'activity', password: input});
+    if(res && res.ok){
+      document.getElementById('pwGate').style.display = 'none';
+      document.getElementById('teacherPanel').style.display = 'block';
+      refreshList();
+    }else{
+      pwErr.textContent = 'パスワードが違います';
+      pwErr.style.display = 'block';
+    }
+  }catch(e){
+    pwErr.textContent = 'つうしんに しっぱいしました';
+    pwErr.style.display = 'block';
   }
 }
 document.getElementById('pwGo').addEventListener('click', attemptTeacherLogin);
@@ -520,19 +567,15 @@ async function refreshList(){
   const sumArea = document.getElementById('summaryArea');
   area.innerHTML = '<div class="emptyMsg">読み込み中…</div>';
   sumArea.innerHTML = '';
+  if(!isConfigured()){
+    area.innerHTML = '<div class="emptyMsg">保存先（Google Apps Script）が設定されていません。</div>';
+    return;
+  }
   try{
-    const listRes = await window.storage.list('activity:' + dateKey + ':', true);
-    const keys = (listRes && listRes.keys) ? listRes.keys : [];
-    if(keys.length === 0){
+    const rows = await apiGet({action:'listRecords', type:'activity', date: dateKey});
+    if(!rows || rows.error || rows.length === 0){
       area.innerHTML = '<div class="emptyMsg">まだ提出はありません。</div>';
       return;
-    }
-    const rows = [];
-    for(const k of keys){
-      try{
-        const r = await window.storage.get(k, true);
-        if(r && r.value) rows.push(JSON.parse(r.value));
-      }catch(e){}
     }
     rows.sort((a,b)=> a.name.localeCompare(b.name,'ja'));
 
