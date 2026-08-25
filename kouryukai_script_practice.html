@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>交流会 英語発表 台本練習</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EFE3C8;
+    --paper-light:#FAF6EC;
+    --indigo:#2E4A6B;
+    --indigo-deep:#1F3350;
+    --matcha:#7C9A6B;
+    --matcha-deep:#5F7A52;
+    --vermilion:#C1440E;
+    --sumi:#2A2521;
+    --line:rgba(42,37,33,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      radial-gradient(circle at 15% 8%, rgba(255,255,255,0.35), transparent 40%),
+      radial-gradient(circle at 85% 92%, rgba(255,255,255,0.25), transparent 45%);
+    color:var(--sumi);
+    font-family:'Zen Maru Gothic', sans-serif;
+    padding:0 0 60px;
+  }
+  h1,h2,h3{font-family:'Shippori Mincho', serif; margin:0;}
+  .mono{font-family:'JetBrains Mono', monospace;}
+
+  /* ---- Header ---- */
+  header{
+    padding:28px 20px 18px;
+    text-align:center;
+    position:relative;
+  }
+  header::after{
+    content:"";
+    display:block;
+    height:6px;
+    margin:18px auto 0;
+    max-width:420px;
+    background:repeating-linear-gradient(90deg, var(--indigo) 0 14px, transparent 14px 22px);
+    opacity:0.55;
+    border-radius:3px;
+  }
+  header .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:.18em;
+    color:var(--indigo-deep);
+    text-transform:uppercase;
+  }
+  header h1{
+    font-size:clamp(24px,4vw,34px);
+    color:var(--indigo-deep);
+    margin-top:6px;
+    line-height:1.4;
+  }
+  header p.sub{
+    margin:8px 0 0;
+    font-size:14px;
+    color:#5c5147;
+  }
+
+  /* ---- Script tabs (styled like stage tickets) ---- */
+  .ticket-row{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    margin:22px auto 0;
+    flex-wrap:wrap;
+    padding:0 16px;
+  }
+  .ticket{
+    position:relative;
+    background:var(--paper-light);
+    border:2px solid var(--indigo);
+    border-radius:10px;
+    padding:10px 22px;
+    font-family:'Shippori Mincho', serif;
+    font-size:15px;
+    font-weight:700;
+    color:var(--indigo-deep);
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .ticket::before,.ticket::after{
+    content:"";
+    position:absolute;
+    top:50%;
+    width:12px;height:12px;
+    background:var(--paper);
+    border-radius:50%;
+    transform:translateY(-50%);
+    box-shadow:0 0 0 2px var(--indigo) inset;
+  }
+  .ticket::before{left:-7px;}
+  .ticket::after{right:-7px;}
+  .ticket:hover{transform:translateY(-2px);}
+  .ticket.active{
+    background:var(--indigo);
+    color:var(--paper-light);
+  }
+  .ticket.active::before,.ticket.active::after{background:var(--indigo);}
+
+  main{max-width:880px; margin:0 auto; padding:0 16px;}
+
+  /* ---- Scene nav ---- */
+  .scene-nav{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:18px 2px 4px;
+    margin-top:10px;
+    scrollbar-width:thin;
+  }
+  .scene-nav button{
+    flex:0 0 auto;
+    background:var(--paper-light);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:7px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--indigo-deep);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .scene-nav button.active{background:var(--indigo); color:#fff; border-color:var(--indigo);}
+
+  .runall{
+    display:flex; justify-content:flex-end; margin-top:4px;
+  }
+  .runall button{
+    background:var(--vermilion); color:#fff; border:none;
+    padding:9px 16px; border-radius:8px; font-size:13px; font-weight:700;
+    cursor:pointer; font-family:'Zen Maru Gothic',sans-serif;
+  }
+  .runall button:disabled{opacity:.5; cursor:default;}
+
+  /* ---- Scene card ---- */
+  .scene{
+    margin-top:26px;
+    background:var(--paper-light);
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .scene-banner{
+    position:relative;
+    min-height:96px;
+    display:flex;
+    align-items:flex-end;
+    padding:16px 20px;
+    background-size:cover;
+    background-position:center;
+    color:#fff;
+  }
+  .scene-banner .veil{
+    position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(31,51,80,.15), rgba(31,51,80,.82));
+  }
+  .scene-banner .badge{
+    position:relative; z-index:1;
+    display:flex; align-items:center; gap:10px;
+  }
+  .scene-banner .badge .maku{
+    width:40px;height:40px;border-radius:50%;
+    background:var(--vermilion);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Shippori Mincho',serif; font-weight:700; font-size:14px;
+    border:2px solid #fff;
+    flex:0 0 auto;
+  }
+  .scene-banner h3{position:relative; z-index:1; font-size:17px; line-height:1.4;}
+  .scene-banner .icon{font-size:22px; position:relative; z-index:1;}
+
+  .scene-body{padding:16px 18px 20px;}
+  .scene-desc{font-size:12.5px; color:#6b5f52; margin-bottom:12px;}
+
+  .line-row{
+    display:flex;
+    gap:12px;
+    padding:14px 0;
+    border-top:1px dashed var(--line);
+    align-items:flex-start;
+  }
+  .line-row:first-of-type{border-top:none;}
+  .speaker-chip{
+    flex:0 0 auto;
+    min-width:78px;
+    text-align:center;
+    padding:6px 8px;
+    border-radius:8px;
+    color:#fff;
+    font-size:12px;
+    font-weight:700;
+    line-height:1.3;
+  }
+  .speaker-chip .no{display:block; font-family:'JetBrains Mono',monospace; font-size:10px; opacity:.85; font-weight:400;}
+  .line-main{flex:1 1 auto; min-width:0;}
+  .direction{font-size:12px; color:#8a5a1f; font-style:italic; margin-bottom:4px;}
+  .line-text{font-size:15.5px; line-height:1.6;}
+  .controls{
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; align-items:center;
+  }
+  .controls button{
+    border:1px solid var(--indigo);
+    background:#fff;
+    color:var(--indigo-deep);
+    font-size:12.5px;
+    padding:6px 11px;
+    border-radius:7px;
+    cursor:pointer;
+    display:flex; align-items:center; gap:5px;
+  }
+  .controls button:hover{background:var(--indigo); color:#fff;}
+  .counters{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:#8a7d6c;
+    margin-left:auto;
+    white-space:nowrap;
+  }
+  .chorus-note{font-size:12px; color:#6b5f52; padding:6px 0;}
+
+  footer{
+    text-align:center; margin-top:40px; font-size:11.5px; color:#8a7d6c;
+  }
+  @media (max-width:520px){
+    .speaker-chip{min-width:66px; font-size:11px;}
+    .line-text{font-size:14.5px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Class 5 &middot; International Exchange Presentation</div>
+  <h1>交流会 英語発表<br>台本 自主練習アプリ</h1>
+  <p class="sub">お手本の音声を聞いて、セリフを練習しよう</p>
+</header>
+
+<div class="ticket-row" id="scriptTabs"></div>
+
+<main>
+  <div class="scene-nav" id="sceneNav"></div>
+  <div class="runall">
+    <button id="runAllBtn">▶ 台本を通しで再生</button>
+  </div>
+
+  <div id="scenes"></div>
+</main>
+
+<footer>音声はブラウザの読み上げ機能で自動生成しています。端末やブラウザによって声の種類が異なります。</footer>
+
+<script>
+/* ================= データ ================= */
+const SCENE_META = [
+  {icon:"🎌", key:"opening"},
+  {icon:"🏫", key:"school"},
+  {icon:"⚽", key:"grade"},
+  {icon:"🍵", key:"tea"},
+  {icon:"🍡", key:"sweets"},
+  {icon:"❓", key:"quiz"},
+  {icon:"👋", key:"closing"},
+];
+
+const SCRIPTS = {
+  script1: {
+    label: "台本1（5-1・5-2）",
+    scenes: [
+      { title:"1. Opening（始まりのあいさつ）", desc:"", lines:[
+        {no:1, name:"しんのすけ", text:"Hello, friends!"},
+        {no:2, name:"まほ", text:"We are very happy to see you."},
+        {no:3, name:"すずな", text:"Let’s enjoy our presentation."},
+      ]},
+      { title:"2. About Ozu Elementary School（大津小の紹介）", desc:"", lines:[
+        {no:4, name:"そうすけ", text:"Look. This is our school. Ozu Elementary School is very big."},
+      ]},
+      { title:"3. About 5th Grade（できること紹介）", desc:"", lines:[
+        {no:6, name:"こうき", text:"Can you play soccer, Ren?"},
+        {no:7, name:"れん", text:"Yes, I can. I like soccer."},
+        {no:8, name:"まな", text:"Can you play the recorder, Kaito?"},
+        {no:9, name:"かいと", text:"Yes, I can. I like music."},
+      ]},
+      { title:"4. Japanese Tea Culture（日本のお茶文化紹介）", desc:"急須など実物や写真を見せながら", lines:[
+        {no:10, name:"ありさ", text:"Do you know Japanese green tea?"},
+        {no:11, name:"なお", text:"I like green tea. It’s very nice."},
+        {no:12, name:"ありさ", direction:"急須でお茶をつぐ", text:"Look. This is kyusu. Here you are."},
+        {no:13, name:"なお", direction:"お茶を飲み、味わう", text:"Thank you. It’s bitter, but nice!"},
+      ]},
+      { title:"5. Japanese Sweets（お茶菓子について）", desc:"写真・実物を見せながら", lines:[
+        {no:14, name:"えいち", text:"I like Japanese sweets."},
+        {no:15, name:"いおり", direction:"見せて", text:"I like Ikinari Dango. Anko and sweet potato inside."},
+        {no:16, name:"りく", direction:"見せて", text:"I like Ikinari Dango. It’s nice."},
+      ]},
+      { title:"6. Quiz Time", desc:"", lines:[
+        {no:17, name:"しんのすけ", text:"Quiz Time!!! What is my name? 1 Totoro, 2 Nobita, 3 Shin-nosuke. The answer is... No.3! My name is Shinnosuke."},
+        {chorus:true, direction:"全員で拍手"},
+      ]},
+      { title:"7. Closing（終わりのあいさつ）", desc:"", lines:[
+        {no:17, name:"ななか", text:"Please tell me about Taiwan tea and sweets."},
+        {chorus:true, name:"All Children", text:"Thank you very much!"},
+      ]},
+    ]
+  },
+  script2: {
+    label: "台本2（5-3・5-4）",
+    scenes: [
+      { title:"1. Opening（始まりのあいさつ）", desc:"", lines:[
+        {no:1, name:"りき", text:"Hello, friends!"},
+        {no:2, name:"おとは", text:"We are very happy to see you."},
+        {no:3, name:"ときつぐ", text:"Let’s enjoy our presentation."},
+      ]},
+      { title:"2. About Ozu Elementary School（大津小の紹介）", desc:"", lines:[
+        {no:4, name:"ひまり", text:"Look. This is our school. Ozu Elementary School is very big."},
+      ]},
+      { title:"3. About 5th Grade（できること紹介）", desc:"", lines:[
+        {no:6, name:"なのは", text:"Can you play baseball, Shingen?"},
+        {no:7, name:"しんげん", text:"Yes, I can. I like baseball."},
+        {no:8, name:"このか", text:"Can you play the recorder, Kiki?"},
+        {no:9, name:"きき", text:"Yes, I can. I like music."},
+      ]},
+      { title:"4. Japanese Tea Culture（日本のお茶文化紹介）", desc:"急須など実物や写真を見せながら", lines:[
+        {no:10, name:"とうこ", text:"Do you know Japanese green tea?"},
+        {no:11, name:"こうたろう", text:"I like green tea. It’s very nice."},
+        {no:12, name:"しゅん", direction:"急須でお茶をつぐ", text:"Look. This is kyusu. Here you are."},
+        {no:13, name:"はな", direction:"お茶を飲み、味わう", text:"Thank you. It’s bitter, but nice!"},
+      ]},
+      { title:"5. Japanese Sweets（お茶菓子について）", desc:"写真・実物を見せながら", lines:[
+        {no:14, name:"わかば", text:"I like Japanese sweets."},
+        {no:15, name:"りくと", direction:"見せて", text:"I like Ikinari Dango. Anko and sweet potato inside."},
+        {no:16, name:"あおと", direction:"見せて", text:"I like Ikinari Dango. It’s nice."},
+        {no:17, name:"いっさ", text:"What is this?"},
+        {no:18, name:"そうすけ", direction:"見せて", text:"It’s peanut. I like peanut."},
+      ]},
+      { title:"6. Quiz Time", desc:"", lines:[
+        {no:19, name:"きき", text:"Quiz Time!!! What is my name? 1 Maruko, 2 Sakura, 3 Kiki. The answer is... No.3! My name is Kiki."},
+        {chorus:true, direction:"全員拍手"},
+      ]},
+      { title:"7. Closing（終わりのあいさつ）", desc:"台本のとおり19番のせりふは、Quiz Timeは「きき」、Closingは「りき」と書かれています。", lines:[
+        {no:19, name:"りき", text:"Please tell me about Taiwan tea and sweets."},
+        {chorus:true, name:"All Children", text:"Thank you very much!"},
+      ]},
+    ]
+  }
+};
+
+/* ================= 状態 ================= */
+let currentScript = "script1";
+const listenCounts = {};
+const voiceMap = {};     // name -> {voice, pitch}
+let voicesReady = false;
+let runAllQueue = null;
+
+/* ================= ユーティリティ ================= */
+function hashStr(s){
+  let h = 0;
+  for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) >>> 0; }
+  return h;
+}
+function lineKey(scriptKey, sceneIdx, lineIdx){ return scriptKey+"__"+sceneIdx+"__"+lineIdx; }
+
+function ensureVoices(cb){
+  const voices = speechSynthesis.getVoices();
+  if(voices.length){ voicesReady = true; cb(voices); }
+  else{
+    speechSynthesis.onvoiceschanged = () => {
+      voicesReady = true;
+      cb(speechSynthesis.getVoices());
+    };
+  }
+}
+function assignVoice(name, voices){
+  if(voiceMap[name]) return voiceMap[name];
+  const en = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith("en"));
+  const pool = en.length ? en : voices;
+  const h = hashStr(name);
+  const voice = pool.length ? pool[h % pool.length] : null;
+  const pitch = 0.85 + ((hashStr(name+"p")) % 5) * 0.075;
+  const assignment = {voice, pitch};
+  voiceMap[name] = assignment;
+  return assignment;
+}
+function speakLine(name, text, slow, onend){
+  ensureVoices((voices)=>{
+    const {voice, pitch} = assignVoice(name, voices);
+    const utter = new SpeechSynthesisUtterance(text);
+    if(voice) utter.voice = voice;
+    utter.pitch = pitch;
+    utter.rate = slow ? 0.68 : 0.98;
+    utter.lang = "en-US";
+    if(onend) utter.onend = onend;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utter);
+  });
+}
+
+/* ================= 描画 ================= */
+function renderTabs(){
+  const el = document.getElementById("scriptTabs");
+  el.innerHTML = "";
+  Object.keys(SCRIPTS).forEach(key=>{
+    const btn = document.createElement("div");
+    btn.className = "ticket" + (key===currentScript ? " active":"");
+    btn.textContent = SCRIPTS[key].label;
+    btn.onclick = () => { currentScript = key; init(); };
+    el.appendChild(btn);
+  });
+}
+
+function renderSceneNav(){
+  const nav = document.getElementById("sceneNav");
+  nav.innerHTML = "";
+  SCRIPTS[currentScript].scenes.forEach((scene, idx)=>{
+    const b = document.createElement("button");
+    b.textContent = `幕${idx+1}`;
+    b.title = scene.title;
+    b.onclick = () => {
+      document.getElementById(`scene-${idx}`).scrollIntoView({behavior:"smooth", block:"start"});
+    };
+    nav.appendChild(b);
+  });
+}
+
+async function renderScenes(){
+  const wrap = document.getElementById("scenes");
+  wrap.innerHTML = "";
+  const scenes = SCRIPTS[currentScript].scenes;
+  for(let idx=0; idx<scenes.length; idx++){
+    const scene = scenes[idx];
+    const meta = SCENE_META[idx] || {icon:"🎭"};
+
+    const card = document.createElement("div");
+    card.className = "scene";
+    card.id = `scene-${idx}`;
+
+    const banner = document.createElement("div");
+    banner.className = "scene-banner";
+    banner.style.background = `linear-gradient(135deg, var(--indigo), var(--indigo-deep))`;
+    banner.innerHTML = `
+      <div class="veil"></div>
+      <div style="width:100%;">
+        <div class="badge">
+          <div class="maku">幕${idx+1}</div>
+          <h3>${meta.icon} ${scene.title}</h3>
+        </div>
+      </div>
+    `;
+    card.appendChild(banner);
+
+    const body = document.createElement("div");
+    body.className = "scene-body";
+    if(scene.desc) body.innerHTML = `<div class="scene-desc">${scene.desc}</div>`;
+
+    scene.lines.forEach((line, lidx)=>{
+      if(line.chorus){
+        const row = document.createElement("div");
+        row.className = "chorus-note";
+        if(line.direction) row.innerHTML += `（${line.direction}）`;
+        if(line.text) row.innerHTML += ` <strong>${line.name || "All Children"}:</strong> ${line.text}`;
+        body.appendChild(row);
+        return;
+      }
+      const key = lineKey(currentScript, idx, lidx);
+      const row = document.createElement("div");
+      row.className = "line-row";
+
+      const chipColors = ["var(--indigo)","var(--matcha-deep)","var(--vermilion)"];
+      const chipColor = chipColors[hashStr(line.name) % chipColors.length];
+
+      row.innerHTML = `
+        <div class="speaker-chip" style="background:${chipColor}">
+          <span class="no">Child ${line.no}</span>${line.name}
+        </div>
+        <div class="line-main">
+          ${line.direction ? `<div class="direction">（${line.direction}）</div>` : ""}
+          <div class="line-text">${line.text}</div>
+          <div class="controls">
+            <button class="play-btn">▶ お手本</button>
+            <button class="slow-btn">🐢 ゆっくり</button>
+            <span class="counters">きいた回数:<span class="lc">0</span></span>
+          </div>
+        </div>
+      `;
+
+      const playBtn = row.querySelector(".play-btn");
+      const slowBtn = row.querySelector(".slow-btn");
+      const lc = row.querySelector(".lc");
+
+      listenCounts[key] = listenCounts[key] || 0;
+
+      playBtn.onclick = () => {
+        listenCounts[key]++; lc.textContent = listenCounts[key];
+        speakLine(line.name, line.text, false);
+      };
+      slowBtn.onclick = () => {
+        listenCounts[key]++; lc.textContent = listenCounts[key];
+        speakLine(line.name, line.text, true);
+      };
+
+      body.appendChild(row);
+    });
+
+    card.appendChild(body);
+    wrap.appendChild(card);
+  }
+}
+
+function collectAllLines(){
+  const out = [];
+  SCRIPTS[currentScript].scenes.forEach(scene=>{
+    scene.lines.forEach(line=>{
+      if(line.chorus && !line.text) return;
+      out.push({name: line.chorus ? (line.name||"All Children") : line.name, text: line.text});
+    });
+  });
+  return out;
+}
+document.getElementById("runAllBtn").onclick = () => {
+  const lines = collectAllLines();
+  let i = 0;
+  const btn = document.getElementById("runAllBtn");
+  btn.disabled = true;
+  btn.textContent = "■ 停止";
+  const stopHandler = () => {
+    speechSynthesis.cancel();
+    btn.disabled = false;
+    btn.textContent = "▶ 台本を通しで再生";
+    btn.onclick = restart;
+  };
+  btn.onclick = stopHandler;
+  function next(){
+    if(i >= lines.length){ stopHandler(); btn.onclick = restart; return; }
+    const l = lines[i++];
+    speakLine(l.name, l.text, false, next);
+  }
+  function restart(){ document.getElementById("runAllBtn").click(); }
+  next();
+};
+
+async function init(){
+  renderTabs();
+  renderSceneNav();
+  await renderScenes();
+}
+ensureVoices(()=>{});
+init();
+</script>
+</body>
+</html>
