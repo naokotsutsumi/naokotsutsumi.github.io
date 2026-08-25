@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
   --bg:#F0F7F4;
@@ -285,7 +286,7 @@ aside#tray{
 <div id="app">
   <header>
     <h1>オリジナル<span>クッキング</span> 🍳</h1>
-    <button id="helpBtn">📤 ていしゅつのしかた</button>
+    <button id="helpBtn">📷 キャプチャ</button>
   </header>
 
   <nav id="themeTabs">
@@ -312,13 +313,8 @@ aside#tray{
 
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
-    <h2>ロイロノートに ていしゅつする ほうほう</h2>
-    <ol>
-      <li>作品が できあがったら、キーボードの <b>スクリーンショットキー</b>（四角に矢印のアイコン）を おす</li>
-      <li>「スクリーンショットを撮影しました」の通知が出たら、画像がほぞんされています</li>
-      <li>ロイロノートを開き、カードを新しく作って <b>「＋」→ 写真（カメラロール）</b> から今の画像を選ぶ</li>
-      <li>できたカードを <b>提出箱</b> に ドラッグして ていしゅつする</li>
-    </ol>
+    <h2>ほぞんしました！</h2>
+    <p id="captureMsg" style="font-size:14px;color:var(--ink-soft);line-height:1.6;">画像をダウンロードしました。ロイロノートの提出箱にドラッグして ていしゅつしてね。</p>
     <button id="closeModal">とじる</button>
   </div>
 </div>
@@ -595,11 +591,36 @@ document.getElementById('resetBtn').addEventListener('click', ()=>{
   }
 });
 
-/* ---------- ヘルプ ---------- */
+/* ---------- キャプチャ（保存） ---------- */
 const helpModal = document.getElementById('helpModal');
-document.getElementById('helpBtn').addEventListener('click', ()=> helpModal.classList.remove('hidden'));
 document.getElementById('closeModal').addEventListener('click', ()=> helpModal.classList.add('hidden'));
 helpModal.addEventListener('click', (e)=>{ if (e.target===helpModal) helpModal.classList.add('hidden'); });
+
+document.getElementById('helpBtn').addEventListener('click', async ()=>{
+  clearSelection();
+  const btn = document.getElementById('helpBtn');
+  const oldText = btn.textContent;
+  btn.textContent = '📷 さつえいちゅう…';
+  btn.disabled = true;
+  try{
+    const target = document.getElementById('canvasWrap');
+    const canvas = await html2canvas(target, {backgroundColor:'#ffffff', scale:2, useCORS:true});
+    const dataUrl = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    const theme = currentTheme === 'parfait' ? 'パフェ' : 'ピザ';
+    a.href = dataUrl;
+    a.download = `オリジナル${theme}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    helpModal.classList.remove('hidden');
+  }catch(err){
+    alert('キャプチャに しっぱいしました。もう一度おしてね。');
+  }finally{
+    btn.textContent = oldText;
+    btn.disabled = false;
+  }
+});
 
 renderTheme();
 </script>
