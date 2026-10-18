@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アルファベット タイピング</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f3f8ff; --card:#ffffff; --ink:#24324a; --sub:#6b7a90;
+    --main:#3b82f6; --main-d:#1e5fd0; --ok:#16a34a; --ng:#e11d48;
+    --hint:#fde047; --key:#eef2f7; --key-b:#c9d3e0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif;
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+  .letter-font{font-family:"Andika",sans-serif}
+  .screen{display:none;width:100%;max-width:900px}
+  .screen.active{display:block}
+  .card{background:var(--card);border-radius:24px;box-shadow:0 6px 24px rgba(30,60,120,.12);padding:28px}
+  h1{margin:0 0 8px;font-size:34px;text-align:center}
+  .lead{text-align:center;color:var(--sub);margin:0 0 24px}
+  .group{margin:0 0 20px}
+  .group-title{font-weight:800;margin-bottom:8px;font-size:20px}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .opt{border:3px solid var(--key-b);background:#fff;border-radius:16px;padding:14px 10px;
+    font:inherit;font-size:22px;font-weight:800;color:var(--ink);cursor:pointer}
+  .opt small{display:block;font-size:14px;font-weight:500;color:var(--sub);margin-top:2px}
+  .opt.sel{border-color:var(--main);background:#e3eeff}
+  .opt .ex{font-family:"Andika",sans-serif;font-size:28px}
+  .btn{display:block;width:100%;border:none;border-radius:18px;background:var(--main);color:#fff;
+    font:inherit;font-size:26px;font-weight:800;padding:16px;cursor:pointer;margin-top:8px}
+  .btn:hover{background:var(--main-d)}
+  .btn.sub{background:#94a3b8}
+  .row{display:flex;gap:12px}
+  .row .btn{flex:1}
+
+  /* play */
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:20px;font-weight:800}
+  .mode-tag{color:var(--sub);font-size:16px;font-weight:500}
+  .stage{text-align:center;position:relative}
+  .big{font-size:180px;line-height:1.1;margin:4px 0;font-weight:400}
+  .listen{border:none;background:#e3eeff;color:var(--main-d);border-radius:999px;padding:8px 20px;
+    font:inherit;font-size:18px;font-weight:800;cursor:pointer}
+  .msg{min-height:64px;font-size:26px;font-weight:800;margin:10px 0}
+  .msg.ok{color:var(--ok)} .msg.ng{color:var(--ng)}
+  .msg .ans{font-family:"Andika",sans-serif;font-size:40px}
+  .warn{min-height:28px;color:#b45309;font-weight:800;font-size:18px}
+  .bar{height:12px;background:#e5eaf2;border-radius:99px;overflow:hidden;margin-bottom:12px}
+  .bar div{height:100%;background:var(--main);width:0;transition:width .3s}
+
+  /* keyboard */
+  .kb{margin:12px auto 0;max-width:760px;visibility:hidden}
+  .kb.show{visibility:visible}
+  .kb-row{display:flex;justify-content:center;gap:6px;margin-bottom:6px}
+  .k{width:58px;height:58px;border-radius:10px;background:var(--key);border:2px solid var(--key-b);
+    display:flex;align-items:center;justify-content:center;font-family:"Andika",sans-serif;font-size:28px;color:var(--ink)}
+  .k.shift{width:120px;font-family:"M PLUS Rounded 1c",sans-serif;font-size:17px;font-weight:800}
+  .k.hl{background:var(--hint);border-color:#ca8a04;transform:scale(1.08)}
+  .k.hl-ng{background:#fecdd3;border-color:var(--ng);transform:scale(1.08)}
+  .r2{padding-left:30px}.r3{padding-left:0}
+
+  /* result */
+  .score{text-align:center;font-size:30px;font-weight:800;margin:6px 0 18px}
+  .score b{font-size:72px;color:var(--main-d)}
+  .miss-title{font-weight:800;font-size:20px;margin-bottom:8px}
+  .miss{display:flex;flex-wrap:wrap;gap:10px;min-height:60px;margin-bottom:20px}
+  .miss span{font-family:"Andika",sans-serif;font-size:40px;background:#fff1f2;border:2px solid #fecdd3;
+    border-radius:12px;min-width:64px;text-align:center;padding:2px 10px}
+  .perfect{font-size:24px;font-weight:800;color:var(--ok)}
+
+  @media (max-width:700px){
+    .k{width:30px;height:40px;font-size:18px}.k.shift{width:58px;font-size:12px}
+    .big{font-size:120px}.r2{padding-left:16px}
+  }
+</style>
+</head>
+<body>
+
+<!-- メニュー -->
+<section id="menu" class="screen active">
+  <div class="card">
+    <h1>アルファベット タイピング</h1>
+    <p class="lead">きこえた文字のキーをおそう！</p>
+
+    <div class="group">
+      <div class="group-title">① 文字</div>
+      <div class="opts" data-key="case">
+        <button class="opt sel" data-val="lower"><span class="ex">a b c</span><small>小文字</small></button>
+        <button class="opt" data-val="upper"><span class="ex">A B C</span><small>大文字（shift を使う）</small></button>
+      </div>
+    </div>
+    <div class="group">
+      <div class="group-title">② じゅんばん</div>
+      <div class="opts" data-key="order">
+        <button class="opt sel" data-val="seq">じゅんばん通り<small>a → z</small></button>
+        <button class="opt" data-val="rand">ランダム<small>バラバラに出る</small></button>
+      </div>
+    </div>
+    <div class="group">
+      <div class="group-title">③ ヒント</div>
+      <div class="opts" data-key="hint">
+        <button class="opt sel" data-val="on">ヒントあり<small>キーの場所が光る</small></button>
+        <button class="opt" data-val="off">ヒントなし<small>自分でさがす</small></button>
+      </div>
+    </div>
+    <button class="btn" id="startBtn">スタート！</button>
+  </div>
+</section>
+
+<!-- 問題 -->
+<section id="play" class="screen">
+  <div class="card">
+    <div class="top">
+      <span id="count">1 / 26</span>
+      <span class="mode-tag" id="modeTag"></span>
+    </div>
+    <div class="bar"><div id="barFill"></div></div>
+    <div class="stage">
+      <div class="big letter-font" id="bigLetter">a</div>
+      <button class="listen" id="listenBtn">🔊 もう一度きく（スペースキー）</button>
+      <div class="msg" id="msg"></div>
+      <div class="warn" id="warn"></div>
+    </div>
+    <div class="kb" id="kb"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn sub" id="quitBtn" style="font-size:18px;padding:10px">メニューにもどる</button>
+    </div>
+  </div>
+</section>
+
+<!-- 結果 -->
+<section id="result" class="screen">
+  <div class="card">
+    <h1>けっか</h1>
+    <div class="score">26問中 <b id="scoreNum">0</b> 問 正解！</div>
+    <div class="miss-title">まちがえた文字</div>
+    <div class="miss" id="missList"></div>
+    <div class="row">
+      <button class="btn" id="retryBtn">もう一度</button>
+      <button class="btn sub" id="menuBtn">メニューへ</button>
+    </div>
+  </div>
+</section>
+
+<script>
+const LETTERS = 'abcdefghijklmnopqrstuvwxyz'.split('');
+const ROWS = [
+  ['q','w','e','r','t','y','u','i','o','p'],
+  ['a','s','d','f','g','h','j','k','l'],
+  ['SHIFT','z','x','c','v','b','n','m','SHIFT']
+];
+const settings = { case:'lower', order:'seq', hint:'on' };
+let queue = [], idx = 0, correct = 0, missed = [], locked = true, playing = false, timer = null;
+
+const $ = id => document.getElementById(id);
+
+// ---------- メニュー ----------
+document.querySelectorAll('.opts').forEach(g=>{
+  g.addEventListener('click', e=>{
+    const b = e.target.closest('.opt'); if(!b) return;
+    g.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel');
+    settings[g.dataset.key] = b.dataset.val;
+  });
+});
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+// ---------- キーボード図 ----------
+function buildKeyboard(){
+  const up = settings.case === 'upper';
+  $('kb').innerHTML = ROWS.map((r,i)=>
+    `<div class="kb-row r${i+1}">` + r.map(k=>{
+      if(k==='SHIFT') return `<div class="k shift" data-k="shift">⇧ shift</div>`;
+      return `<div class="k" data-k="${k}">${up ? k.toUpperCase() : k}</div>`;
+    }).join('') + `</div>`
+  ).join('');
+}
+function clearKeys(){ document.querySelectorAll('.k').forEach(k=>k.classList.remove('hl','hl-ng')); }
+function lightKey(letter, cls){
+  clearKeys();
+  document.querySelectorAll(`.k[data-k="${letter}"]`).forEach(k=>k.classList.add(cls));
+  if(settings.case==='upper') document.querySelectorAll('.k[data-k="shift"]').forEach(k=>k.classList.add(cls));
+}
+
+// ---------- 音 ----------
+let actx = null;
+function ac(){ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; }
+function tone(freq, start, dur, type='sine', vol=0.25){
+  const c = ac(), o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, c.currentTime + start);
+  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + start + dur);
+  o.connect(g).connect(c.destination);
+  o.start(c.currentTime + start); o.stop(c.currentTime + start + dur + 0.02);
+}
+function soundOK(){ tone(988,0,0.18); tone(1319,0.16,0.35); }          // ピンポン
+function soundNG(){ tone(140,0,0.28,'square',0.15); tone(140,0.34,0.4,'square',0.15); } // ブッブー
+
+// ---------- 読み上げ ----------
+let enVoice = null;
+function pickVoice(){
+  const vs = speechSynthesis.getVoices();
+  enVoice = vs.find(v=>/en-US/i.test(v.lang) && /Google/i.test(v.name))
+         || vs.find(v=>/en-US/i.test(v.lang)) || vs.find(v=>/^en/i.test(v.lang)) || null;
+}
+if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(letter){
+  if(!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(letter.toUpperCase());
+  u.lang = 'en-US'; u.rate = 0.8;
+  if(enVoice) u.voice = enVoice;
+  speechSynthesis.speak(u);
+}
+
+// ---------- ゲーム ----------
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function disp(l){ return settings.case==='upper' ? l.toUpperCase() : l; }
+
+function start(){
+  ac(); // ブラウザの音声許可のため、ボタン操作時に起動
+  queue = settings.order==='rand' ? shuffle(LETTERS.slice()) : LETTERS.slice();
+  idx = 0; correct = 0; missed = [];
+  $('modeTag').textContent =
+    (settings.case==='upper'?'大文字':'小文字') + '・' +
+    (settings.order==='rand'?'ランダム':'じゅんばん') + '・' +
+    (settings.hint==='on'?'ヒントあり':'ヒントなし');
+  buildKeyboard();
+  show('play'); playing = true;
+  next();
+}
+function next(){
+  if(idx >= queue.length){ finish(); return; }
+  const l = queue[idx];
+  $('count').textContent = `${idx+1} / ${queue.length}`;
+  $('barFill').style.width = (idx/queue.length*100) + '%';
+  $('bigLetter').textContent = disp(l);
+  $('bigLetter').style.color = '';
+  $('msg').className = 'msg'; $('msg').innerHTML = '';
+  $('warn').textContent = '';
+  if(settings.hint==='on'){ $('kb').classList.add('show'); lightKey(l,'hl'); }
+  else { $('kb').classList.remove('show'); clearKeys(); }
+  locked = false;
+  setTimeout(()=>speak(l), 150);
+}
+function judge(key){
+  const l = queue[idx];
+  const target = disp(l);
+  locked = true;
+  if(key === target){
+    correct++;
+    soundOK();
+    $('msg').className = 'msg ok'; $('msg').textContent = '⭕ せいかい！';
+    $('bigLetter').style.color = 'var(--ok)';
+    idx++; timer = setTimeout(next, 700);
+  } else {
+    missed.push(target);
+    soundNG();
+    let note = '';
+    if(key.toLowerCase() === l){
+      note = settings.case==='upper'
+        ? '<br><span style="font-size:20px">shift をおしながら打とう！</span>'
+        : '<br><span style="font-size:20px">大文字になっているよ（Caps Lock がオンかも）</span>';
+    }
+    $('msg').className = 'msg ng';
+    $('msg').innerHTML = `❌ 正解は <span class="ans">${target}</span>${note}`;
+    $('bigLetter').style.color = 'var(--ng)';
+    $('kb').classList.add('show'); lightKey(l,'hl-ng');
+    idx++; timer = setTimeout(next, 2200);
+  }
+}
+function finish(){
+  playing = false;
+  $('barFill').style.width = '100%';
+  $('scoreNum').textContent = correct;
+  $('missList').innerHTML = missed.length
+    ? missed.map(m=>`<span>${m}</span>`).join('')
+    : '<div class="perfect">ぜんぶ正解！すごい！🎉</div>';
+  show('result');
+}
+function quit(){ clearTimeout(timer); playing = false; locked = true; speechSynthesis.cancel(); show('menu'); }
+
+document.addEventListener('keydown', e=>{
+  if(!playing) return;
+  if(e.isComposing || e.key === 'Process' || e.keyCode === 229){
+    $('warn').textContent = '日本語入力になっているよ。「英数」キーかCtrl＋スペースで切りかえよう';
+    return;
+  }
+  if(e.key === ' '){ e.preventDefault(); if(!locked) speak(queue[idx]); return; }
+  if(locked || e.ctrlKey || e.altKey || e.metaKey) return;
+  if(e.key.length !== 1 || !/[a-zA-Z]/.test(e.key)) return; // shiftなどは無視
+  e.preventDefault();
+  $('warn').textContent = '';
+  judge(e.key);
+});
+
+$('startBtn').onclick = start;
+$('retryBtn').onclick = start;
+$('menuBtn').onclick = ()=>show('menu');
+$('quitBtn').onclick = quit;
+$('listenBtn').onclick = ()=>{ if(playing && !locked) speak(queue[idx]); };
+</script>
+</body>
+</html>
