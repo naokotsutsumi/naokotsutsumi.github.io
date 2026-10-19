@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 5 英文練習</title>
+<style>
+  :root{
+    --blue:#2f6fd6; --blue-dark:#1f52a8; --bg:#eef4fc; --ink:#2b3445;
+    --ok:#2e9d5b; --ng:#e04a4a; --soft:#f5f8fe; --line:#d6e2f5; --gold:#f2b134;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Hiragino Maru Gothic ProN","Rounded Mplus 1c","BIZ UDPGothic","Meiryo",sans-serif;}
+  header{background:linear-gradient(135deg,var(--blue),var(--blue-dark)); color:#fff; text-align:center; padding:18px 16px 16px;}
+  header h1{margin:0; font-size:1.45em;}
+  header p{margin:6px 0 0; font-size:.95em; opacity:.92;}
+  .en{font-family:"Century Gothic","Avenir Next","Avenir","Segoe UI",sans-serif;}
+  main{max-width:720px; margin:0 auto; padding:20px 16px 50px;}
+  .card{background:#fff; border-radius:20px; box-shadow:0 4px 16px rgba(31,82,168,.12); padding:24px 20px; text-align:center;}
+  .btn{border:none; border-radius:999px; cursor:pointer; font-family:inherit; font-weight:bold; font-size:1.1em;
+    padding:14px 34px; background:var(--blue); color:#fff; box-shadow:0 3px 0 var(--blue-dark);}
+  .btn:active{transform:translateY(2px); box-shadow:0 1px 0 var(--blue-dark);}
+  .btn.sub{background:#fff; color:var(--blue); border:2px solid var(--blue); box-shadow:none; font-size:1em; padding:10px 22px;}
+  .btn:disabled{opacity:.45; cursor:default;}
+  .menu{display:grid; gap:16px; margin-top:18px;}
+  .menu .btn{font-size:1.3em; padding:20px;}
+  .menu small{display:block; font-size:.7em; font-weight:normal; opacity:.9; margin-top:4px;}
+  .progress{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .bar{flex:1; height:10px; background:var(--line); border-radius:99px; overflow:hidden;}
+  .bar span{display:block; height:100%; background:var(--blue); width:0; transition:width .3s;}
+  .count{font-weight:bold; color:var(--blue-dark); min-width:64px; text-align:right;}
+  .mode-label{display:inline-block; background:var(--soft); color:var(--blue-dark); border-radius:99px; padding:4px 14px; font-size:.9em; font-weight:bold; margin-bottom:6px;}
+  .jp{font-size:1.05em; color:#5a6880; margin:6px 0 4px;}
+  .ear{display:inline-block; color:#b07a00; background:#fff6dd; border-radius:8px; padding:3px 10px; font-size:.85em; font-weight:bold; margin-top:4px;}
+  /* reorder */
+  .answer-zone{min-height:74px; border:3px dashed var(--line); border-radius:16px; padding:10px; margin:16px 0;
+    display:flex; flex-wrap:wrap; gap:8px; justify-content:center; align-items:center; background:var(--soft);}
+  .pool{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; min-height:56px; margin-bottom:12px;}
+  .wcard{font-family:"Century Gothic","Avenir Next","Avenir","Segoe UI",sans-serif; font-size:1.5em; padding:8px 16px;
+    border:2px solid var(--blue); border-radius:12px; background:#fff; color:var(--ink); cursor:pointer; box-shadow:0 2px 0 var(--line);}
+  .wcard:active{transform:translateY(1px);}
+  .wcard.bad{border-color:var(--ng); background:#ffecec; color:var(--ng);}
+  .wcard.good{border-color:var(--ok); background:#eaf7ef;}
+  .punct{font-family:"Century Gothic","Avenir Next","Avenir","Segoe UI",sans-serif; font-size:1.6em; font-weight:bold; color:var(--blue-dark);}
+  /* blank */
+  .sentence{font-size:2em; line-height:1.6; margin:20px 0; word-break:break-word;}
+  .blank{display:inline-block; min-width:3.5em; border-bottom:4px solid var(--blue); color:var(--ok); padding:0 6px;}
+  .choices{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:10px 0 6px;}
+  .choice{font-family:"Century Gothic","Avenir Next","Avenir","Segoe UI",sans-serif; font-size:1.4em; padding:14px 10px;
+    border:3px solid var(--line); border-radius:14px; background:#fff; color:var(--ink); cursor:pointer;}
+  .choice:hover{border-color:var(--blue);}
+  .choice.crossed{text-decoration:line-through; text-decoration-thickness:3px; text-decoration-color:var(--ng); color:#aab; border-color:#eee; cursor:default; background:#fafafa;}
+  .choice.right{border-color:var(--ok); background:#eaf7ef; color:var(--ok);}
+  .msg{min-height:2.8em; font-weight:bold; font-size:1.05em; line-height:1.5; margin:6px 0 10px;}
+  .msg.ng{color:var(--ng);} .msg.ok{color:var(--ok);}
+  .row{display:flex; justify-content:center; gap:12px; flex-wrap:wrap;}
+  .shake{animation:shake .4s;}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
+  .end h2{font-size:2em; color:var(--blue-dark); margin:10px 0 6px;}
+  .end p{font-size:1.3em; margin:0 0 24px;}
+  .hidden{display:none;}
+  @media (max-width:480px){ .wcard{font-size:1.2em; padding:7px 12px;} .sentence{font-size:1.5em;} }
+</style>
+</head>
+<body>
+<header>
+  <h1>Unit 5 <span class="en">Where is it from?</span> 英文練習</h1>
+  <p>音声をきいて、英文をつくろう</p>
+</header>
+<main>
+  <section id="menu" class="card">
+    <div style="font-size:1.15em;font-weight:bold;">れんしゅうをえらぼう</div>
+    <div class="menu">
+      <button class="btn" id="goOrder">並べかえ（20問）<small>カードをじゅんばんにならべよう</small></button>
+      <button class="btn" id="goBlank">穴うめ（20問）<small>あてはまることばをえらぼう</small></button>
+    </div>
+  </section>
+
+  <section id="quiz" class="card hidden">
+    <div class="progress"><div class="bar"><span id="barFill"></span></div><div class="count" id="count"></div></div>
+    <div class="mode-label" id="modeLabel"></div>
+    <div class="jp" id="jp"></div>
+    <div id="earNote" class="ear hidden">🔊 音声をよく聞いてえらぼう</div>
+
+    <div id="orderArea">
+      <div class="answer-zone" id="zone"></div>
+      <div class="pool" id="pool"></div>
+    </div>
+    <div id="blankArea">
+      <div class="sentence en" id="sentence"></div>
+      <div class="choices" id="choices"></div>
+    </div>
+
+    <div class="msg" id="msg"></div>
+    <div class="row">
+      <button class="btn sub" id="againBtn">🔊 もう一度きく</button>
+      <button class="btn sub" id="resetBtn">やりなおし</button>
+      <button class="btn" id="checkBtn">こたえあわせ</button>
+    </div>
+  </section>
+
+  <section id="end" class="card end hidden">
+    <div style="font-size:3em;">🎉</div>
+    <h2>練習終了です</h2>
+    <p>おつかれさまです</p>
+    <div class="row">
+      <button class="btn" id="retryBtn">もう一度</button>
+      <button class="btn sub" id="menuBtn">メニューにもどる</button>
+    </div>
+  </section>
+</main>
+
+<script>
+// w: カード（文末の記号はのぞく） / p: 文末 / jp: 日本語 / b: 空らんにする語の位置 / c: 選択肢（先頭が正解） / ear: 音声で区別
+const S = [
+  {w:["Where","is","it","from"], p:"?", jp:"それはどこから来たの？", b:3, c:["from","in","is"]},
+  {w:["It's","from","Vietnam"], p:".", jp:"それはベトナムから来たよ。", b:2, c:["Vietnam","Italy","Germany"], ear:true},
+  {w:["Vietnam","is","in","Asia"], p:".", jp:"ベトナムはアジアにあるよ。", b:3, c:["Asia","Europe","Africa"]},
+  {w:["Vietnam","is","a","nice","country"], p:".", jp:"ベトナムはすてきな国だよ。", b:4, c:["country","city","team"]},
+  {w:["This","is","my","cap"], p:".", jp:"これはわたしのぼうしです。", b:3, c:["cap","hat","bag"], ear:true},
+  {w:["This","stapler","is","from","Germany"], p:".", jp:"このホッチキスはドイツから来たよ。", b:4, c:["Germany","America","Japan"], ear:true},
+  {w:["Where","is","this","chicken","from"], p:"?", jp:"このとり肉はどこから来たの？", b:0, c:["Where","What","How"]},
+  {w:["Where","is","New Zealand"], p:"?", jp:"ニュージーランドはどこにあるの？", b:1, c:["is","are","do"]},
+  {w:["New Zealand","is","in","Oceania"], p:".", jp:"ニュージーランドはオセアニアにあるよ。", b:3, c:["Oceania","Asia","Europe"]},
+  {w:["My","sweater","is","from","New Zealand"], p:".", jp:"わたしのセーターはニュージーランドから来たよ。", b:1, c:["sweater","cap","T-shirt"], ear:true},
+  {w:["This","T-shirt","is","from","Japan"], p:".", jp:"このTシャツは日本から来たよ。", b:3, c:["from","to","at"]},
+  {w:["Italy","is","in","Europe"], p:".", jp:"イタリアはヨーロッパにあるよ。", b:3, c:["Europe","Asia","Africa"]},
+  {w:["America","is","in","North America"], p:".", jp:"アメリカは北アメリカにあるよ。", b:3, c:["North America","South America","Asia"]},
+  {w:["Thailand","is","in","Asia"], p:".", jp:"タイはアジアにあるよ。", b:3, c:["Asia","Europe","Africa"]},
+  {w:["Tomato","is","from","Kumamoto"], p:".", jp:"トマトは熊本から来たよ。", b:3, c:["Kumamoto","Nagano","Hokkaido"], ear:true},
+  {w:["Lettuce","is","from","Nagano"], p:".", jp:"レタスは長野から来たよ。", b:3, c:["Nagano","Kumamoto","Hokkaido"], ear:true},
+  {w:["The","bacon","is","from","Italy"], p:".", jp:"そのベーコンはイタリアから来たよ。", b:4, c:["Italy","Kenya","Brazil"], ear:true},
+  {w:["It's","from","China"], p:".", jp:"それは中国から来たよ。", b:2, c:["China","Korea","India"], ear:true},
+  {w:["This","is","my","pencil case"], p:".", jp:"これはわたしの筆箱です。", b:3, c:["pencil case","water bottle","textbook"], ear:true},
+  {w:["This","is","my","water bottle"], p:".", jp:"これはわたしの水とうです。", b:3, c:["water bottle","pencil case","umbrella"], ear:true},
+];
+const full = s => s.w.join(" ") + s.p;
+
+// ---------- sounds ----------
+let ac=null;
+function ctx(){ if(!ac){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return ac; }
+function tone(f,st,d,type,v){ const c=ctx(); if(!c) return; const o=c.createOscillator(), g=c.createGain();
+  o.type=type; o.frequency.value=f; g.gain.setValueAtTime(0.0001,c.currentTime+st);
+  g.gain.exponentialRampToValueAtTime(v,c.currentTime+st+0.02); g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+st+d);
+  o.connect(g); g.connect(c.destination); o.start(c.currentTime+st); o.stop(c.currentTime+st+d+0.05); }
+function pinpon(){ tone(1046,0,0.35,'sine',0.35); tone(784,0.28,0.55,'sine',0.35); }
+function buzz(){ tone(150,0,0.45,'square',0.18); tone(110,0,0.45,'sawtooth',0.12); }
+
+// ---------- speech ----------
+let enVoice=null;
+function pickVoice(){ if(!('speechSynthesis' in window)) return; const vs=speechSynthesis.getVoices();
+  enVoice = vs.find(v=>v.lang==='en-US' && /Google|Samantha|Microsoft/.test(v.name)) || vs.find(v=>v.lang==='en-US') || vs.find(v=>/^en/.test(v.lang)) || null; }
+if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(times){
+  if(!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const text = full(S[order[idx]]);
+  for(let i=0;i<times;i++){
+    const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; u.rate=0.85; if(enVoice) u.voice=enVoice;
+    speechSynthesis.speak(u);
+  }
+}
+
+// ---------- flow ----------
+const $=id=>document.getElementById(id);
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+let mode='order', order=[], idx=0, busy=false, placed=[], poolItems=[];
+
+function start(m){
+  mode=m; ctx(); if(ac && ac.state==='suspended') ac.resume();
+  order=shuffle(S.map((_,i)=>i)); idx=0;
+  $('menu').classList.add('hidden'); $('end').classList.add('hidden'); $('quiz').classList.remove('hidden');
+  $('orderArea').classList.toggle('hidden', m!=='order');
+  $('blankArea').classList.toggle('hidden', m!=='blank');
+  $('resetBtn').classList.toggle('hidden', m!=='order');
+  $('checkBtn').classList.toggle('hidden', m!=='order');
+  $('modeLabel').textContent = m==='order' ? '並べかえ' : '穴うめ';
+  show();
+}
+function show(){
+  const s=S[order[idx]]; busy=false;
+  $('count').textContent=(idx+1)+' / '+S.length;
+  $('barFill').style.width=(idx/S.length*100)+'%';
+  $('jp').textContent = mode==='order' ? s.jp : '';
+  $('msg').textContent=''; $('msg').className='msg';
+  $('earNote').classList.toggle('hidden', !(mode==='blank' && s.ear));
+  if(mode==='order') buildOrder(s); else buildBlank(s);
+  speak(2);
+}
+
+// --- reorder ---
+function buildOrder(s){
+  let mix; do{ mix=shuffle(s.w.map((_,i)=>i)); }while(s.w.length>1 && mix.every((v,i)=>s.w[v]===s.w[i]));
+  poolItems = mix; placed=[]; drawOrder();
+}
+function drawOrder(bad){
+  const s=S[order[idx]], zone=$('zone'), pool=$('pool');
+  zone.innerHTML=''; pool.innerHTML='';
+  placed.forEach((wi,pos)=>{
+    const b=document.createElement('button'); b.className='wcard'; b.textContent=s.w[wi];
+    if(bad!==undefined && pos>=bad) b.classList.add('bad');
+    b.onclick=()=>{ if(busy) return; placed.splice(pos,1); drawOrder(); clearMsg(); };
+    zone.appendChild(b);
+  });
+  const p=document.createElement('span'); p.className='punct'; p.textContent=s.p; zone.appendChild(p);
+  poolItems.forEach(wi=>{
+    if(placed.includes(wi)) return;
+    const b=document.createElement('button'); b.className='wcard'; b.textContent=s.w[wi];
+    b.onclick=()=>{ if(busy) return; placed.push(wi); drawOrder(); clearMsg(); };
+    pool.appendChild(b);
+  });
+  $('checkBtn').disabled = placed.length !== s.w.length;
+}
+function clearMsg(){ $('msg').textContent=''; $('msg').className='msg'; }
+function checkOrder(){
+  if(busy) return;
+  const s=S[order[idx]];
+  if(placed.length!==s.w.length){ return; }
+  let bad=-1; for(let i=0;i<placed.length;i++){ if(s.w[placed[i]]!==s.w[i]){ bad=i; break; } }
+  if(bad<0){
+    busy=true; drawOrder(); document.querySelectorAll('#zone .wcard').forEach(b=>b.classList.add('good'));
+    $('checkBtn').disabled=true;
+    ok();
+  }else{
+    drawOrder(bad);
+    ng((bad+1)+'番目のカードからじゅんばんがちがうよ。');
+  }
+}
+
+// --- blank ---
+function buildBlank(s){
+  const words=s.w.map((w,i)=> i===s.b ? '<span class="blank" id="blankSlot">&nbsp;</span>' : escapeHtml(w));
+  $('sentence').innerHTML = words.join(' ') + escapeHtml(s.p);
+  const box=$('choices'); box.innerHTML='';
+  shuffle(s.c).forEach(ch=>{
+    const b=document.createElement('button'); b.className='choice'; b.textContent=ch;
+    b.onclick=()=>pick(b,ch);
+    box.appendChild(b);
+  });
+}
+function escapeHtml(t){ return t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function pick(btn,ch){
+  if(busy || btn.classList.contains('crossed')) return;
+  const s=S[order[idx]];
+  if(ch===s.w[s.b]){
+    busy=true; btn.classList.add('right'); $('blankSlot').textContent=ch;
+    ok();
+  }else{
+    btn.classList.add('crossed'); btn.disabled=true;
+    ng('ちがうよ。もう一度えらんでみよう。');
+  }
+}
+
+function ok(){
+  $('msg').textContent='せいかい！'; $('msg').className='msg ok';
+  $('barFill').style.width=((idx+1)/S.length*100)+'%';
+  pinpon();
+  setTimeout(()=>{ idx++; if(idx>=S.length) finish(); else show(); }, 1400);
+}
+function ng(text){
+  buzz(); $('msg').textContent=text; $('msg').className='msg ng';
+  const c=$('quiz'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
+}
+function finish(){
+  if('speechSynthesis' in window) speechSynthesis.cancel();
+  $('quiz').classList.add('hidden'); $('end').classList.remove('hidden');
+}
+
+$('goOrder').onclick=()=>start('order');
+$('goBlank').onclick=()=>start('blank');
+$('retryBtn').onclick=()=>start(mode);
+$('menuBtn').onclick=()=>{ $('end').classList.add('hidden'); $('menu').classList.remove('hidden'); };
+$('againBtn').onclick=()=>speak(1);
+$('resetBtn').onclick=()=>{ if(busy) return; placed=[]; drawOrder(); clearMsg(); };
+$('checkBtn').onclick=checkOrder;
+</script>
+</body>
+</html>
