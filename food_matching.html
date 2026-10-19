@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>たべもの・もちものマッチング</title>
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--green:#58cc02;--green-d:#46a302;--blue:#1cb0f6;--blue-d:#1899d6;--red:#ff4b4b;--gray:#e5e5e5;--text:#3c3c3c}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif;background:#fff;color:var(--text);min-height:100vh;display:flex;justify-content:center}
+.wrap{width:100%;max-width:640px;padding:16px}
+.screen{display:none}.screen.on{display:block}
+h1{text-align:center;font-size:34px;margin:28px 0 4px}
+.emoji{text-align:center;font-size:56px}
+.sub{text-align:center;color:#777;margin-bottom:20px}
+.label{font-weight:700;margin:18px 0 6px}
+.opt{display:flex;gap:8px;flex-wrap:wrap}
+.opt label{flex:1;text-align:center;border:2px solid var(--gray);border-bottom-width:4px;border-radius:14px;padding:12px 8px;cursor:pointer;font-weight:700;font-size:17px}
+.opt input{display:none}
+.opt label:has(input:checked){border-color:var(--blue);background:#ddf4ff;color:var(--blue-d)}
+.btn{display:block;width:100%;padding:16px;font-size:20px;font-weight:700;border:none;border-radius:16px;color:#fff;background:var(--green);box-shadow:0 4px 0 var(--green-d);cursor:pointer;font-family:inherit;margin-top:14px}
+.btn:active{transform:translateY(4px);box-shadow:none}
+.btn.blue{background:var(--blue);box-shadow:0 4px 0 var(--blue-d)}
+.btn.white{background:#fff;color:var(--blue-d);border:2px solid var(--gray);box-shadow:0 4px 0 var(--gray)}
+.top{display:flex;align-items:center;gap:12px;margin:8px 0 18px}
+.quit{background:none;border:none;font-size:26px;color:#afafaf;cursor:pointer;padding:0 4px}
+.bar{flex:1;height:18px;background:var(--gray);border-radius:9px;overflow:hidden}
+.bar div{height:100%;width:0;background:var(--green);border-radius:9px;transition:width .4s}
+.q{font-size:21px;font-weight:700;margin:0 0 16px}
+.board{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.col{display:flex;flex-direction:column;gap:12px}
+.card{min-height:68px;border:2px solid var(--gray);border-bottom-width:4px;border-radius:14px;background:#fff;color:var(--text);font-family:inherit;font-size:21px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:8px;text-align:center;transition:opacity .35s,transform .35s;-webkit-tap-highlight-color:transparent}
+.card.en{font-family:"Andika",sans-serif;font-size:25px}
+.card.sel{border-color:var(--blue);background:#ddf4ff;color:var(--blue-d)}
+.card.ok{border-color:var(--green);background:#d7ffb8;color:var(--green-d)}
+.card.ng{border-color:var(--red);background:#ffdfe0;color:var(--red);animation:shake .35s}
+.card.gone{opacity:0;transform:scale(.85);pointer-events:none}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.praise{height:44px;text-align:center;font-size:28px;font-weight:700;color:var(--green);margin-top:18px}
+.score{text-align:center;font-size:22px;font-weight:700}
+.score b{font-size:54px;color:var(--green)}
+.stars{text-align:center;font-size:48px;margin:8px 0}
+.msg{text-align:center;font-size:20px;font-weight:700;margin-bottom:12px}
+.miss{border:2px solid var(--gray);border-radius:14px;padding:8px 14px;margin-top:10px}
+.miss h3{margin:6px 0;font-size:17px;color:var(--red)}
+.row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #eee}
+.row .w{font-family:"Andika",sans-serif;font-size:22px;font-weight:700;flex:1}
+.row .j{flex:1}
+.row button{border:none;background:#ddf4ff;border-radius:10px;font-size:20px;padding:6px 10px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="screen on" id="menu">
+  <div class="emoji">🍎🥕✏️</div>
+  <h1>たべもの・もちものマッチング</h1>
+  <div class="sub">英語と日本語のペアをタップしよう</div>
+  <div class="label">もんだいの数</div>
+  <div class="opt">
+    <label><input type="radio" name="n" value="10" checked>10語</label>
+    <label><input type="radio" name="n" value="20">20語</label>
+    <label><input type="radio" name="n" value="all" id="allLabel">ぜんぶ</label>
+  </div>
+  <div class="label">レベル</div>
+  <div class="opt">
+    <label><input type="radio" name="m" value="text" checked>英語の文字あり</label>
+    <label><input type="radio" name="m" value="sound">🔊 音だけ</label>
+  </div>
+  <button class="btn" onclick="start()">スタート</button>
+</div>
+
+<div class="screen" id="game">
+  <div class="top">
+    <button class="quit" onclick="quit()">✕</button>
+    <div class="bar"><div id="fill"></div></div>
+  </div>
+  <div class="q" id="q"></div>
+  <div class="board">
+    <div class="col" id="left"></div>
+    <div class="col" id="right"></div>
+  </div>
+  <div class="praise" id="praise"></div>
+</div>
+
+<div class="screen" id="result">
+  <h1>おわり！</h1>
+  <div class="stars" id="stars"></div>
+  <div class="score">一回で正解 <b id="sc"></b> / <span id="tot"></span></div>
+  <div class="msg" id="msg"></div>
+  <div id="missBox"></div>
+  <button class="btn" id="retryMiss" onclick="start(missList())">まちがえた単語だけれんしゅう</button>
+  <button class="btn blue" onclick="start()">もう一度</button>
+  <button class="btn white" onclick="show('menu')">メニューへ</button>
+</div>
+
+</div>
+<script>
+const W=[
+["apple","りんご"],["banana","バナナ"],["orange","オレンジ"],["grapes","ぶどう"],["strawberry","いちご"],["peach","もも"],["melon","メロン"],["lemon","レモン"],
+["tomato","トマト"],["potato","じゃがいも"],["carrot","にんじん"],["onion","たまねぎ"],["cabbage","キャベツ"],["corn","とうもろこし"],["green pepper","ピーマン"],["cucumber","きゅうり"],
+["rice","ごはん"],["bread","パン"],["egg","たまご"],["milk","ぎゅうにゅう"],["cheese","チーズ"],["beef","ぎゅうにく"],["chicken","とりにく"],["pork","ぶたにく"],
+["pencil","えんぴつ"],["eraser","けしゴム"],["ruler","じょうぎ"],["notebook","ノート"],["scissors","はさみ"],["glue","のり"],["pencil case","ふでばこ"],
+["bag","かばん"],["cap","ぼうし"],["umbrella","かさ"],["watch","うでどけい"],["glasses","めがね"]
+];
+
+const $=s=>document.querySelector(s);
+let pool=[],queue=[],missed=new Set(),reviewing=false,done=0,total=0,combo=0,left=0,selEn=null,selJa=null,soundOnly=false,lock=false;
+document.getElementById('allLabel').parentNode.lastChild.textContent='ぜんぶ（'+W.length+'語）';
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+/* 効果音 */
+let ac;
+function tone(f,d,type,when,vol){
+  ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+  const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+(when||0);
+  o.type=type||'sine';o.frequency.value=f;
+  g.gain.setValueAtTime(vol||.2,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
+  o.connect(g).connect(ac.destination);o.start(t);o.stop(t+d);
+}
+const sOK=()=>{tone(880,.15,'sine',0);tone(1320,.3,'sine',.1)};
+const sNG=()=>{tone(140,.4,'square',0,.12)};
+const sFin=()=>{[523,659,784,1047].forEach((f,i)=>tone(f,.35,'triangle',i*.15))};
+
+/* 読み上げ */
+let voice=null;
+function loadV(){const v=speechSynthesis.getVoices().filter(x=>x.lang.startsWith('en'));
+  voice=v.find(x=>/Samantha|Google US English/.test(x.name))||v.find(x=>x.lang==='en-US')||v[0]||null}
+if('speechSynthesis' in window){loadV();speechSynthesis.onvoiceschanged=loadV}
+function speak(t){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.85;if(voice)u.voice=voice;speechSynthesis.speak(u)}
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$('#'+id).classList.add('on')}
+
+function start(list){
+  const n=document.querySelector('input[name=n]:checked').value;
+  soundOnly=document.querySelector('input[name=m]:checked').value==='sound';
+  pool=list?shuffle(list):shuffle(W).slice(0,n==='all'?W.length:+n);
+  total=pool.length;done=0;combo=0;missed=new Set();reviewing=false;queue=pool.slice();lock=false;
+  bar();show('game');nextRound();
+}
+
+function nextRound(){
+  if(queue.length===0){
+    if(!reviewing&&missed.size>0){reviewing=true;queue=shuffle(pool.filter(w=>missed.has(w[0])));}
+    else return finish();
+  }
+  const round=queue.splice(0,5);
+  $('#q').textContent=reviewing?'🔁 まちがえた単語をもう一度！':(soundOnly?'音を聞いて、日本語とペアにしよう':'英語と日本語のペアをタップしよう');
+  const L=$('#left'),R=$('#right');L.innerHTML='';R.innerHTML='';
+  shuffle(round).forEach(w=>L.appendChild(card(w,'en')));
+  shuffle(round).forEach(w=>R.appendChild(card(w,'ja')));
+  left=round.length;selEn=selJa=null;
+}
+
+function card(w,side){
+  const b=document.createElement('button');
+  b.className='card '+side;b.dataset.k=w[0];
+  b.textContent=side==='en'?(soundOnly?'🔊':w[0]):w[1];
+  b.onclick=()=>tap(b,side);return b;
+}
+
+function tap(b,side){
+  if(lock||b.classList.contains('ok'))return;
+  if(side==='en'){speak(b.dataset.k);if(selEn)selEn.classList.remove('sel');selEn=b}
+  else{if(selJa)selJa.classList.remove('sel');selJa=b}
+  b.classList.add('sel');
+  if(selEn&&selJa)check();
+}
+
+function check(){
+  const a=selEn,b=selJa;selEn=selJa=null;
+  a.classList.remove('sel');b.classList.remove('sel');
+  if(a.dataset.k===b.dataset.k){
+    a.classList.add('ok');b.classList.add('ok');
+    if(soundOnly)a.textContent=a.dataset.k;
+    sOK();combo++;praise();
+    if(!reviewing)done++;bar();
+    setTimeout(()=>{a.classList.add('gone');b.classList.add('gone')},500);
+    if(--left===0){lock=true;setTimeout(()=>{lock=false;nextRound()},900)}
+  }else{
+    a.classList.add('ng');b.classList.add('ng');sNG();combo=0;$('#praise').textContent='';
+    if(!reviewing){missed.add(a.dataset.k);missed.add(b.dataset.k)}
+    lock=true;setTimeout(()=>{a.classList.remove('ng');b.classList.remove('ng');lock=false},600);
+  }
+}
+
+let pt;
+function praise(){
+  const P=['Good!','Nice!','Great!','Excellent!','すごい！','その調子！','Perfect!'];
+  $('#praise').textContent=combo>=3?'🔥 '+combo+'れんぞく！':P[Math.floor(Math.random()*P.length)];
+  clearTimeout(pt);pt=setTimeout(()=>$('#praise').textContent='',1000);
+}
+function bar(){$('#fill').style.width=(total?done/total*100:0)+'%'}
+
+function missList(){return pool.filter(w=>missed.has(w[0]))}
+
+function finish(){
+  sFin();
+  const ok=total-missed.size,r=ok/total;
+  $('#sc').textContent=ok;$('#tot').textContent=total;
+  $('#stars').textContent=r===1?'⭐⭐⭐':r>=.8?'⭐⭐☆':'⭐☆☆';
+  $('#msg').textContent=r===1?'パーフェクト！すばらしい！':r>=.8?'よくできました！':'まちがえた単語をれんしゅうしよう！';
+  const m=missList(),box=$('#missBox');box.innerHTML='';
+  if(m.length){
+    const d=document.createElement('div');d.className='miss';d.innerHTML='<h3>まちがえた単語</h3>';
+    m.forEach(w=>{const r=document.createElement('div');r.className='row';
+      r.innerHTML='<span class="w"></span><span class="j"></span><button>🔊</button>';
+      r.querySelector('.w').textContent=w[0];r.querySelector('.j').textContent=w[1];
+      r.querySelector('button').onclick=()=>speak(w[0]);d.appendChild(r)});
+    box.appendChild(d);
+  }
+  $('#retryMiss').style.display=m.length?'block':'none';
+  show('result');
+}
+
+function quit(){if(confirm('とちゅうでやめますか？')){if('speechSynthesis' in window)speechSynthesis.cancel();show('menu')}}
+</script>
+</body>
+</html>
