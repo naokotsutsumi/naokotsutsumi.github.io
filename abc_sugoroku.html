@@ -1,0 +1,367 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>abcすごろく</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@500;600;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+/* Layout: board (serpentine 7×6 route over a sandy road) on the left, turn panel with the big die on the right; stacks on narrow screens. Single bright light look by design. */
+:root{
+  --paper:#f2f5ea; --board:#fbf8ee; --ink:#24312a; --muted:#5f6c63;
+  --red:#e0453a; --red-soft:#fde3e0; --blue:#2f6fd6; --blue-soft:#dfe9fb;
+  --road:#e6d3a6; --blankA:#fff3c8; --blankB:#e2f1d1; --sun:#f2b631;
+  --jp:"Zen Maru Gothic","Hiragino Maru Gothic ProN","BIZ UDPGothic","Meiryo",sans-serif;
+  --abc:"Andika","Century Gothic","Comic Sans MS",sans-serif;
+  --en:"Fredoka","Zen Maru Gothic","Arial Rounded MT Bold",sans-serif;
+  color-scheme:light;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--jp);font-size:16px;
+  background-image:radial-gradient(circle at 1px 1px,rgba(36,49,42,.07) 1px,transparent 0);background-size:18px 18px}
+.app{min-height:100%;box-sizing:border-box;padding-block:14px 20px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:18px;align-items:start;max-width:1280px;margin:0 auto}
+@media (max-width:860px){.app{grid-template-columns:minmax(0,1fr)}.panel{order:-1}}
+h1{margin:0;font-weight:900;font-size:clamp(20px,2.4vw,28px);letter-spacing:.04em;text-wrap:balance}
+h1 small{display:block;font-family:var(--en);font-weight:600;font-size:.6em;color:var(--muted);letter-spacing:.02em}
+
+/* board */
+.board-wrap{width:100%;max-width:min(100%,calc((100dvh - 60px) * 1.12));margin:0 auto;
+  background:var(--board);border:3px solid var(--ink);border-radius:22px;padding:clamp(6px,1.4vw,14px);box-sizing:border-box;box-shadow:0 6px 0 var(--ink)}
+.board{position:relative;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:clamp(4px,1vw,9px)}
+.road{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.cell{position:relative;z-index:1;aspect-ratio:1;border-radius:18%;container-type:inline-size;box-sizing:border-box}
+.cell.blank{border:2px dashed rgba(36,49,42,.28)}
+.cell.b1{background:var(--blankA)} .cell.b2{background:var(--blankB)}
+.cell.place{background:#fff;border:3px solid var(--ink);overflow:hidden}
+.cell .art{position:absolute;inset:0}
+.cell .art svg,.big-art svg{width:100%;height:100%;display:block}
+.cell .nm{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);border-top:2px solid var(--ink);
+  font-family:var(--en);font-weight:700;font-size:13cqw;line-height:1.05;text-align:center;padding:2cqw 1cqw 3cqw}
+.cell .tag{position:absolute;top:3cqw;left:3cqw;font-family:var(--en);font-weight:700;font-size:11cqw;padding:1cqw 4cqw;border-radius:99px;color:#fff;letter-spacing:.04em}
+.cell.endpoint{border:3px solid var(--ink);display:grid;place-items:center;color:#fff;font-family:var(--en);font-weight:700;letter-spacing:.03em}
+.cell.endpoint span{font-size:19cqw}
+.cell.letter{background:#fff;border:3px solid var(--ink);display:grid;place-items:center;overflow:hidden}
+.cell.letter span{font-family:var(--abc);font-weight:700;font-size:62cqw;line-height:1;transform:translateY(-6%)}
+.cell.letter.c0 span{color:#c2362c}.cell.letter.c1 span{color:#2a62bf}.cell.letter.c2 span{color:#2f8a3f}.cell.letter.c3 span{color:#b5591a}.cell.letter.c4 span{color:#7a4bb0}
+.q{font-size:clamp(22px,4vw,28px);font-weight:900}
+.big-letter{width:min(240px,62vw);aspect-ratio:1;margin:0 auto;border:3px solid var(--ink);border-radius:22px;display:grid;place-items:center;background:var(--board)}
+.big-letter span{font-family:var(--abc);font-weight:700;font-size:min(170px,44vw);line-height:1;color:var(--ink)}
+.answer{font-family:var(--en);font-weight:700;font-size:28px;color:var(--red);min-height:1.2em}
+.btn[disabled]{opacity:.6;cursor:default}
+.cell.start{background:var(--ink)}
+.cell.goal{background:var(--red);background-image:repeating-conic-gradient(rgba(255,255,255,.18) 0 25%,transparent 0 50%);background-size:30% 30%}
+.cell.land{animation:land .7s ease}
+@keyframes land{0%{transform:scale(1)}40%{transform:scale(1.12)}100%{transform:scale(1)}}
+.token{position:absolute;z-index:3;transition:left .22s ease,top .22s ease;pointer-events:none;filter:drop-shadow(0 2px 0 rgba(0,0,0,.25))}
+.token svg{width:100%;height:100%;display:block}
+.token.hop{animation:hop .22s ease}
+@keyframes hop{50%{transform:translateY(-28%)}}
+
+/* panel */
+.panel{display:flex;flex-direction:column;gap:14px;min-width:0}
+.turn{border-radius:18px;padding:14px 16px;color:#fff;border:3px solid var(--ink);transition:background .3s}
+.turn.t0{background:var(--red)} .turn.t1{background:var(--blue)}
+.turn b{display:block;font-size:26px;font-weight:900}
+.turn span{font-size:15px;font-weight:700;opacity:.95}
+.dice-row{display:flex;gap:14px;align-items:center}
+@media (max-width:860px){.panel-main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}}
+.dice{width:118px;height:118px;flex:none;border-radius:24px;background:#fff;border:4px solid var(--ink);box-shadow:0 7px 0 var(--ink);
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:14px;box-sizing:border-box;cursor:pointer;
+  transition:transform .1s, box-shadow .1s}
+.dice:active{transform:translateY(5px);box-shadow:0 2px 0 var(--ink)}
+.dice:focus-visible{outline:4px solid var(--sun);outline-offset:4px}
+.dice[aria-disabled="true"]{cursor:default;opacity:.55}
+.dice.rolling{animation:shake .12s linear infinite}
+@keyframes shake{0%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}100%{transform:rotate(-8deg)}}
+.pip{width:70%;height:70%;margin:auto;border-radius:50%}
+.pip.on{background:var(--ink)}
+.dice.one .pip.on{background:var(--red);width:90%;height:90%}
+.msg{background:#fff;border:2px solid var(--ink);border-radius:14px;padding:10px 12px;font-weight:700;font-size:15px;min-height:2.6em;line-height:1.45}
+.status{display:grid;gap:6px}
+.st{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;padding:7px 10px;border-radius:12px}
+.st.r{background:var(--red-soft)} .st.b{background:var(--blue-soft)}
+.st i{width:14px;height:14px;border-radius:50%;flex:none}
+.st.r i{background:var(--red)} .st.b i{background:var(--blue)}
+.st em{margin-left:auto;font-style:normal;font-variant-numeric:tabular-nums}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+button.sm{font-family:var(--jp);font-weight:700;font-size:14px;border:2px solid var(--ink);background:#fff;color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer}
+button.sm:focus-visible,.btn:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+
+/* modals */
+.modal{position:fixed;inset:0;z-index:20;background:rgba(36,49,42,.55);display:grid;place-items:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow:auto}
+.card{background:#fff;border:3px solid var(--ink);border-radius:24px;box-shadow:0 8px 0 var(--ink);padding:22px;width:min(560px,100%);box-sizing:border-box;display:grid;gap:14px;text-align:center}
+.card h2{margin:0;font-size:clamp(24px,4vw,32px);font-weight:900;text-wrap:balance}
+.card .en-sub{font-family:var(--en);font-weight:600;color:var(--muted);margin-top:-8px}
+.rules{text-align:left;margin:0;padding-left:1.4em;display:grid;gap:4px;font-weight:500;line-height:1.5}
+.opts{display:grid;gap:8px;text-align:left;background:var(--paper);border-radius:14px;padding:12px 14px;font-size:15px}
+.opts label{display:flex;gap:8px;align-items:center;cursor:pointer}
+.opts .h{font-weight:700;font-size:13px;color:var(--muted);letter-spacing:.06em}
+.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{font-family:var(--jp);font-weight:900;font-size:18px;border:3px solid var(--ink);border-radius:16px;padding:12px 18px;cursor:pointer;color:#fff;box-shadow:0 5px 0 var(--ink)}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+.btn.red{background:var(--red)} .btn.blue{background:var(--blue)} .btn.plain{background:#fff;color:var(--ink)} .btn.go{background:var(--sun);color:var(--ink)}
+.big-art{width:min(220px,60vw);aspect-ratio:1;margin:0 auto;border:3px solid var(--ink);border-radius:22px;overflow:hidden}
+.who{display:inline-block;justify-self:center;color:#fff;font-weight:900;border-radius:999px;padding:4px 14px}
+.who.t0{background:var(--red)} .who.t1{background:var(--blue)}
+.sentence{font-family:var(--en);font-weight:600;font-size:clamp(26px,5vw,38px);line-height:1.2;text-wrap:balance}
+.sentence b{color:var(--red);font-weight:700}
+.jp{color:var(--muted);font-weight:700;margin-top:2px}
+.hidden-sentence{font-family:var(--en);font-weight:600;font-size:28px;color:var(--muted)}
+canvas#fx{position:fixed;inset:0;z-index:30;pointer-events:none;width:100%;height:100%}
+@media (prefers-reduced-motion:reduce){.token,.dice,.cell{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app">
+  <main class="board-wrap" aria-label="すごろくの盤">
+    <div class="board" id="board"><svg class="road" id="road" aria-hidden="true"></svg></div>
+  </main>
+  <aside class="panel">
+    <h1>abcすごろく<small>What's this letter?</small></h1>
+    <div class="panel-main">
+      <div class="turn t0" id="turn"><b id="turnName">赤チームの番</b><span id="turnSub">サイコロをタップしてね</span></div>
+      <button class="dice" id="dice" aria-label="サイコロをふる"></button>
+    </div>
+    <div class="msg" id="msg" aria-live="polite">先攻・後攻を決めてスタート！</div>
+    <div class="status">
+      <div class="st r"><i></i>赤チーム<em id="leftR"></em></div>
+      <div class="st b"><i></i>青チーム<em id="leftB"></em></div>
+    </div>
+    <div class="tools">
+      <button class="sm" id="btnReset">はじめから</button>
+    </div>
+  </aside>
+</div>
+
+<!-- start -->
+<div class="modal" id="mStart">
+  <div class="card">
+    <h2>abcすごろく</h2>
+    <div class="en-sub">a b c d e f g …</div>
+    <ol class="rules">
+      <li>先攻・後攻（赤チームか青チームか）を決めます。</li>
+      <li>サイコロをタップすると、出た目の数だけコマが進みます。</li>
+      <li>止まったマスの小文字の名前を言います。「答えを確かめる」で答えを聞けます。</li>
+      <li>先にGOALしたチームの勝ち！ GOALはちょうどの数でしか入れません。</li>
+    </ol>
+    <div class="opts">
+      <div class="h">ゴールで数があまったら</div>
+      <label><input type="radio" name="over" id="overBounce" value="bounce" checked> あまった数だけもどる</label>
+      <label><input type="radio" name="over" id="overStay" value="stay"> その場で止まる（進まない）</label>
+      <div class="h">文字のならび</div>
+      <label><input type="radio" name="order" id="ordRandom" value="random" checked> ばらばら（毎回かわる）</label>
+      <label><input type="radio" name="order" id="ordAbc" value="abc"> a b c じゅん</label>
+    </div>
+    <div class="btns">
+      <button class="btn red" data-first="0">赤チームから</button>
+      <button class="btn blue" data-first="1">青チームから</button>
+      <button class="btn plain" data-first="r">ランダム</button>
+    </div>
+  </div>
+</div>
+
+<!-- landed -->
+<div class="modal" id="mSay" hidden>
+  <div class="card">
+    <span class="who" id="sayWho"></span>
+    <div class="q">この文字の名前は？</div>
+    <div class="big-letter"><span id="sayLetter">a</span></div>
+    <div class="answer" id="sayAnswer" aria-live="polite"></div>
+    <div class="btns">
+      <button class="btn go" id="btnCheck">答えを確かめる</button>
+    </div>
+  </div>
+</div>
+
+<!-- win -->
+<div class="modal" id="mWin" hidden>
+  <div class="card">
+    <h2 id="winTitle">GOAL!</h2>
+    <div class="big-art" id="winArt"></div>
+    <div class="sentence">Congratulations!</div>
+    <div class="btns">
+      <button class="btn go" id="btnAgain">もう一度あそぶ</button>
+    </div>
+  </div>
+</div>
+<canvas id="fx"></canvas>
+
+<script>
+const ABC='abcdefghijklmnopqrstuvwxyz'.split('');
+const NAME={a:'ay',b:'bee',c:'see',d:'dee',e:'E',f:'ef',g:'gee',h:'aitch',i:'eye',j:'jay',k:'kay',l:'el',m:'em',n:'en',o:'oh',p:'pee',q:'cue',r:'are',s:'ess',t:'tee',u:'you',v:'vee',w:'double you',x:'ex',y:'why',z:'zee'};
+const NSLOT=40;
+const ORDER=['START',...Array(NSLOT).fill('L'),'GOAL'];
+let letters=[];
+function makeLetters(mode){
+  if(mode==='abc')return ABC.concat(ABC).slice(0,NSLOT);
+  const extra=ABC.slice().sort(()=>Math.random()-.5).slice(0,NSLOT-26);
+  const a=ABC.concat(extra);
+  for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]];}
+  for(let k=1;k<a.length;k++)if(a[k]===a[k-1]){const j=(k+2)%a.length;[a[k],a[j]]=[a[j],a[k]];}
+  return a;
+}
+
+const S='<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">';
+function burst(cx,cy,r,col){let d='';for(let k=0;k<12;k++){const a=k*Math.PI/6;d+=`M${(cx+Math.cos(a)*r*.35).toFixed(1)} ${(cy+Math.sin(a)*r*.35).toFixed(1)}L${(cx+Math.cos(a)*r).toFixed(1)} ${(cy+Math.sin(a)*r).toFixed(1)}`;}return `<path d="${d}" stroke="${col}" stroke-width="2.5" stroke-linecap="round"/>`;}
+function pawn(col){return `<svg viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg"><ellipse cx="20" cy="44" rx="15" ry="5" fill="${col}" stroke="#fff" stroke-width="2"/><path d="M8 43 Q10 26 20 22 Q30 26 32 43Z" fill="${col}" stroke="#fff" stroke-width="2"/><circle cx="20" cy="13" r="9" fill="${col}" stroke="#fff" stroke-width="2"/><circle cx="17" cy="10" r="2.5" fill="#fff" opacity=".7"/></svg>`;}
+
+const TEAM=[{name:'赤チーム',col:'#e0453a'},{name:'青チーム',col:'#2f6fd6'}];
+const squares=[];ORDER.forEach(it=>{if(typeof it==='string')squares.push(it);else for(let k=0;k<it;k++)squares.push(null)});
+const LAST=squares.length-1, COLS=7;
+const $=s=>document.querySelector(s);
+const board=$('#board'), road=$('#road'), cells=[];
+squares.forEach((id,i)=>{
+  const r=Math.floor(i/COLS), c0=i%COLS, c=r%2===0?c0:COLS-1-c0;
+  const el=document.createElement('div');
+  el.style.gridRow=r+1; el.style.gridColumn=c+1;
+  if(id==='START'||id==='GOAL'){el.className='cell endpoint '+id.toLowerCase();el.innerHTML=`<span>${id}</span>`;}
+  else if(id==='L'){el.className='cell letter c'+(i%5);el.innerHTML='<span></span>';}
+  else el.className='cell blank '+(i%2?'b1':'b2');
+  board.appendChild(el);cells.push(el);
+});
+function fillLetters(mode){
+  letters=makeLetters(mode);
+  cells.forEach((el,i)=>{if(squares[i]==='L'){const ch=letters[i-1];el.firstChild.textContent=ch;el.setAttribute('aria-label','小文字 '+ch);}});
+}
+fillLetters('random');
+const tokens=TEAM.map(t=>{const d=document.createElement('div');d.className='token';d.innerHTML=pawn(t.col);board.appendChild(d);return d;});
+
+let pos=[0,0], turn=0, phase='setup', rule='bounce';
+function center(i){const c=cells[i];return{x:c.offsetLeft+c.offsetWidth/2,y:c.offsetTop+c.offsetHeight/2,w:c.offsetWidth};}
+function drawRoad(){
+  const pts=cells.map((c,i)=>{const p=center(i);return p.x.toFixed(1)+','+p.y.toFixed(1)}).join(' ');
+  const w=cells[0].offsetWidth;
+  road.setAttribute('viewBox',`0 0 ${board.clientWidth} ${board.clientHeight}`);
+  road.innerHTML=`<polyline points="${pts}" fill="none" style="stroke:var(--road)" stroke-width="${(w*.42).toFixed(1)}" stroke-linejoin="round" stroke-linecap="round"/>`;
+}
+function placeTokens(){
+  TEAM.forEach((t,k)=>{
+    const p=center(pos[k]), lt=squares[pos[k]]==='L', size=p.w*(lt?.36:.5), same=pos[0]===pos[1];
+    const dx=lt?(same?(k?.3:-.3):.3)*p.w:(same?(k?1:-1)*p.w*.2:0), dy=lt?p.w*.3:(same?(k?.06:-.06)*p.w:-p.w*.08);
+    const el=tokens[k];el.style.width=size+'px';el.style.height=size*1.25+'px';
+    el.style.left=(p.x+dx-size/2)+'px';el.style.top=(p.y+dy-size*.7)+'px';
+    el.style.zIndex=k===turn?4:3;
+  });
+}
+function layout(){drawRoad();placeTokens();}
+new ResizeObserver(layout).observe(board);
+
+/* dice */
+const dice=$('#dice');
+const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+function renderDice(n){dice.innerHTML=Array.from({length:9},(_,i)=>`<span class="pip${PIPS[n].includes(i)?' on':''}"></span>`).join('');dice.classList.toggle('one',n===1);dice.setAttribute('aria-label',`サイコロ（${n}）をふる`);}
+renderDice(5);
+
+/* sound */
+let ac;
+function ensureAudio(){try{if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();}catch(e){}}
+function tone(f,t0,d,type='triangle',v=.15){if(!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;const s=ac.currentTime+t0;g.gain.setValueAtTime(0.0001,s);g.gain.linearRampToValueAtTime(v,s+.012);g.gain.exponentialRampToValueAtTime(.0005,s+d);o.connect(g).connect(ac.destination);o.start(s);o.stop(s+d+.05);}catch(e){}}
+const sClick=()=>tone(300+Math.random()*200,0,.05,'square',.04);
+const sStep=()=>tone(660,0,.09,'triangle',.12);
+const sDing=()=>{tone(880,0,.25);tone(1320,.12,.4)};
+function fanfare(){
+  const m=[[392,0,.16],[523,.17,.16],[659,.34,.16],[784,.51,.42],[659,.98,.16],[784,1.15,.7]];
+  m.forEach(([f,t,d])=>{tone(f,t,d+.05,'square',.06);tone(f,t,d+.1,'triangle',.14);});
+  [523,659,784,1047].forEach(f=>{tone(f,1.95,1.8,'square',.04);tone(f,1.95,1.9,'triangle',.1);});
+  [131,196].forEach((f,k)=>tone(f,1.95,1.6,'triangle',.18));
+}
+function speak(text,onend){try{const sy=window.speechSynthesis;sy.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.8;if(onend)u.onend=onend;const v=sy.getVoices().find(v=>/^en(-|_)US/i.test(v.lang))||sy.getVoices().find(v=>/^en/i.test(v.lang));if(v)u.voice=v;sy.speak(u);}catch(e){}}
+
+/* ui */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function setMsg(t){$('#msg').textContent=t;}
+function updateUI(){
+  const tb=$('#turn');tb.className='turn t'+turn;
+  $('#turnName').textContent=TEAM[turn].name+'の番';
+  $('#turnSub').textContent=phase==='idle'?'サイコロをタップしてね':phase==='won'?'ゲーム終了':'…';
+  dice.setAttribute('aria-disabled',phase==='idle'?'false':'true');
+  $('#leftR').textContent=`あと ${LAST-pos[0]} マス`;
+  $('#leftB').textContent=`あと ${LAST-pos[1]} マス`;
+  placeTokens();
+}
+
+dice.addEventListener('click',roll);
+async function roll(){
+  if(phase!=='idle')return;
+  ensureAudio();phase='rolling';updateUI();
+  dice.classList.add('rolling');let n=1;
+  for(let k=0;k<11;k++){n=1+Math.floor(Math.random()*6);renderDice(n);sClick();await sleep(55+k*9);}
+  dice.classList.remove('rolling');
+  setMsg(`${TEAM[turn].name}：${n} が出た！`);
+  await sleep(400);phase='moving';await move(n);
+}
+async function move(n){
+  const t=turn,start=pos[t],target=start+n,path=[];
+  if(target>LAST){
+    const over=target-LAST;
+    if(rule==='stay'){setMsg(`${n} が出た！ ゴールまであと ${LAST-start}。ちょうどの数が出ないと進めません。`);await sleep(1600);return next();}
+    for(let i=start+1;i<=LAST;i++)path.push(i);
+    for(let k=1;k<=over;k++)path.push(LAST-k);
+    setMsg(`${n} が出た！ ゴールまであと ${LAST-start}。あまった ${over} マスもどる！`);
+  }else for(let i=start+1;i<=target;i++)path.push(i);
+  for(const i of path){pos[t]=i;placeTokens();tokens[t].classList.remove('hop');void tokens[t].offsetWidth;tokens[t].classList.add('hop');sStep();await sleep(290);}
+  updateUI();
+  const id=squares[pos[t]],cell=cells[pos[t]];
+  cell.classList.remove('land');void cell.offsetWidth;cell.classList.add('land');
+  if(pos[t]===LAST)return win(t);
+  if(id==='L'){await sleep(350);sDing();showSay(t,letters[pos[t]-1]);}
+  else{setMsg(`空きマスに止まった。つぎは${TEAM[1-t].name}！`);await sleep(1000);next(true);}
+}
+function showSay(t,ch){
+  phase='prompt';
+  const w=$('#sayWho');w.textContent=TEAM[t].name;w.className='who t'+t;
+  $('#sayLetter').textContent=ch;$('#sayAnswer').textContent='';
+  const b=$('#btnCheck');b.disabled=false;
+  b.onclick=()=>{
+    if(b.disabled)return;b.disabled=true;
+    $('#sayAnswer').textContent=ch.toUpperCase()+' '+ch;
+    let done=false;const close=()=>{if(done)return;done=true;$('#mSay').hidden=true;next();};
+    speak(NAME[ch],()=>setTimeout(close,700));
+    setTimeout(close,3200);
+  };
+  $('#mSay').hidden=false;b.focus();
+  setMsg(`「${ch}」に止まった！ この文字の名前は？`);
+}
+function next(keepMsg){
+  turn=1-turn;phase='idle';updateUI();
+  if(!keepMsg)setMsg(`つぎは${TEAM[turn].name}！ サイコロをタップしてね。`);
+}
+function win(t){
+  phase='won';updateUI();
+  setMsg(`${TEAM[t].name}がゴール！ おめでとう！`);
+  fanfare();confetti();
+  $('#winTitle').textContent=`${TEAM[t].name}の勝ち！`;$('#winTitle').style.color=TEAM[t].col;
+  $('#winArt').innerHTML=S+`<rect width="100" height="100" fill="#fff6d6"/><rect y="82" width="100" height="18" fill="#8fd16a"/><rect x="30" y="14" width="5" height="72" fill="#24312a"/><path d="M35 16 H80 L72 30 L80 44 H35Z" fill="${TEAM[t].col}"/><text x="56" y="34" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="11" fill="#fff">GOAL</text><circle cx="16" cy="20" r="3" fill="#f2b631"/><circle cx="88" cy="60" r="3" fill="#ff7fa8"/><circle cx="14" cy="62" r="3" fill="#2f6fd6"/></svg>`;
+  setTimeout(()=>{$('#mWin').hidden=false;$('#btnAgain').focus();},700);
+}
+function openStart(){
+  ['#mSay','#mWin'].forEach(s=>$(s).hidden=true);
+  pos=[0,0];turn=0;phase='setup';updateUI();setMsg('先攻・後攻を決めてスタート！');
+  $('#mStart').hidden=false;
+}
+$('#btnAgain').onclick=openStart;
+$('#btnReset').onclick=openStart;
+document.querySelectorAll('[data-first]').forEach(b=>b.onclick=async()=>{
+  ensureAudio();
+  rule=$('#overStay').checked?'stay':'bounce';fillLetters($('#ordAbc').checked?'abc':'random');
+  const f=b.dataset.first;turn=f==='r'?(Math.random()<.5?0:1):+f;
+  $('#mStart').hidden=true;phase='idle';updateUI();
+  setMsg(`${f==='r'?'ランダムで決定！ ':''}${TEAM[turn].name}が先攻です。サイコロをタップしてね。`);
+  tone(523,0,.12);tone(784,.12,.25);dice.focus();
+});
+
+/* confetti */
+function confetti(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const cv=$('#fx'),cx=cv.getContext('2d');const W=cv.width=innerWidth,H=cv.height=innerHeight;
+  const cols=['#e0453a','#2f6fd6','#f2b631','#3fa34d','#ff7fa8','#7fe0ff'];
+  const ps=Array.from({length:180},()=>({x:Math.random()*W,y:-20-Math.random()*H*.6,vx:(Math.random()-.5)*3,vy:2+Math.random()*3.5,r:Math.random()*6.28,vr:(Math.random()-.5)*.3,s:6+Math.random()*7,c:cols[Math.floor(Math.random()*cols.length)]}));
+  const t0=performance.now();
+  (function f(now){cx.clearRect(0,0,W,H);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);cx.restore();});
+    if(now-t0<4500)requestAnimationFrame(f);else cx.clearRect(0,0,W,H);})(t0);
+}
+updateUI();
+</script>
