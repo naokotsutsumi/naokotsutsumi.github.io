@@ -1,0 +1,449 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>くまもとすごろく2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+/* Layout: board (serpentine 7×6 route over a sandy road) on the left, turn panel with the big die on the right; stacks on narrow screens. Single bright light look by design. */
+:root{
+  --paper:#f2f5ea; --board:#fbf8ee; --ink:#24312a; --muted:#5f6c63;
+  --red:#e0453a; --red-soft:#fde3e0; --blue:#2f6fd6; --blue-soft:#dfe9fb;
+  --road:#e6d3a6; --blankA:#fff3c8; --blankB:#e2f1d1; --sun:#f2b631;
+  --jp:"Zen Maru Gothic","Hiragino Maru Gothic ProN","BIZ UDPGothic","Meiryo",sans-serif;
+  --en:"Fredoka","Zen Maru Gothic","Arial Rounded MT Bold",sans-serif;
+  color-scheme:light;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--jp);font-size:16px;
+  background-image:radial-gradient(circle at 1px 1px,rgba(36,49,42,.07) 1px,transparent 0);background-size:18px 18px}
+.app{min-height:100%;box-sizing:border-box;padding-block:14px 20px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:18px;align-items:start;max-width:1280px;margin:0 auto}
+@media (max-width:860px){.app{grid-template-columns:minmax(0,1fr)}.panel{order:-1}}
+h1{margin:0;font-weight:900;font-size:clamp(20px,2.4vw,28px);letter-spacing:.04em;text-wrap:balance}
+h1 small{display:block;font-family:var(--en);font-weight:600;font-size:.6em;color:var(--muted);letter-spacing:.02em}
+
+/* board */
+.board-wrap{width:100%;max-width:min(100%,calc((100dvh - 60px) * 1.12));margin:0 auto;
+  background:var(--board);border:3px solid var(--ink);border-radius:22px;padding:clamp(6px,1.4vw,14px);box-sizing:border-box;box-shadow:0 6px 0 var(--ink)}
+.board{position:relative;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:clamp(4px,1vw,9px)}
+.road{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.cell{position:relative;z-index:1;aspect-ratio:1;border-radius:18%;container-type:inline-size;box-sizing:border-box}
+.cell.blank{border:2px dashed rgba(36,49,42,.28)}
+.cell.b1{background:var(--blankA)} .cell.b2{background:var(--blankB)}
+.cell.place{background:#fff;border:3px solid var(--ink);overflow:hidden}
+.cell .art{position:absolute;inset:0}
+.cell .art svg,.big-art svg{width:100%;height:100%;display:block}
+.cell .nm{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);border-top:2px solid var(--ink);
+  font-family:var(--en);font-weight:700;font-size:13cqw;line-height:1.05;text-align:center;padding:2cqw 1cqw 3cqw}
+.cell .tag{position:absolute;top:3cqw;left:3cqw;font-family:var(--en);font-weight:700;font-size:11cqw;padding:1cqw 4cqw;border-radius:99px;color:#fff;letter-spacing:.04em}
+.cell.endpoint{border:3px solid var(--ink);display:grid;place-items:center;color:#fff;font-family:var(--en);font-weight:700;letter-spacing:.03em}
+.cell.endpoint span{font-size:19cqw}
+.cell.start{background:var(--ink)}
+.cell.goal{background:var(--red);background-image:repeating-conic-gradient(rgba(255,255,255,.18) 0 25%,transparent 0 50%);background-size:30% 30%}
+.cell.land{animation:land .7s ease}
+@keyframes land{0%{transform:scale(1)}40%{transform:scale(1.12)}100%{transform:scale(1)}}
+.token{position:absolute;z-index:3;transition:left .22s ease,top .22s ease;pointer-events:none;filter:drop-shadow(0 2px 0 rgba(0,0,0,.25))}
+.token svg{width:100%;height:100%;display:block}
+.token.hop{animation:hop .22s ease}
+@keyframes hop{50%{transform:translateY(-28%)}}
+
+/* panel */
+.panel{display:flex;flex-direction:column;gap:14px;min-width:0}
+.turn{border-radius:18px;padding:14px 16px;color:#fff;border:3px solid var(--ink);transition:background .3s}
+.turn.t0{background:var(--red)} .turn.t1{background:var(--blue)}
+.turn b{display:block;font-size:26px;font-weight:900}
+.turn span{font-size:15px;font-weight:700;opacity:.95}
+.dice-row{display:flex;gap:14px;align-items:center}
+@media (max-width:860px){.panel-main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}}
+.dice{width:118px;height:118px;flex:none;border-radius:24px;background:#fff;border:4px solid var(--ink);box-shadow:0 7px 0 var(--ink);
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:14px;box-sizing:border-box;cursor:pointer;
+  transition:transform .1s, box-shadow .1s}
+.dice:active{transform:translateY(5px);box-shadow:0 2px 0 var(--ink)}
+.dice:focus-visible{outline:4px solid var(--sun);outline-offset:4px}
+.dice[aria-disabled="true"]{cursor:default;opacity:.55}
+.dice.rolling{animation:shake .12s linear infinite}
+@keyframes shake{0%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}100%{transform:rotate(-8deg)}}
+.pip{width:70%;height:70%;margin:auto;border-radius:50%}
+.pip.on{background:var(--ink)}
+.dice.one .pip.on{background:var(--red);width:90%;height:90%}
+.msg{background:#fff;border:2px solid var(--ink);border-radius:14px;padding:10px 12px;font-weight:700;font-size:15px;min-height:2.6em;line-height:1.45}
+.status{display:grid;gap:6px}
+.st{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;padding:7px 10px;border-radius:12px}
+.st.r{background:var(--red-soft)} .st.b{background:var(--blue-soft)}
+.st i{width:14px;height:14px;border-radius:50%;flex:none}
+.st.r i{background:var(--red)} .st.b i{background:var(--blue)}
+.st em{margin-left:auto;font-style:normal;font-variant-numeric:tabular-nums}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+button.sm{font-family:var(--jp);font-weight:700;font-size:14px;border:2px solid var(--ink);background:#fff;color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer}
+button.sm:focus-visible,.btn:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+
+/* modals */
+.modal{position:fixed;inset:0;z-index:20;background:rgba(36,49,42,.55);display:grid;place-items:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow:auto}
+.card{background:#fff;border:3px solid var(--ink);border-radius:24px;box-shadow:0 8px 0 var(--ink);padding:22px;width:min(560px,100%);box-sizing:border-box;display:grid;gap:14px;text-align:center}
+.card h2{margin:0;font-size:clamp(24px,4vw,32px);font-weight:900;text-wrap:balance}
+.card .en-sub{font-family:var(--en);font-weight:600;color:var(--muted);margin-top:-8px}
+.rules{text-align:left;margin:0;padding-left:1.4em;display:grid;gap:4px;font-weight:500;line-height:1.5}
+.opts{display:grid;gap:8px;text-align:left;background:var(--paper);border-radius:14px;padding:12px 14px;font-size:15px}
+.opts label{display:flex;gap:8px;align-items:center;cursor:pointer}
+.opts .h{font-weight:700;font-size:13px;color:var(--muted);letter-spacing:.06em}
+.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{font-family:var(--jp);font-weight:900;font-size:18px;border:3px solid var(--ink);border-radius:16px;padding:12px 18px;cursor:pointer;color:#fff;box-shadow:0 5px 0 var(--ink)}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+.btn.red{background:var(--red)} .btn.blue{background:var(--blue)} .btn.plain{background:#fff;color:var(--ink)} .btn.go{background:var(--sun);color:var(--ink)}
+.big-art{width:min(220px,60vw);aspect-ratio:1;margin:0 auto;border:3px solid var(--ink);border-radius:22px;overflow:hidden}
+.who{display:inline-block;justify-self:center;color:#fff;font-weight:900;border-radius:999px;padding:4px 14px}
+.who.t0{background:var(--red)} .who.t1{background:var(--blue)}
+.sentence{font-family:var(--en);font-weight:600;font-size:clamp(26px,5vw,38px);line-height:1.2;text-wrap:balance}
+.sentence b{color:var(--red);font-weight:700}
+.jp{color:var(--muted);font-weight:700;margin-top:2px}
+.hidden-sentence{font-family:var(--en);font-weight:600;font-size:28px;color:var(--muted)}
+canvas#fx{position:fixed;inset:0;z-index:30;pointer-events:none;width:100%;height:100%}
+@media (prefers-reduced-motion:reduce){.token,.dice,.cell{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app">
+  <main class="board-wrap" aria-label="すごろくの盤">
+    <div class="board" id="board"><svg class="road" id="road" aria-hidden="true"></svg></div>
+  </main>
+  <aside class="panel">
+    <h1>くまもとすごろく2<small>I want to see / eat / try ___.</small></h1>
+    <div class="panel-main">
+      <div class="turn t0" id="turn"><b id="turnName">赤チームの番</b><span id="turnSub">サイコロをタップしてね</span></div>
+      <button class="dice" id="dice" aria-label="サイコロをふる"></button>
+    </div>
+    <div class="msg" id="msg" aria-live="polite">先攻・後攻を決めてスタート！</div>
+    <div class="status">
+      <div class="st r"><i></i>赤チーム<em id="leftR"></em></div>
+      <div class="st b"><i></i>青チーム<em id="leftB"></em></div>
+    </div>
+    <div class="tools">
+      <button class="sm" id="btnReset">はじめから</button>
+    </div>
+  </aside>
+</div>
+
+<!-- start -->
+<div class="modal" id="mStart">
+  <div class="card">
+    <h2>くまもとすごろく2</h2>
+    <div class="en-sub">What do you want to do?</div>
+    <ol class="rules">
+      <li>先攻・後攻（赤チームか青チームか）を決めます。</li>
+      <li>サイコロをタップすると、出た目の数だけコマが進みます。</li>
+      <li>止まったマスの絵を見て「I want to see / eat / try / go ___.」と言います。</li>
+      <li>先にGOALしたチームの勝ち！ GOALはちょうどの数でしか入れません。</li>
+    </ol>
+    <div class="opts">
+      <div class="h">ゴールで数があまったら</div>
+      <label><input type="radio" name="over" id="overBounce" value="bounce" checked> あまった数だけもどる</label>
+      <label><input type="radio" name="over" id="overStay" value="stay"> その場で止まる（進まない）</label>
+      <div class="h">英文のヒント</div>
+      <label><input type="checkbox" id="hint" checked> 止まったマスで英文を見せる</label>
+    </div>
+    <div class="btns">
+      <button class="btn red" data-first="0">赤チームから</button>
+      <button class="btn blue" data-first="1">青チームから</button>
+      <button class="btn plain" data-first="r">ランダム</button>
+    </div>
+  </div>
+</div>
+
+<!-- landed -->
+<div class="modal" id="mSay" hidden>
+  <div class="card">
+    <span class="who" id="sayWho"></span>
+    <div class="big-art" id="sayArt"></div>
+    <div id="sayText"></div>
+    <div class="btns">
+      <button class="btn plain" id="btnListen">▶ 英語をきく</button>
+      <button class="btn go" id="btnSaid">言えた！ つぎへ</button>
+    </div>
+  </div>
+</div>
+
+<!-- win -->
+<div class="modal" id="mWin" hidden>
+  <div class="card">
+    <h2 id="winTitle">GOAL!</h2>
+    <div class="big-art" id="winArt"></div>
+    <div class="sentence">Congratulations!</div>
+    <div class="btns">
+      <button class="btn go" id="btnAgain">もう一度あそぶ</button>
+    </div>
+  </div>
+</div>
+<canvas id="fx"></canvas>
+
+<script>
+const P={
+ ozu:{en:'Ozu',jp:'大津町',a:'I want to eat ',k:'sweet potatoes',z:'さつまいもが食べたいです。'},
+ kikuyo:{en:'Kikuyo',jp:'菊陽町',a:'I want to go ',k:'shopping',z:'買い物に行きたいです。'},
+ koshi:{en:'Koshi',jp:'合志市',a:'I want to go to ',k:'Koshi Country Park',z:'合志カントリーパークに行きたいです。'},
+ kikuchi:{en:'Kikuchi',jp:'菊池市',a:'I want to see ',k:'Kikuchi Valley',z:'菊池渓谷を見たいです。'},
+ arao:{en:'Arao',jp:'荒尾市',a:'I want to go to ',k:'Greenland',z:'グリーンランドに行きたいです。'},
+ tamana:{en:'Tamana',jp:'玉名市',a:'I want to see ',k:'the Shinkansen',z:'新幹線を見たいです。'},
+ ueki:{en:'Ueki',jp:'植木',a:'I want to eat ',k:'watermelons',z:'スイカが食べたいです。'},
+ kumamoto:{en:'Kumamoto City',jp:'熊本市',a:'I want to see ',k:'Kumamoto Castle',z:'熊本城を見たいです。'},
+ mifune:{en:'Mifune',jp:'御船町',a:'I want to go ',k:'shopping',z:'買い物に行きたいです。'},
+ yamato:{en:'Yamato',jp:'山都町',a:'I want to see ',k:'Tsujun Bridge',z:'通潤橋を見たいです。'},
+ yatsushiro:{en:'Yatsushiro',jp:'八代市',a:'I want to see ',k:'the fireworks',z:'花火を見たいです。'},
+ minamata:{en:'Minamata',jp:'水俣市',a:'I want to eat ',k:'Dekopons',z:'デコポンが食べたいです。'},
+ hitoyoshi:{en:'Hitoyoshi',jp:'人吉市',a:'I want to try ',k:'rafting on the Kuma River',z:'球磨川でラフティングをしてみたいです。'}
+};
+const SAY=id=>P[id].a+P[id].k+'.';
+const ORDER=['START','ozu',2,'kikuyo',3,'koshi',2,'kikuchi',2,'arao',2,'tamana',2,'ueki',3,'kumamoto',2,'mifune',3,'yamato',2,'yatsushiro',2,'minamata',2,'hitoyoshi','GOAL'];
+
+const S='<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">';
+function burst(cx,cy,r,col){let d='';for(let k=0;k<12;k++){const a=k*Math.PI/6;d+=`M${(cx+Math.cos(a)*r*.35).toFixed(1)} ${(cy+Math.sin(a)*r*.35).toFixed(1)}L${(cx+Math.cos(a)*r).toFixed(1)} ${(cy+Math.sin(a)*r).toFixed(1)}`;}return `<path d="${d}" stroke="${col}" stroke-width="2.5" stroke-linecap="round"/>`;}
+const ICON={
+ozu:S+`<rect width="100" height="100" fill="#fbecd9"/>
+<path d="M8 62 Q4 58 10 52 L14 56" stroke="#7a2450" stroke-width="2" fill="none"/>
+<ellipse cx="40" cy="50" rx="32" ry="16" transform="rotate(-22 40 50)" fill="#a8326b"/>
+<path d="M22 54 q3 -2 5 0 M40 40 q3 -2 5 0 M52 48 q3 -2 5 0" stroke="#7a2450" stroke-width="1.8" fill="none"/>
+<ellipse cx="62" cy="72" rx="26" ry="15" transform="rotate(-12 62 72)" fill="#a8326b"/>
+<ellipse cx="63" cy="71" rx="21" ry="11" transform="rotate(-12 62 72)" fill="#f5c84c"/>
+<ellipse cx="58" cy="68" rx="7" ry="3" transform="rotate(-12 62 72)" fill="#ffe28a"/>
+<path d="M54 46 q-4 -6 0 -12 q4 -6 0 -12 M68 48 q-4 -6 0 -12 q4 -6 0 -12" stroke="#c9b9a6" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`,
+kikuyo:S+`<rect width="100" height="100" fill="#fdf1dc"/><rect y="84" width="100" height="16" fill="#c9ccd1"/>
+<rect x="6" y="34" width="88" height="50" fill="#f7d58c" stroke="#c99a3e" stroke-width="2"/>
+<rect x="3" y="24" width="94" height="14" rx="3" fill="#e2733f"/><text x="50" y="35" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="10" fill="#fff">MALL</text>
+<rect x="11" y="44" width="13" height="12" fill="#bfe0f0"/><rect x="28" y="44" width="13" height="12" fill="#bfe0f0"/><rect x="59" y="44" width="13" height="12" fill="#bfe0f0"/><rect x="76" y="44" width="13" height="12" fill="#bfe0f0"/>
+<rect x="38" y="60" width="24" height="24" fill="#8fc9e6" stroke="#5a8fa8" stroke-width="2"/><line x1="50" y1="60" x2="50" y2="84" stroke="#5a8fa8" stroke-width="2"/>
+<rect x="72" y="72" width="16" height="16" rx="2" fill="#e85d8a"/><path d="M75 72 Q80 63 85 72" stroke="#e85d8a" stroke-width="2.5" fill="none"/>
+<rect x="12" y="74" width="14" height="14" rx="2" fill="#5b8def"/><path d="M15 74 Q19 66 23 74" stroke="#5b8def" stroke-width="2.5" fill="none"/></svg>`,
+koshi:S+`<rect width="100" height="100" fill="#dff1fb"/><circle cx="84" cy="16" r="9" fill="#ffd23f"/><rect y="64" width="100" height="36" fill="#8fd16a"/>
+<rect x="19" y="50" width="7" height="22" fill="#8a5a2b"/><circle cx="22" cy="40" r="16" fill="#3fa34d"/><circle cx="14" cy="46" r="8" fill="#3fa34d"/>
+<rect x="69" y="50" width="6" height="20" fill="#8a5a2b"/><circle cx="72" cy="42" r="13" fill="#4cb35a"/>
+<rect x="36" y="62" width="26" height="4" rx="1" fill="#a8662f"/><rect x="36" y="69" width="26" height="4" rx="1" fill="#a8662f"/><rect x="38" y="69" width="3" height="10" fill="#6d4220"/><rect x="57" y="69" width="3" height="10" fill="#6d4220"/>
+<circle cx="14" cy="84" r="3" fill="#ff7fa8"/><circle cx="24" cy="88" r="3" fill="#ffd23f"/><circle cx="82" cy="86" r="3" fill="#ff7fa8"/><circle cx="90" cy="80" r="3" fill="#fff"/></svg>`,
+kikuchi:S+`<rect width="100" height="100" fill="#d8f0e4"/>
+<path d="M0 0 H36 L31 40 L37 70 L28 100 H0Z" fill="#3f8f4f"/><path d="M100 0 H64 L69 35 L62 70 L72 100 H100Z" fill="#2f7a43"/>
+<circle cx="12" cy="20" r="6" fill="#f0913a"/><circle cx="22" cy="34" r="5" fill="#e65b3a"/><circle cx="86" cy="24" r="6" fill="#f0b13a"/><circle cx="80" cy="44" r="5" fill="#e65b3a"/>
+<path d="M30 6 Q50 0 70 6 L66 14 H34Z" fill="#7a7f73"/>
+<rect x="38" y="12" width="24" height="56" fill="#8fd3f0"/><path d="M43 14 V66 M50 14 V66 M57 14 V66" stroke="#fff" stroke-width="2.2" opacity=".85"/>
+<ellipse cx="50" cy="73" rx="27" ry="9" fill="#5fbbe0"/><path d="M36 80 Q50 90 43 100 H59 Q65 90 64 80Z" fill="#5fbbe0"/>
+<circle cx="42" cy="68" r="4" fill="#fff"/><circle cx="58" cy="68" r="4" fill="#fff"/><circle cx="50" cy="70" r="3" fill="#fff"/>
+<ellipse cx="26" cy="80" rx="8" ry="5" fill="#8b8f86"/><ellipse cx="74" cy="82" rx="9" ry="5" fill="#8b8f86"/></svg>`,
+arao:S+`<rect width="100" height="100" fill="#ffe9ef"/><rect y="88" width="100" height="12" fill="#8fd16a"/>
+<path d="M50 46 L30 89 M50 46 L70 89" stroke="#6b5b95" stroke-width="4" stroke-linecap="round"/>
+<circle cx="50" cy="46" r="32" fill="none" stroke="#6b5b95" stroke-width="3"/>
+<path d="M50 46 L82 46 M50 46 L72.6 68.6 M50 46 L50 78 M50 46 L27.4 68.6 M50 46 L18 46 M50 46 L27.4 23.4 M50 46 L50 14 M50 46 L72.6 23.4" stroke="#6b5b95" stroke-width="1.6"/>
+<circle cx="82" cy="46" r="6" fill="#e0453a"/><circle cx="72.6" cy="68.6" r="6" fill="#f2b631"/><circle cx="50" cy="78" r="6" fill="#2f6fd6"/><circle cx="27.4" cy="68.6" r="6" fill="#3fa34d"/>
+<circle cx="18" cy="46" r="6" fill="#e0453a"/><circle cx="27.4" cy="23.4" r="6" fill="#f2b631"/><circle cx="50" cy="14" r="6" fill="#2f6fd6"/><circle cx="72.6" cy="23.4" r="6" fill="#3fa34d"/>
+<circle cx="50" cy="46" r="5" fill="#6b5b95"/></svg>`,
+tamana:S+`<rect width="100" height="100" fill="#e6f3ff"/><path d="M0 30 Q30 22 60 30 T100 28" stroke="#b9dcf5" stroke-width="5" fill="none"/>
+<rect y="80" width="100" height="20" fill="#bfc4b8"/><rect y="79" width="100" height="3" fill="#555"/>
+<path d="M2 48 H60 Q88 50 98 76 H2Z" fill="#fff" stroke="#333" stroke-width="2"/>
+<path d="M2 66 H90 Q93 69 95 72 H2Z" fill="#d7263d"/>
+<rect x="7" y="54" width="9" height="7" rx="1" fill="#2b3a55"/><rect x="20" y="54" width="9" height="7" rx="1" fill="#2b3a55"/><rect x="33" y="54" width="9" height="7" rx="1" fill="#2b3a55"/><rect x="46" y="54" width="9" height="7" rx="1" fill="#2b3a55"/>
+<path d="M64 52 Q80 54 87 63 H70Z" fill="#2b3a55"/>
+<circle cx="14" cy="78" r="3" fill="#333"/><circle cx="26" cy="78" r="3" fill="#333"/><circle cx="66" cy="78" r="3" fill="#333"/><circle cx="78" cy="78" r="3" fill="#333"/></svg>`,
+ueki:S+`<rect width="100" height="100" fill="#fff6d6"/>
+<circle cx="36" cy="54" r="27" fill="#2e8b3a"/><path d="M23 31 Q28 54 23 77 M36 27 Q41 54 36 81 M49 31 Q54 54 49 77" stroke="#145a23" stroke-width="3.5" fill="none"/>
+<path d="M36 27 Q38 20 44 18" stroke="#6b4a1f" stroke-width="2.5" fill="none"/>
+<path d="M44 66 L98 66 A27 27 0 0 1 44 66Z" fill="#2e8b3a"/><path d="M47 66 L95 66 A24 24 0 0 1 47 66Z" fill="#e8f5d0"/><path d="M50 66 L92 66 A21 21 0 0 1 50 66Z" fill="#ef3f4a"/>
+<ellipse cx="60" cy="72" rx="1.6" ry="2.6" fill="#222"/><ellipse cx="71" cy="78" rx="1.6" ry="2.6" fill="#222"/><ellipse cx="82" cy="72" rx="1.6" ry="2.6" fill="#222"/><ellipse cx="71" cy="70" rx="1.6" ry="2.6" fill="#222"/></svg>`,
+kumamoto:S+`<rect width="100" height="100" fill="#e3eefa"/><rect y="86" width="100" height="14" fill="#8fd16a"/>
+<polygon points="16,88 84,88 75,66 25,66" fill="#9a9a96"/><path d="M22 74 H78 M19 81 H81 M40 66 V88 M60 66 V88" stroke="#7d7d79" stroke-width="1.2"/>
+<rect x="28" y="52" width="44" height="14" fill="#222"/><rect x="28" y="52" width="44" height="5" fill="#f4f1ea"/>
+<polygon points="19,54 81,54 72,45 28,45" fill="#3a3f47"/><polygon points="43,45 57,45 50,38" fill="#3a3f47"/>
+<rect x="34" y="37" width="32" height="10" fill="#222"/><rect x="34" y="37" width="32" height="4" fill="#f4f1ea"/>
+<polygon points="27,39 73,39 65,30 35,30" fill="#3a3f47"/>
+<rect x="40" y="22" width="20" height="9" fill="#222"/><rect x="40" y="22" width="20" height="3" fill="#f4f1ea"/>
+<polygon points="34,24 66,24 58,15 42,15" fill="#3a3f47"/><polygon points="41,15 44,9 45,15" fill="#d9a520"/><polygon points="55,15 56,9 59,15" fill="#d9a520"/>
+<rect x="46" y="58" width="8" height="8" fill="#555"/></svg>`,
+mifune:S+`<rect width="100" height="100" fill="#eef3e2"/><rect y="84" width="100" height="16" fill="#c9ccd1"/>
+<rect x="6" y="36" width="88" height="48" fill="#d8dde3" stroke="#8a95a2" stroke-width="2"/>
+<path d="M14 40 V84 M22 40 V84 M78 40 V84 M86 40 V84" stroke="#b8c0ca" stroke-width="2"/>
+<path d="M2 38 Q50 16 98 38Z" fill="#4a6fa5"/>
+<rect x="28" y="42" width="44" height="12" rx="2" fill="#d7263d"/><text x="50" y="51.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9" fill="#fff">SUPER</text>
+<rect x="36" y="58" width="28" height="26" fill="#6b7785"/><path d="M36 64 H64 M36 70 H64 M36 76 H64" stroke="#59636f" stroke-width="1.5"/>
+<path d="M5 64 H11 L14 78 H29 L32 68 H12" fill="none" stroke="#333" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="16" cy="83" r="2.6" fill="#333"/><circle cx="27" cy="83" r="2.6" fill="#333"/>
+<rect x="70" y="70" width="14" height="14" fill="#c98f4f" stroke="#8a5a2b"/><rect x="76" y="58" width="12" height="12" fill="#d9a36a" stroke="#8a5a2b"/></svg>`,
+yamato:S+`<rect width="100" height="100" fill="#dff0f7"/><path d="M0 46 Q25 26 50 40 T100 34 V100 H0Z" fill="#7cbf6a"/><rect y="90" width="100" height="10" fill="#5fbbe0"/>
+<path d="M0 36 H100 V90 H82 A32 26 0 0 0 18 90 H0Z" fill="#b8a283" stroke="#8a7457" stroke-width="1.5"/>
+<path d="M0 44 H100 M0 54 H24 M76 54 H100 M0 66 H17 M83 66 H100 M0 78 H15 M85 78 H100" stroke="#8a7457" stroke-width="1"/>
+<rect y="32" width="100" height="5" fill="#7c8c5a"/>
+<path d="M45 50 Q22 46 12 88" stroke="#4fb0e6" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M55 50 Q78 46 88 88" stroke="#4fb0e6" stroke-width="5" fill="none" stroke-linecap="round"/>
+<circle cx="14" cy="88" r="4" fill="#fff"/><circle cx="86" cy="88" r="4" fill="#fff"/><circle cx="20" cy="70" r="1.8" fill="#fff"/><circle cx="80" cy="70" r="1.8" fill="#fff"/></svg>`,
+yatsushiro:S+`<rect width="100" height="100" fill="#22204a"/>${burst(30,30,22,'#ff6fa3')}${burst(72,26,24,'#ffd23f')}${burst(54,58,14,'#7fe0ff')}
+<circle cx="30" cy="30" r="3" fill="#fff"/><circle cx="72" cy="26" r="3" fill="#fff"/><circle cx="54" cy="58" r="2" fill="#fff"/>
+<path d="M0 100 V84 H10 V78 H20 V86 H32 V74 H40 V84 H56 V80 H66 V88 H78 V76 H88 V84 H100 V100Z" fill="#141230"/>
+<rect y="92" width="100" height="8" fill="#2d3f6e"/></svg>`,
+minamata:S+`<rect width="100" height="100" fill="#eef7e6"/>
+<circle cx="26" cy="72" r="16" fill="#f2a43a"/><circle cx="26" cy="54" r="7" fill="#f2a43a"/>
+<circle cx="58" cy="64" r="28" fill="#f5921b"/><circle cx="58" cy="34" r="12" fill="#f5921b"/>
+<path d="M58 23 q8 -10 18 -6 q-8 8 -18 6z" fill="#3a9d4f"/><path d="M58 24 v-5" stroke="#6b4a1f" stroke-width="2"/>
+<ellipse cx="47" cy="52" rx="7" ry="10" fill="#fff" opacity=".35"/>
+<circle cx="66" cy="60" r="1.2" fill="#d97a10"/><circle cx="72" cy="72" r="1.2" fill="#d97a10"/><circle cx="56" cy="80" r="1.2" fill="#d97a10"/><circle cx="46" cy="70" r="1.2" fill="#d97a10"/><circle cx="76" cy="54" r="1.2" fill="#d97a10"/></svg>`,
+hitoyoshi:S+`<rect width="100" height="100" fill="#dff0f7"/>
+<path d="M0 50 L22 26 L40 44 L62 20 L86 42 L100 32 V60 H0Z" fill="#5d9e5a"/>
+<path d="M0 56 Q50 48 100 58 V100 H0Z" fill="#3fa0d8"/>
+<path d="M8 68 q6 -5 12 0 q6 5 12 0 M60 88 q6 -5 12 0 q6 5 12 0 M70 64 q6 -5 12 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+<path d="M16 76 H84 Q86 90 72 90 H28 Q14 90 16 76Z" fill="#f2b631" stroke="#b98618" stroke-width="2"/>
+<rect x="18" y="76" width="64" height="4" fill="#e0453a"/>
+<circle cx="32" cy="66" r="6" fill="#ffd9b8"/><path d="M26 64 a6 6 0 0 1 12 0Z" fill="#e0453a"/><rect x="27" y="71" width="10" height="7" rx="2" fill="#2f6fd6"/>
+<circle cx="50" cy="66" r="6" fill="#ffd9b8"/><path d="M44 64 a6 6 0 0 1 12 0Z" fill="#e0453a"/><rect x="45" y="71" width="10" height="7" rx="2" fill="#2f6fd6"/>
+<circle cx="68" cy="66" r="6" fill="#ffd9b8"/><path d="M62 64 a6 6 0 0 1 12 0Z" fill="#e0453a"/><rect x="63" y="71" width="10" height="7" rx="2" fill="#2f6fd6"/>
+<path d="M40 70 L28 94 M76 70 L88 92" stroke="#6b4a1f" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="27" cy="95" rx="3" ry="5" fill="#6b4a1f"/>
+<circle cx="90" cy="80" r="3" fill="#fff"/><circle cx="10" cy="84" r="2.5" fill="#fff"/></svg>`
+};
+function pawn(col){return `<svg viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg"><ellipse cx="20" cy="44" rx="15" ry="5" fill="${col}" stroke="#fff" stroke-width="2"/><path d="M8 43 Q10 26 20 22 Q30 26 32 43Z" fill="${col}" stroke="#fff" stroke-width="2"/><circle cx="20" cy="13" r="9" fill="${col}" stroke="#fff" stroke-width="2"/><circle cx="17" cy="10" r="2.5" fill="#fff" opacity=".7"/></svg>`;}
+
+const TEAM=[{name:'赤チーム',col:'#e0453a'},{name:'青チーム',col:'#2f6fd6'}];
+const squares=[];ORDER.forEach(it=>{if(typeof it==='string')squares.push(it);else for(let k=0;k<it;k++)squares.push(null)});
+const LAST=squares.length-1, COLS=7;
+const $=s=>document.querySelector(s);
+const board=$('#board'), road=$('#road'), cells=[];
+squares.forEach((id,i)=>{
+  const r=Math.floor(i/COLS), c0=i%COLS, c=r%2===0?c0:COLS-1-c0;
+  const el=document.createElement('div');
+  el.style.gridRow=r+1; el.style.gridColumn=c+1;
+  if(id==='START'||id==='GOAL'){el.className='cell endpoint '+id.toLowerCase();el.innerHTML=`<span>${id}</span>`;}
+  else if(id){el.className='cell place';el.innerHTML=`<div class="art">${ICON[id]}</div><div class="nm">${P[id].en}</div>`;el.setAttribute('aria-label',`${P[id].en}（${P[id].jp}）：${SAY(id)}`);}
+  else el.className='cell blank '+(i%2?'b1':'b2');
+  board.appendChild(el);cells.push(el);
+});
+const tokens=TEAM.map(t=>{const d=document.createElement('div');d.className='token';d.innerHTML=pawn(t.col);board.appendChild(d);return d;});
+
+let pos=[0,0], turn=0, phase='setup', rule='bounce', hint=true;
+function center(i){const c=cells[i];return{x:c.offsetLeft+c.offsetWidth/2,y:c.offsetTop+c.offsetHeight/2,w:c.offsetWidth};}
+function drawRoad(){
+  const pts=cells.map((c,i)=>{const p=center(i);return p.x.toFixed(1)+','+p.y.toFixed(1)}).join(' ');
+  const w=cells[0].offsetWidth;
+  road.setAttribute('viewBox',`0 0 ${board.clientWidth} ${board.clientHeight}`);
+  road.innerHTML=`<polyline points="${pts}" fill="none" style="stroke:var(--road)" stroke-width="${(w*.42).toFixed(1)}" stroke-linejoin="round" stroke-linecap="round"/>`;
+}
+function placeTokens(){
+  TEAM.forEach((t,k)=>{
+    const p=center(pos[k]), size=p.w*.5, same=pos[0]===pos[1];
+    const dx=same?(k?1:-1)*p.w*.2:0, dy=same?(k?.06:-.06)*p.w:-p.w*.08;
+    const el=tokens[k];el.style.width=size+'px';el.style.height=size*1.25+'px';
+    el.style.left=(p.x+dx-size/2)+'px';el.style.top=(p.y+dy-size*.7)+'px';
+    el.style.zIndex=k===turn?4:3;
+  });
+}
+function layout(){drawRoad();placeTokens();}
+new ResizeObserver(layout).observe(board);
+
+/* dice */
+const dice=$('#dice');
+const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+function renderDice(n){dice.innerHTML=Array.from({length:9},(_,i)=>`<span class="pip${PIPS[n].includes(i)?' on':''}"></span>`).join('');dice.classList.toggle('one',n===1);dice.setAttribute('aria-label',`サイコロ（${n}）をふる`);}
+renderDice(5);
+
+/* sound */
+let ac;
+function ensureAudio(){try{if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();}catch(e){}}
+function tone(f,t0,d,type='triangle',v=.15){if(!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;const s=ac.currentTime+t0;g.gain.setValueAtTime(0.0001,s);g.gain.linearRampToValueAtTime(v,s+.012);g.gain.exponentialRampToValueAtTime(.0005,s+d);o.connect(g).connect(ac.destination);o.start(s);o.stop(s+d+.05);}catch(e){}}
+const sClick=()=>tone(300+Math.random()*200,0,.05,'square',.04);
+const sStep=()=>tone(660,0,.09,'triangle',.12);
+const sDing=()=>{tone(880,0,.25);tone(1320,.12,.4)};
+function fanfare(){
+  const m=[[392,0,.16],[523,.17,.16],[659,.34,.16],[784,.51,.42],[659,.98,.16],[784,1.15,.7]];
+  m.forEach(([f,t,d])=>{tone(f,t,d+.05,'square',.06);tone(f,t,d+.1,'triangle',.14);});
+  [523,659,784,1047].forEach(f=>{tone(f,1.95,1.8,'square',.04);tone(f,1.95,1.9,'triangle',.1);});
+  [131,196].forEach((f,k)=>tone(f,1.95,1.6,'triangle',.18));
+}
+function speak(text){try{const sy=window.speechSynthesis;sy.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.85;const v=sy.getVoices().find(v=>/^en(-|_)US/i.test(v.lang))||sy.getVoices().find(v=>/^en/i.test(v.lang));if(v)u.voice=v;sy.speak(u);}catch(e){}}
+
+/* ui */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function setMsg(t){$('#msg').textContent=t;}
+function updateUI(){
+  const tb=$('#turn');tb.className='turn t'+turn;
+  $('#turnName').textContent=TEAM[turn].name+'の番';
+  $('#turnSub').textContent=phase==='idle'?'サイコロをタップしてね':phase==='won'?'ゲーム終了':'…';
+  dice.setAttribute('aria-disabled',phase==='idle'?'false':'true');
+  $('#leftR').textContent=`あと ${LAST-pos[0]} マス`;
+  $('#leftB').textContent=`あと ${LAST-pos[1]} マス`;
+  placeTokens();
+}
+function sentenceHTML(id){return `<div class="sentence">${P[id].a}<b>${P[id].k}</b>.</div><div class="jp">${P[id].z}</div>`;}
+
+dice.addEventListener('click',roll);
+async function roll(){
+  if(phase!=='idle')return;
+  ensureAudio();phase='rolling';updateUI();
+  dice.classList.add('rolling');let n=1;
+  for(let k=0;k<11;k++){n=1+Math.floor(Math.random()*6);renderDice(n);sClick();await sleep(55+k*9);}
+  dice.classList.remove('rolling');
+  setMsg(`${TEAM[turn].name}：${n} が出た！`);
+  await sleep(400);phase='moving';await move(n);
+}
+async function move(n){
+  const t=turn,start=pos[t],target=start+n,path=[];
+  if(target>LAST){
+    const over=target-LAST;
+    if(rule==='stay'){setMsg(`${n} が出た！ ゴールまであと ${LAST-start}。ちょうどの数が出ないと進めません。`);await sleep(1600);return next();}
+    for(let i=start+1;i<=LAST;i++)path.push(i);
+    for(let k=1;k<=over;k++)path.push(LAST-k);
+    setMsg(`${n} が出た！ ゴールまであと ${LAST-start}。あまった ${over} マスもどる！`);
+  }else for(let i=start+1;i<=target;i++)path.push(i);
+  for(const i of path){pos[t]=i;placeTokens();tokens[t].classList.remove('hop');void tokens[t].offsetWidth;tokens[t].classList.add('hop');sStep();await sleep(290);}
+  updateUI();
+  const id=squares[pos[t]],cell=cells[pos[t]];
+  cell.classList.remove('land');void cell.offsetWidth;cell.classList.add('land');
+  if(pos[t]===LAST)return win(t);
+  if(id&&P[id]){await sleep(350);sDing();showSay(t,id);}
+  else{setMsg(`空きマスに止まった。つぎは${TEAM[1-t].name}！`);await sleep(1000);next(true);}
+}
+function showSay(t,id){
+  phase='prompt';
+  const w=$('#sayWho');w.textContent=TEAM[t].name;w.className='who t'+t;
+  $('#sayArt').innerHTML=ICON[id];
+  const box=$('#sayText');
+  if(hint)box.innerHTML=sentenceHTML(id);
+  else{box.innerHTML=`<div class="hidden-sentence">${P[id].en}<br>I want to …</div><button class="sm" id="reveal" style="margin-top:8px">英文を見る</button>`;
+    $('#reveal').onclick=()=>{box.innerHTML=sentenceHTML(id);};}
+  $('#btnListen').onclick=()=>speak(SAY(id));
+  $('#mSay').hidden=false;$('#btnSaid').focus();
+  setMsg(`${P[id].en} に止まった！「${SAY(id)}」と言おう。`);
+}
+$('#btnSaid').onclick=()=>{$('#mSay').hidden=true;try{speechSynthesis.cancel()}catch(e){}next();};
+function next(keepMsg){
+  turn=1-turn;phase='idle';updateUI();
+  if(!keepMsg)setMsg(`つぎは${TEAM[turn].name}！ サイコロをタップしてね。`);
+}
+function win(t){
+  phase='won';updateUI();
+  setMsg(`${TEAM[t].name}がゴール！ おめでとう！`);
+  fanfare();confetti();
+  $('#winTitle').textContent=`${TEAM[t].name}の勝ち！`;$('#winTitle').style.color=TEAM[t].col;
+  $('#winArt').innerHTML=S+`<rect width="100" height="100" fill="#fff6d6"/><rect y="82" width="100" height="18" fill="#8fd16a"/><rect x="30" y="14" width="5" height="72" fill="#24312a"/><path d="M35 16 H80 L72 30 L80 44 H35Z" fill="${TEAM[t].col}"/><text x="56" y="34" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="11" fill="#fff">GOAL</text><circle cx="16" cy="20" r="3" fill="#f2b631"/><circle cx="88" cy="60" r="3" fill="#ff7fa8"/><circle cx="14" cy="62" r="3" fill="#2f6fd6"/></svg>`;
+  setTimeout(()=>{$('#mWin').hidden=false;$('#btnAgain').focus();},700);
+}
+function openStart(){
+  ['#mSay','#mWin'].forEach(s=>$(s).hidden=true);
+  pos=[0,0];turn=0;phase='setup';updateUI();setMsg('先攻・後攻を決めてスタート！');
+  $('#mStart').hidden=false;
+}
+$('#btnAgain').onclick=openStart;
+$('#btnReset').onclick=openStart;
+document.querySelectorAll('[data-first]').forEach(b=>b.onclick=async()=>{
+  ensureAudio();
+  rule=$('#overStay').checked?'stay':'bounce';hint=$('#hint').checked;
+  const f=b.dataset.first;turn=f==='r'?(Math.random()<.5?0:1):+f;
+  $('#mStart').hidden=true;phase='idle';updateUI();
+  setMsg(`${f==='r'?'ランダムで決定！ ':''}${TEAM[turn].name}が先攻です。サイコロをタップしてね。`);
+  tone(523,0,.12);tone(784,.12,.25);dice.focus();
+});
+
+/* confetti */
+function confetti(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const cv=$('#fx'),cx=cv.getContext('2d');const W=cv.width=innerWidth,H=cv.height=innerHeight;
+  const cols=['#e0453a','#2f6fd6','#f2b631','#3fa34d','#ff7fa8','#7fe0ff'];
+  const ps=Array.from({length:180},()=>({x:Math.random()*W,y:-20-Math.random()*H*.6,vx:(Math.random()-.5)*3,vy:2+Math.random()*3.5,r:Math.random()*6.28,vr:(Math.random()-.5)*.3,s:6+Math.random()*7,c:cols[Math.floor(Math.random()*cols.length)]}));
+  const t0=performance.now();
+  (function f(now){cx.clearRect(0,0,W,H);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);cx.restore();});
+    if(now-t0<4500)requestAnimationFrame(f);else cx.clearRect(0,0,W,H);})(t0);
+}
+updateUI();
+</script>
