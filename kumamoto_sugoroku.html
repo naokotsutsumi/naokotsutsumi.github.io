@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>くまもとすごろく</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +14,9 @@
   --en:"Fredoka","Zen Maru Gothic","Arial Rounded MT Bold",sans-serif;
   color-scheme:light;
 }
+[hidden]{display:none!important}
 html,body{height:100%}
+body{margin:0}
 body{background:var(--paper);color:var(--ink);font-family:var(--jp);font-size:16px;
   background-image:radial-gradient(circle at 1px 1px,rgba(36,49,42,.07) 1px,transparent 0);background-size:18px 18px}
 .app{min-height:100%;box-sizing:border-box;padding-block:14px 20px;
@@ -36,7 +40,8 @@ h1 small{display:block;font-family:var(--en);font-weight:600;font-size:.6em;colo
 .cell .nm{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);border-top:2px solid var(--ink);
   font-family:var(--en);font-weight:700;font-size:13cqw;line-height:1.05;text-align:center;padding:2cqw 1cqw 3cqw}
 .cell .tag{position:absolute;top:3cqw;left:3cqw;font-family:var(--en);font-weight:700;font-size:11cqw;padding:1cqw 4cqw;border-radius:99px;color:#fff;letter-spacing:.04em}
-.cell.endpoint{border:3px solid var(--ink);display:grid;place-items:center;color:#fff;font-family:var(--en);font-weight:700;font-size:19cqw;letter-spacing:.03em}
+.cell.endpoint{border:3px solid var(--ink);display:grid;place-items:center;color:#fff;font-family:var(--en);font-weight:700;letter-spacing:.03em}
+.cell.endpoint span{font-size:19cqw}
 .cell.start{background:var(--ink)}
 .cell.goal{background:var(--red);background-image:repeating-conic-gradient(rgba(255,255,255,.18) 0 25%,transparent 0 50%);background-size:30% 30%}
 .cell.land{animation:land .7s ease}
