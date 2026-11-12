@@ -298,56 +298,48 @@ function genStage4(){
       exp:`<p class="tip"><b>1 ＝ ${fr(d,d)}</b></p><div class="steps"><div>${w} は ${fr(d,1)} が ${d} × ${w} ＝ <b>${w*d}こ</b></div><div>${w*d} ＋ ${n} ＝ ${top} → <b>${A}</b></div></div>`};
   }
 }
-// ステージ5：角の大きさと面積
-function rectSvg(h,w,label){
-  const W=Math.min(220,w*18+20),H=Math.min(140,h*14+16);
-  return `<svg width="${W+90}" height="${H+40}" style="display:block;margin:6px auto"><rect x="50" y="10" width="${W}" height="${H}" fill="#ffe0c2" stroke="#555" stroke-width="3"/><text x="${50+W/2}" y="${H+32}" text-anchor="middle" font-size="18" font-weight="bold">横 ${w}cm</text><text x="44" y="${10+H/2}" text-anchor="end" font-size="18" font-weight="bold">たて</text><text x="44" y="${30+H/2}" text-anchor="end" font-size="18" font-weight="bold">${h}cm</text><text x="${50+W/2}" y="${15+H/2}" text-anchor="middle" font-size="16">${label}</text></svg>`;
-}
+// ステージ5：角の大きさ
 function lineSvg(a){
   const r=a*Math.PI/180;const x=150+90*Math.cos(Math.PI-r),y=110-90*Math.sin(Math.PI-r);
   return `<svg width="300" height="130" style="display:block;margin:6px auto"><line x1="20" y1="110" x2="280" y2="110" stroke="#555" stroke-width="4"/><line x1="150" y1="110" x2="${x}" y2="${y}" stroke="#e8692c" stroke-width="4"/><text x="200" y="100" font-size="18" font-weight="bold">${a}°</text><text x="80" y="100" font-size="18" font-weight="bold" fill="#e05555">？</text></svg>`;
 }
+const ANG=v=>v+'°';
+function angC(A,ans,c){return makeChoices(A,c.filter(v=>v>0&&v!==ans).map(ANG),()=>ANG(Math.max(5,ans+rnd(-6,6)*5)));}
 function genStage5(){
   const t=Math.random();
-  if(t<0.18){
+  const tri=`<p class="tip">三角じょうぎの角は <b>30°・60°・90°</b> と <b>45°・45°・90°</b></p>`;
+  if(t<0.17){
     const angs=[30,45,60,90];let a,b;do{a=pick(angs);b=pick(angs);}while(a===b);
-    const ans=a+b;const A=ans+'°';
-    return {q:`三角じょうぎの ${a}° と ${b}° を合わせた角は？`,ans:A,choices:makeChoices(A,[ans+10,ans-10,ans+15,ans-15,180-ans].filter(v=>v>0).map(v=>v+'°'),()=>(rnd(3,20)*5)+'°'),
-      exp:`<p class="tip">三角じょうぎの角は <b>30°・60°・90°</b> と <b>45°・45°・90°</b></p><p>${a}° ＋ ${b}° ＝ <b>${A}</b></p>`};
-  }else if(t<0.36){
-    const a=rnd(4,16)*10+pick([0,5]);const ans=180-a;const A=ans+'°';
+    const ans=a+b;const A=ANG(ans);
+    return {q:`三角じょうぎの ${a}° と ${b}° を合わせた角は？`,ans:A,choices:angC(A,ans,[ans+10,ans-10,ans+15,ans-15,Math.abs(a-b)]),
+      exp:tri+`<p>合わせる → たし算：${a}° ＋ ${b}° ＝ <b>${A}</b></p>`};
+  }else if(t<0.3){
+    const [a,b]=pick([[90,45],[90,60],[90,30],[60,45],[45,30],[60,30]]);
+    const ans=a-b;const A=ANG(ans);
+    return {q:`三角じょうぎの ${a}° の角に ${b}° の角を重ねた。はみ出した角は？`,ans:A,choices:angC(A,ans,[a+b,ans+10,ans+5,ans-5,ans*2]),
+      exp:tri+`<p>重ねてはみ出した部分 → ひき算：${a}° − ${b}° ＝ <b>${A}</b></p>`};
+  }else if(t<0.47){
+    const a=rnd(4,16)*10+pick([0,5]);const ans=180-a;const A=ANG(ans);
     return {q:`一直線の角を2つに分けた。かたほうが ${a}° のとき、もうかたほうは？`,ans:A,
-      choices:makeChoices(A,[360-a,ans+10,ans-10,a-90>0?a-90:ans+20].map(v=>v+'°'),()=>(rnd(2,30)*5)+'°'),
-      exp:lineSvg(a)+`<p class="tip"><b>一直線の角 ＝ 180°</b></p><p>180° − ${a}° ＝ <b>${A}</b></p>`};
-  }else if(t<0.5){
-    const a=rnd(19,34)*10+pick([0,5]);const ans=360-a;const A=ans+'°';
+      choices:angC(A,ans,[360-a,ans+10,ans-10,Math.abs(a-90),ans+20]),
+      exp:lineSvg(a)+`<p class="tip"><b>一直線の角 ＝ 180°</b>（直角2つ分）</p><p>180° − ${a}° ＝ <b>${A}</b></p>`};
+  }else if(t<0.6){
+    const a=rnd(19,34)*10+pick([0,5]);const ans=360-a;const A=ANG(ans);
     return {q:`${a}° の角は、一回りの角より 何度 小さい？`,ans:A,
-      choices:makeChoices(A,[a-180,ans+10,180-ans>0?180-ans:ans+20,ans-10].map(v=>v+'°'),()=>(rnd(2,30)*5)+'°'),
-      exp:`<p class="tip"><b>一回りの角 ＝ 360°</b>　（一直線の角2つ分）</p><p>360° − ${a}° ＝ <b>${A}</b></p>`};
-  }else if(t<0.68){
-    let h,w;do{h=rnd(2,9);w=rnd(2,12);}while(h===w);
-    const A=`${h} × ${w}`;
-    return {q:`たて ${h}cm、横 ${w}cm の長方形の面積を求める式は？`,ans:A,
-      choices:makeChoices(A,[`${h} + ${w}`,`(${h} + ${w}) × 2`,`${h} × ${h}`,`${w} × ${w}`,`${h} × 4`],()=>`${h} × ${rnd(2,9)}`),
-      exp:rectSvg(h,w,'1㎠の正方形が何こ？')+`<p class="tip"><b>長方形の面積 ＝ たて × 横</b><br>（たて＋横）×2 は まわりの長さだよ</p><p>${A} ＝ ${h*w}（㎠）</p>`};
-  }else if(t<0.78){
-    const s=rnd(2,12);const A=`${s} × ${s}`;
-    return {q:`1辺 ${s}cm の正方形の面積を求める式は？`,ans:A,
-      choices:makeChoices(A,[`${s} × 4`,`${s} + ${s}`,`${s} × 2`,`${s} + 4`],()=>`${s} × ${rnd(3,9)}`),
-      exp:rectSvg(s,s,'')+`<p class="tip"><b>正方形の面積 ＝ 1辺 × 1辺</b><br>1辺 × 4 は まわりの長さだよ</p><p>${A} ＝ ${s*s}（㎠）</p>`};
-  }else if(t<0.9){
-    let h,w;do{h=rnd(3,9);w=rnd(3,12);}while(h===w);const S=h*w;
-    const A=`${S} ÷ ${h}`;
-    return {q:`面積が ${S}㎠ で、たてが ${h}cm の長方形。横の長さを求める式は？`,ans:A,
-      choices:makeChoices(A,[`${S} × ${h}`,`${S} − ${h}`,`${h} ÷ ${S}`,`${S} + ${h}`],()=>`${S} ÷ ${rnd(2,9)}`),
-      exp:rectSvg(h,w,`面積 ${S}㎠`)+`<p class="tip">たて × 横 ＝ 面積 だから<br><b>横 ＝ 面積 ÷ たて</b></p><p>${A} ＝ ${w}（cm）</p>`};
+      choices:angC(A,ans,[a-180,ans+10,180-ans,ans-10,ans+20]),
+      exp:`<p class="tip"><b>一回りの角 ＝ 360°</b>（直角4つ分、一直線2つ分）</p><p>360° − ${a}° ＝ <b>${A}</b></p>`};
+  }else if(t<0.72){
+    const a=rnd(1,17)*10;const ans=180+a;const A=ANG(ans);
+    return {q:`一直線の角より ${a}° 大きい角は 何度？`,ans:A,choices:angC(A,ans,[180-a,360-a,ans+10,90+a,ans-10]),
+      exp:`<p class="tip">180°より大きい角は、<b>180° ＋ のこり</b> で考えよう</p><p>180° ＋ ${a}° ＝ <b>${A}</b></p>`};
+  }else if(t<0.84){
+    const n=rnd(1,4);const ans=90*n;const A=ANG(ans);const name={1:'直角',2:'直角2つ分',3:'直角3つ分',4:'直角4つ分'}[n];
+    return {q:`${name} の角は 何度？`,ans:A,choices:angC(A,ans,[ans+90,ans-90,ans*2,100*n,ans+45]),
+      exp:`<p class="tip"><b>直角 ＝ 90°</b><br>直角2つ分 ＝ 一直線 ＝ 180°　直角4つ分 ＝ 一回り ＝ 360°</p><p>90° × ${n} ＝ <b>${A}</b></p>`};
   }else{
-    const [q,ans,cands,why]=pick([
-      ['1㎡ は 何㎠？','10000㎠',['100㎠','1000㎠','100000㎠'],'1m＝100cm だから 100 × 100 ＝ 10000'],
-      ['1a（アール）は 何㎡？','100㎡',['10㎡','1000㎡','10000㎡'],'1a は 1辺10mの正方形：10 × 10 ＝ 100'],
-      ['1ha（ヘクタール）は 何㎡？','10000㎡',['100㎡','1000㎡','100000㎡'],'1ha は 1辺100mの正方形：100 × 100 ＝ 10000'],
-      ['1㎢ は 何㎡？','1000000㎡',['1000㎡','10000㎡','100000㎡'],'1km＝1000m だから 1000 × 1000 ＝ 1000000']]);
-    return {q,ans,choices:shuffle([ans,...cands]),exp:`<p class="tip">${why}</p><p>答え：<b>${ans}</b></p>`};
+    const m=pick([5,10,15,20,25,30,40,45]);const ans=m*6;const A=ANG(ans);
+    return {q:`時計の長いはりが ${m}分 で回る角度は？`,ans:A,choices:angC(A,ans,[ans+30,ans-30,m*5,m*10,ans*2]),
+      exp:`<p class="tip">長いはりは 60分で 一回り（360°）<br>だから <b>1分で 6°</b>、5分で 30°</p><p>6° × ${m} ＝ <b>${A}</b></p>`};
   }
 }
 const GENS=[genStage1,genStage2,genStage3,genStage4,genStage5];
@@ -366,7 +358,7 @@ const STAGES=[
  {name:'がい数',chara:'名探偵キツネ',color:'#e8692c',catchy:'四捨五入、すぐに見ぬくぞ！',good:['名推理！','見事な推理だ！','さえてるね！']},
  {name:'計算のきまり',chara:'パンダ博士',color:'#555555',catchy:'あわてず、じゅんばんどおりにやるのじゃ',good:['うむ、見事じゃ','よく見つけたのう','さすがじゃ！']},
  {name:'小数と分数',chara:'旅人トラ',color:'#d9822b',catchy:'0.1の旅、どこまでも行くぞ！',good:['ナイス・トラベル！','どこまでも行けるぞ！','いいぞ、その調子！']},
- {name:'角の大きさと面積',chara:'魔法使いユニコーン',color:'#a259d9',catchy:'角と面積の魔法、かけちゃうよ！',good:['まほう成功！','キラキラ正解！','すてき！']}
+ {name:'角の大きさ',chara:'魔法使いユニコーン',color:'#a259d9',catchy:'角の魔法、かけちゃうよ！',good:['まほう成功！','キラキラ正解！','すてき！']}
 ];
 const RANKS=[null,{n:'ブロンズ',c:'r1'},{n:'シルバー',c:'r2'},{n:'ゴールド',c:'r3'},{n:'レインボー',c:'r4'}];
 function rankOf(s){return s>=100?4:s>=90?3:s>=70?2:1;}
